@@ -85,9 +85,10 @@ class CommandFactory implements CommandFactoryContract
             $list[$name] = compact('class', 'name', 'description');
         }
 
-        if (file_exists(plugin_path('commands.php'))) {
+        $pluginManifest = manifest_path('plugins/commands.php');
+        if (file_exists($pluginManifest)) {
             /** @noinspection PhpIncludeInspection */
-            $list = array_merge(include plugin_path('commands.php'), $list);
+            $list = array_merge(include $pluginManifest, $list);
         }
 
         ksort($list);
@@ -160,8 +161,10 @@ class CommandFactory implements CommandFactoryContract
      */
     private function modificationTime()
     {
+        $pluginManifest = manifest_path('plugins/commands.php');
+
         return max(
-            filemtime(plugin_path('commands.php')),
+            file_exists($pluginManifest) ? filemtime($pluginManifest) : 0,
             filemtime(__DIR__ . '/../Commands'),
             filemtime(app_path('Commands'))
         );

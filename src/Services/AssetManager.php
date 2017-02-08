@@ -43,7 +43,7 @@ class AssetManager implements AssetManagerContract
     public function __construct()
     {
         // read manifest
-        $this->manifestFile = asset_path('manifest.php');
+        $this->manifestFile = manifest_path('assets/manifest.php');
 
         /** @noinspection PhpIncludeInspection */
         $this->manifest = @file_exists($this->manifestFile) ? include $this->manifestFile : [];
@@ -89,13 +89,14 @@ class AssetManager implements AssetManagerContract
     private function build($dest = null, $plugin = null)
     {
         if ($plugin !== null) {
+            $pluginManifest = manifest_path('plugins/assets.php');
             /** @noinspection PhpIncludeInspection */
-            $assets = file_exists(plugin_path('assets.php')) ? include plugin_path('assets.php') : [];
-            if (!isset($assets[$plugin])) {
+            $plugins = file_exists($pluginManifest) ? include $pluginManifest : [];
+            if (!isset($plugins[$plugin])) {
                 throw new \InvalidArgumentException('Plugin "' . $plugin . '" has no assets or is not installed.');
             }
             /** @noinspection PhpIncludeInspection */
-            $build = $assets[$plugin];
+            $build = $plugins[$plugin];
         }
         else {
             /** @noinspection PhpIncludeInspection */

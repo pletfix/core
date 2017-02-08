@@ -1,6 +1,6 @@
 <?php
 
 ///////////////////////////////////////////////////////////////////////////////
-// frohlfing/hello
+// pletfix/hello
 
-(new FRohlfing\Hello\Bootstraps\Plugin)->boot();
+(new Pletfix\Hello\Bootstraps\Plugin)->boot();

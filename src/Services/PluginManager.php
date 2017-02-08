@@ -59,7 +59,7 @@ class PluginManager implements PluginManagerContract
         // search the package
         $this->vendor = substr($package, 0, $pos);
         $this->plugin = substr($package, $pos + 1);
-        $this->path   = plugin_path($package);
+        $this->path   = manifest_path('plugins' . DIRECTORY_SEPARATOR . $package);
         if (!is_dir($this->path)) {
             $this->path = vendor_path($package);
             if (!is_dir($this->path)) {
@@ -72,9 +72,10 @@ class PluginManager implements PluginManagerContract
 
         // read the namespace from composer.json
         $this->namespace = $this->getNamespace($this->path . '/composer.json');
-        
+
+        $pluginManifest = manifest_path('plugins/packages.php');
         /** @noinspection PhpIncludeInspection */
-        $this->packages = @file_exists(plugin_path('packages.php')) ? include plugin_path('packages.php') : [];
+        $this->packages = @file_exists($pluginManifest) ? include $pluginManifest : [];
     }
 
     /**
@@ -236,7 +237,7 @@ class PluginManager implements PluginManagerContract
         }
 
         // update manifest
-        $manifest = plugin_path('assets.php');
+        $manifest = manifest_path('plugins/assets.php');
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
         if ($register) {
@@ -270,7 +271,7 @@ class PluginManager implements PluginManagerContract
 
         // generate command list
         // todo gleicher Code bei CommandFactory! => Liste vom CommandFactory generieren lassen
-        $manifest = plugin_path('commands.php');
+        $manifest = manifest_path('plugins/commands.php');
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
         foreach ($classes as $class) {
@@ -305,7 +306,7 @@ class PluginManager implements PluginManagerContract
         list_files($files, $migrationPath, ['php']);
 
         // update manifest
-        $manifest = plugin_path('migrations.php');
+        $manifest = manifest_path('plugins/migrations.php');
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
         $basePathLength  = strlen(base_path()) + 1;
@@ -339,7 +340,7 @@ class PluginManager implements PluginManagerContract
         foreach ($files as $file) {
             // update manifest
             $lang = basename($file, '.php');
-            $manifest = plugin_path('lang_' . $lang . '.php');
+            $manifest = manifest_path('plugins/lang_' . $lang . '.php');
             /** @noinspection PhpIncludeInspection */
             $list = @file_exists($manifest) ? include $manifest : [];
             if ($register) {
@@ -369,7 +370,7 @@ class PluginManager implements PluginManagerContract
         list_files($files, $visitPath, ['php']);
 
         // update manifest
-        $manifest = plugin_path('views.php');
+        $manifest = manifest_path('plugins/views.php');
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
         $visitPathLength = strlen($visitPath) + 1;
@@ -438,7 +439,7 @@ class PluginManager implements PluginManagerContract
                 $src . PHP_EOL;
         }
 
-        $this->saveContent(plugin_path('routes.php'), $dest);
+        $this->saveContent(manifest_path('plugins/routes.php'), $dest);
     }
 
     /**
@@ -491,7 +492,7 @@ class PluginManager implements PluginManagerContract
                 $src . PHP_EOL;
         }
 
-        $this->saveContent(plugin_path('services.php'), $dest);
+        $this->saveContent(manifest_path('plugins/services.php'), $dest);
     }
 
     /**
@@ -535,7 +536,7 @@ class PluginManager implements PluginManagerContract
             }
         }
 
-        $this->saveContent(plugin_path('bootstrap.php'), $dest);
+        $this->saveContent(manifest_path('plugins/bootstrap.php'), $dest);
     }
 
     /**
@@ -545,7 +546,7 @@ class PluginManager implements PluginManagerContract
      */
     private function enablePackage($register)
     {
-        $this->saveArray(plugin_path('packages.php'), $this->listPackages($register));
+        $this->saveArray(manifest_path('plugins/packages.php'), $this->listPackages($register));
     }
 
     ///////////////////////////////////////////////////////////////////////////

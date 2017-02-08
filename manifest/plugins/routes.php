@@ -3,7 +3,7 @@
 $route = \Core\Application::route();
 
 ///////////////////////////////////////////////////////////////////////////////
-// frohlfing/hello
+// pletfix/hello
 
 $route->get('hello', function() {
     return di('hello')->sayHello();

@@ -412,16 +412,17 @@ if (!function_exists('migration_path')) { // todo evtl mit resource_path('db/mig
     }
 }
 
-if (!function_exists('plugin_path')) {
+if (!function_exists('manifest_path')) {
     /**
-     * Get the plugin path.
+     * Get the manifest path.
      *
      * @param string $path
      * @return string
      */
-    function plugin_path($path = '')
+    function manifest_path($path = '')
     {
-        return realpath(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'plugins') . (!empty($path) ? DIRECTORY_SEPARATOR . $path : '');
+        // don't use BASE PATH because the core path could be a subfolder either of vendor or workbench
+        return realpath(__DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'manifest') . (!empty($path) ? DIRECTORY_SEPARATOR . $path : '');
     }
 }
 

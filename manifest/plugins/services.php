@@ -3,13 +3,13 @@
 $di = \Core\Services\DI::getInstance();
 
 ///////////////////////////////////////////////////////////////////////////////
-// frohlfing/hello
+// pletfix/hello
 
 /*
  * Singleton Instance (shared)
  */
 
-$di->set('hello', \FRohlfing\Hello\HelloService::class, true);
+$di->set('hello', \Pletfix\Hello\HelloService::class, true);
 
 /*
  * Multiple Instance (not shared)

@@ -70,8 +70,9 @@ class PluginCommand extends AbstractCommand
 
         $this->notice('Path of enabled packages:');
 
+        $pluginManifest = manifest_path('plugins/packages.php');
         /** @noinspection PhpIncludeInspection */
-        $packages = @file_exists(plugin_path('packages.php')) ? include plugin_path('packages.php') : [];
+        $packages = @file_exists($pluginManifest) ? include $pluginManifest : [];
 
         $length = 0;
         foreach ($packages as $package => $path) {
