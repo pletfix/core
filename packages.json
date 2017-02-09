@@ -1,0 +1,11 @@
+{
+  "package": {
+    "name": "pletfix/app",
+    "version": "0.1.2",
+    "source": {
+      "type": "git",
+      "url": "git@github.com:pletfix/app.git",
+      "reference": "master"
+    }
+  }
+}
