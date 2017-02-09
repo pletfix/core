@@ -42,8 +42,15 @@ class AssetManager implements AssetManagerContract
      */
     public function __construct()
     {
-        // read manifest
         $this->manifestFile = manifest_path('assets/manifest.php');
+
+        // be sure the manifest path is exits
+        $dir = dirname($this->manifestFile);
+        if (!@file_exists($dir)) {
+            if (@mkdir($dir, 0755, true) === false) {
+                throw new \RuntimeException('Unable to create directory ' . $dir);
+            }
+        }
 
         /** @noinspection PhpIncludeInspection */
         $this->manifest = @file_exists($this->manifestFile) ? include $this->manifestFile : [];

@@ -59,8 +59,8 @@ class PluginManager implements PluginManagerContract
         // search the package
         $this->vendor = substr($package, 0, $pos);
         $this->plugin = substr($package, $pos + 1);
-        $this->path   = manifest_path('plugins' . DIRECTORY_SEPARATOR . $package);
-        if (!is_dir($this->path)) {
+        //$this->path   = plugin_path($package);
+        //if (!is_dir($this->path)) {
             $this->path = vendor_path($package);
             if (!is_dir($this->path)) {
                 $this->path = workbench_path($package);
@@ -68,14 +68,23 @@ class PluginManager implements PluginManagerContract
                     throw new \InvalidArgumentException('Package "' . $package . '" not found.');
                 }
             }
-        }
+        //}
 
         // read the namespace from composer.json
         $this->namespace = $this->getNamespace($this->path . '/composer.json');
 
-        $pluginManifest = manifest_path('plugins/packages.php');
+        $manifest = manifest_path('plugins/packages.php');
+
+        // be sure the manifest path is exits
+        $dir = dirname($manifest);
+        if (!@file_exists($dir)) {
+            if (@mkdir($dir, 0755, true) === false) {
+                throw new \RuntimeException('Unable to create directory ' . $dir);
+            }
+        }
+
         /** @noinspection PhpIncludeInspection */
-        $this->packages = @file_exists($pluginManifest) ? include $pluginManifest : [];
+        $this->packages = @file_exists($manifest) ? include $manifest : [];
     }
 
     /**
