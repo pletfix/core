@@ -407,8 +407,7 @@ if (!function_exists('migration_path')) { // todo evtl mit resource_path('db/mig
      */
     function migration_path($path = '')
     {
-        return BASE_PATH . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'db' .
-            DIRECTORY_SEPARATOR . 'migrations' . (!empty($path) ? DIRECTORY_SEPARATOR . $path : '');
+        return BASE_PATH . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'migrations' . (!empty($path) ? DIRECTORY_SEPARATOR . $path : '');
     }
 }
 
