@@ -129,7 +129,9 @@ class Request implements RequestContract
      */
     public function url()
     {
-        return $this->baseUrl() . '/' . $this->path();
+        $path = $this->path();
+
+        return $this->baseUrl() . (!empty($path) ? '/' . $path : '');
     }
 
     /**

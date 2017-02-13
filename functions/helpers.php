@@ -31,7 +31,7 @@ if (! function_exists('asset')) {
     {
         static $manifest = null;
         if (is_null($manifest)) {
-            $manifestFile = asset_path('manifest.php');
+            $manifestFile = manifest_path('assets/manifest.php');
             /** @noinspection PhpIncludeInspection */
             $manifest = @file_exists($manifestFile) ? require $manifestFile : [];
         }
@@ -327,6 +327,20 @@ if (!function_exists('list_classes')) {
                 $result[] = $namespace . '\\' . basename($file, '.php');
             }
         }
+    }
+}
+
+if (!function_exists('url')) {
+    /**
+     * Generate a absolute URL to the given path.
+     *
+     * @param string $path
+     * @param array $parameters
+     * @return string
+     */
+    function url($path = '', $parameters = [])
+    {
+        return request()->baseUrl() . (!empty($path) ? '/' . $path : '') . (!empty($parameters) ? '?' . http_build_query($parameters) : '');
     }
 }
 

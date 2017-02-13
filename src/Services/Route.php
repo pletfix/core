@@ -218,7 +218,6 @@ class Route implements RouteContract
      */
     public function resource($path, $controller /*, array $options = [] */)
     {
-
         $var = 'id';
         $this->get(   $path,                          $controller . '@index');
         $this->get(   $path . '/create',              $controller . '@create');
