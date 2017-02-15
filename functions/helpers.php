@@ -434,8 +434,7 @@ if (!function_exists('manifest_path')) {
      */
     function manifest_path($path = '')
     {
-        // don't use BASE PATH because the core path could be a subfolder either of vendor or workbench
-        return realpath(__DIR__ . DIRECTORY_SEPARATOR . '..') . DIRECTORY_SEPARATOR . 'manifest' . (!empty($path) ? DIRECTORY_SEPARATOR . $path : '');
+        return BASE_PATH . DIRECTORY_SEPARATOR . '.manifest' . (!empty($path) ? DIRECTORY_SEPARATOR . $path : '');
     }
 }
 

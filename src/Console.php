@@ -38,7 +38,7 @@ class Console
          */
         call_user_func(function() {
             require __DIR__ . '/../../../../config/boot/services.php';
-            @include __DIR__ . '/../manifest/plugins/services.php';
+            @include __DIR__ . '/../../../../.manifest/plugins/services.php';
         });
 
         /*
@@ -46,7 +46,7 @@ class Console
          */
         call_user_func(function() {
             require __DIR__ . '/../../../../config/boot/bootstrap.php';
-            @include __DIR__ . '/../manifest/plugins/bootstrap.php';
+            @include __DIR__ . '/../../../../.manifest/plugins/bootstrap.php';
         });
 
         /*

@@ -33,7 +33,7 @@ class Application
          */
         call_user_func(function() {
             require __DIR__ . '/../../../../config/boot/services.php';
-            @include __DIR__ . '/../manifest/plugins/services.php';
+            @include __DIR__ . '/../../../../.manifest/plugins/services.php';
         });
 
 //        echo 'include: ';
@@ -51,7 +51,7 @@ class Application
          */
         call_user_func(function() {
             require __DIR__ . '/../../../../config/boot/bootstrap.php';
-            @include __DIR__ . '/../manifest/plugins/bootstrap.php';
+            @include __DIR__ . '/../../../../.manifest/plugins/bootstrap.php';
         });
 
 //        echo 'Load Bootstrap: ';
@@ -69,7 +69,7 @@ class Application
          */
         call_user_func(function() {
             require __DIR__ . '/../../../../config/boot/routes.php';
-            @include __DIR__ . '/../manifest/plugins/routes.php';
+            @include __DIR__ . '/../../../../.manifest/plugins/routes.php';
         });
 
         /*
