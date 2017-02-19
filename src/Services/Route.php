@@ -116,7 +116,7 @@ class Route implements RouteContract
      */
     private function pattern($route)
     {
-        return '/^' . preg_replace('/\\\{(\w+)\\\}/', '(\w+)', preg_quote($route->path, '/')) . '$/';
+        return '/^' . preg_replace('/\\\{([A-Za-z0-9-._]+)\\\}/', '([A-Za-z0-9-._]+)', preg_quote($route->path, '/')) . '$/';
     }
 
     /**

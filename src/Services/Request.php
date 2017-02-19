@@ -165,7 +165,7 @@ class Request implements RequestContract
                 throw new \UnexpectedValueException(sprintf('Invalid Host "%s"', $host));
             }
 
-            $this->baseUrl = $scheme . '://' . $host . (!$isDefaultPort ? ':' . $port : '') . $basePath;
+            $this->baseUrl = $scheme . '://' . $host . (!$isDefaultPort ? ':' . $port : '') . rtrim($basePath, '/.');
         }
 
         return $this->baseUrl;
