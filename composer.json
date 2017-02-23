@@ -15,15 +15,15 @@
         "doctrine/cache": "^1.6",
         "fightbulc/moment": "^1.25",
         "jdorn/sql-formatter": "^1.2",
+        "leafo/scssphp": "^0.6.6",
         "monolog/monolog": "~1.11",
+        "natxet/cssmin": "^3.0",
+        "oyejorge/less.php": "v1.7.0.10",
+        "tedivm/jshrink": "^1.1"
         "vlucas/phpdotenv": "~2.2"
     },
     "require-dev": {
-        "leafo/scssphp": "^0.6.6",
-        "natxet/cssmin": "^3.0",
-        "oyejorge/less.php": "v1.7.0.10",
         "phpunit/phpunit": "^5.7|^6.0",
-        "tedivm/jshrink": "^1.1"
     },
     "files": [
         "functions/helpers.php",
