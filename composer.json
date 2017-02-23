@@ -19,11 +19,11 @@
         "monolog/monolog": "~1.11",
         "natxet/cssmin": "^3.0",
         "oyejorge/less.php": "v1.7.0.10",
-        "tedivm/jshrink": "^1.1"
+        "tedivm/jshrink": "^1.1",
         "vlucas/phpdotenv": "~2.2"
     },
     "require-dev": {
-        "phpunit/phpunit": "^5.7|^6.0",
+        "phpunit/phpunit": "^5.7|^6.0"
     },
     "files": [
         "functions/helpers.php",
