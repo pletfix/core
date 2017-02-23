@@ -72,13 +72,9 @@ If you want to develop at the core, you can create a workbench as follows.
         }
     }    
     ~~~
-   
-<!--    
-5. Create a symlink from the core's binary `phpunit` to the folder `vendor/bin/phpunit`
-and copy `phpunit.xml.dist` from the core to `phpunit.xml`.
- 
+
+5. Open `phpunit.xml` and modify attribute `bootstrap`:
+    
+    ~~~  
+    <phpunit bootstrap="./workbench/pletfix/core/tests/bootstrap.php"
     ~~~
-    ln -s ../../workbench/pletfix/core/vendor/bin/phpunit ./vendor/bin/phpunit
-    cp ./workbench/phpunit.xml.dist ./phpunit.xml
-    ~~~
--->
