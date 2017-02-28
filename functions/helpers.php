@@ -51,7 +51,7 @@ if (!function_exists('benchmark')) {
      * @param callable $callback
      * @param int $loops Number of loops which execute the callback.
      * @param bool|null $return [optional] <p>
-     * If used and set to true, dump will return the variable representation instead of outputing it.
+     * If used and set to true, benchmark will return the variable representation instead of outputting it.
      * @return null|array Delay and memory usage if the return parameter is true. Otherwise, this function will return null.
      */
     function benchmark(callable $callback, $loops = 1, $return = null)
@@ -82,13 +82,13 @@ if (!function_exists('benchmark')) {
 
 if (! function_exists('command')) {
     /**
-     * Run an console command by name.
+     * Run a console command by name.
      *
      * @param string $name Command name
      * @param array $argv Command line arguments and options
      * @return int Exit code
      */
-    function command($name, $argv) // todo command() testen
+    function command($name, array $argv = []) // todo command() testen
     {
         /** @var \Core\Services\Contracts\Command|false $command */
         $command = \Core\Services\DI::getInstance()->get('command-factory')->command(array_unshift($argv, [$name]));
@@ -276,9 +276,33 @@ if (!function_exists('list_files')) {
     }
 }
 
+if (!function_exists('list_classes')) {
+    /**
+     * Read available PHP classes recursive from given path.
+     *
+     * @param array &$result Receives the classes
+     * @param string $path
+     * @param string $namespace
+     */
+    function list_classes(&$result, $path, $namespace)
+    {
+        foreach (scandir($path) as $file) {
+            if ($file[0] == '.') {
+                continue;
+            }
+            if (@is_dir($path . DIRECTORY_SEPARATOR . $file)) {
+                list_classes($result, $path . DIRECTORY_SEPARATOR . $file, $namespace . '\\' . $file);
+            }
+            else if (substr($file, -4) == '.php') {
+                $result[] = $namespace . '\\' . basename($file, '.php');
+            }
+        }
+    }
+}
+
 if (!function_exists('remove_folder')) {
     /**
-     * Delete a file or folder
+     * Delete a folder (or file).
      *
      * @param string $path
      * @return bool
@@ -303,30 +327,6 @@ if (!function_exists('remove_folder')) {
         }
 
         return rmdir($path);
-    }
-}
-
-if (!function_exists('list_classes')) {
-    /**
-     * Read available PHP classes recursive from given path.
-     *
-     * @param array &$result Receives the classes
-     * @param string $path
-     * @param string $namespace
-     */
-    function list_classes(&$result, $path, $namespace)
-    {
-        foreach (scandir($path) as $file) {
-            if ($file[0] == '.') {
-                continue;
-            }
-            if (@is_dir($path . DIRECTORY_SEPARATOR . $file)) {
-                list_classes($result, $path . DIRECTORY_SEPARATOR . $file, $namespace . '\\' . $file);
-            }
-            else if (substr($file, -4) == '.php') {
-                $result[] = $namespace . '\\' . basename($file, '.php');
-            }
-        }
     }
 }
 
@@ -363,7 +363,7 @@ if (!function_exists('app_path')) {
     }
 }
 
-if (!function_exists('asset_path')) { // todo evtl mit resource_path('assets/' . $file) ersetzen
+if (!function_exists('asset_path')) { // todo ist noch nicht dokumentiert - evtl mit resource_path('assets/' . $file) ersetzen!
     /**
      * Get the asset path (the subfolder of resources).
      *
@@ -402,7 +402,7 @@ if (!function_exists('config_path')) {
     }
 }
 
-if (!function_exists('environment_file')) {
+if (!function_exists('environment_file')) { // todo ist noch nicht dokumentiert - evtl mit base_path('.env') ersetzen!
     /**
      * Get the environment file.
      */
@@ -412,7 +412,7 @@ if (!function_exists('environment_file')) {
     }
 }
 
-if (!function_exists('migration_path')) { // todo evtl mit resource_path('db/migrations/' . $file) ersetzen
+if (!function_exists('migration_path')) { // todo ist noch nicht dokumentiert - evtl mit resource_path('migrations/' . $file) ersetzen
     /**
      * Get the migration path.
      *
@@ -497,7 +497,7 @@ if (!function_exists('view_path')) {
      * @param string $path
      * @return string
      */
-    function view_path($path = '') // todo evtl mit resource_path('views/' . $file) ersetzen
+    function view_path($path = '') // todo noch nicht dokumentiert - evtl mit resource_path('views/' . $file) ersetzen
     {
         return BASE_PATH . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'views' . (!empty($path) ? DIRECTORY_SEPARATOR . $path : '');
     }
@@ -510,7 +510,7 @@ if (!function_exists('workbench_path')) {
      * @param string $path
      * @return string
      */
-    function workbench_path($path = '')
+    function workbench_path($path = '') // todo noch nicht dokumentiert - evtl mit base_path('workbench/' . $file) ersetzen
     {
         return BASE_PATH . DIRECTORY_SEPARATOR . 'workbench' . (!empty($path) ? DIRECTORY_SEPARATOR . $path : '');
     }

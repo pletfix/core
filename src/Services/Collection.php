@@ -20,8 +20,8 @@ use Traversable;
  *
  * This code based on Laravel's Collection 5.3 (see copyright notice license-laravel.md)
  *
- * @see https://laravel.com/docs/master/collections Laravel's Documentation
- * @see https://github.com/illuminate/support/blob/master/Collection.php Laravel's Collection on GitHub by Taylor Otwell
+ * @see https://laravel.com/docs/5.3/collections Laravel's Documentation
+ * @see https://github.com/illuminate/support/blob/5.3/Collection.php Laravel's Collection on GitHub by Taylor Otwell
  */
 class Collection implements CollectionContract
 {
@@ -173,7 +173,7 @@ class Collection implements CollectionContract
      */
     public function containsStrict($value, $key = null) // todo parameter waren verdreht - testen!
     {
-        // todo funktion fast doppelt
+        // todo Funktion fast doppelt, ist auch nicht dokumentiert.
 
         if (func_num_args() == 2) {
             return $this->contains(function ($item) use ($value, $key) { // todo rekursiver aufruf vermeiden
@@ -355,7 +355,7 @@ class Collection implements CollectionContract
             return $values->get($middle);
         }
 
-        return (new static([$values->get($middle - 1), $values->get($middle)]))->avg(); // todo Ergebnis rtesten
+        return (new static([$values->get($middle - 1), $values->get($middle)]))->avg(); // todo Ergebnis testen
     }
 
     /**
@@ -507,7 +507,7 @@ class Collection implements CollectionContract
 
     /*
      * --------------------------------------------------------------------------------------------------------------
-     * Collection Manipulation (a)
+     * Collection Manipulation (Immutable Functions)
      *
      * The following methods returns a new modified Collection instance, allowing you to preserve the original copy
      * of the collection when necessary.
@@ -1149,7 +1149,7 @@ class Collection implements CollectionContract
 
     /*
      * --------------------------------------------------------------------------------------------------------------
-     * Collection Manipulation (b)
+     * Collection Manipulation (Mutable Functions)
      *
      * Unlike most other collection methods, the following method does not return a new modified collection; it
      * modifies the collection that is called.

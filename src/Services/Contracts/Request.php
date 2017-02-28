@@ -25,7 +25,7 @@ interface Request
     public function fullUrl();
 
     /**
-     * Get the URL for the request (without query string) .
+     * Get the URL for the request (without query string).
      *
      * Example: http://localhost/myapp/public/path
      *
@@ -43,7 +43,6 @@ interface Request
      * - The host is lowercase as per RFC 952/2181.
      * - It will not show the default port 80 for HTTP and port 443 for HTTPS.
      *
-     * @link http://stackoverflow.com/questions/6768793/get-the-full-url-in-php
      * @return string
      */
     public function baseUrl();
@@ -51,7 +50,7 @@ interface Request
     /**
      * Get the canonical URL for the request.
      *
-     * This URL is importend for SEO (Search Engine Optimizing).
+     * This URL is important for SEO (Search Engine Optimizing).
      *
      * Example: fullUrl = "http://example.com/path?a=3" --> canonicalUrl = "https://www.example.de/path"
      *
@@ -108,11 +107,8 @@ interface Request
     /**
      * Gets the request method.
      *
-     * This code based on Symfony\Component\HttpFoundation\Request.
-     *
-     * If the X-HTTP-Method-Override header is set, and if the method is a POST,
-     * then it is used to determine the "real" intended HTTP method.
-     * The method is always an uppercased string.
+     * If the X-HTTP-Method-Override header is set, and if the method is a POST, then it is used to determine the
+     * "real" intended HTTP method. The method is always an uppercase string.
      *
      * @return string (GET, HEAD, POST, PUT, PATCH or DELETE)
      */

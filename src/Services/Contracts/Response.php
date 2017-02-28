@@ -4,10 +4,6 @@ namespace Core\Services\Contracts;
 
 /**
  * The Response class represents an HTTP response.
- *
- * The class based on Flight: An extensible micro-framework.
- * Copyright (c) 2011, Mike Cao <mike@mikecao.com>, MIT, http://flightphp.com/license
- * https://github.com/mikecao/flight/blob/master/flight/net/Response.php
  */
 interface Response
 {
@@ -21,7 +17,7 @@ interface Response
     /**
      * Set the output.
      *
-     * @param mixed $content The response content, see setContent()
+     * @param string $content The response content
      * @param int $status The response status code
      * @param array $headers An array of response headers
      *
@@ -34,7 +30,7 @@ interface Response
      *
      * @param string $name Name of the view
      * @param array $variables
-     * @param int   $status  The response status code
+     * @param int $status The response status code
      * @param array $headers An array of response headers
      * @return $this
      */
