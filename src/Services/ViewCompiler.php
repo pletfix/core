@@ -12,7 +12,7 @@ use Core\Services\Contracts\ViewCompiler as ViewCompilerContract;
  * This code based on Laravel's Blade Compiler 5.3 (see copyright notice license-laravel.md)
  *
  * @see https://laravel.com/docs/5.3/blade Laravel's Documentation
- * @see https://github.com/illuminate/view/blob/master/Compilers/BladeCompiler.php Laravel's Blade Compiler on GitHub by Taylor Otwell
+ * @see https://github.com/illuminate/view/blob/5.3/Compilers/BladeCompiler.php Laravel's Blade Compiler on GitHub by Taylor Otwell
  */
 class ViewCompiler implements ViewCompilerContract
 {

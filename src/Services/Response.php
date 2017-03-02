@@ -89,7 +89,7 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
-    public function getStatusCode()
+    public function getStatusCode() // todo umbennenen in statusCode()
     {
         return $this->status;
     }
@@ -97,7 +97,7 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
-    public function getStatusText()
+    public function getStatusText() // todo umbennenen in statusText()
     {
 //        return isset(static::$statusTexts[$this->status]) ?  static::$statusTexts[$this->status] : '';
         return http_status_text($this->status);
@@ -123,7 +123,7 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
-    public function getHeaders()
+    public function getHeaders() // todo umbennenen in headers()
     {
         return $this->headers;
     }
