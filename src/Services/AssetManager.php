@@ -11,15 +11,12 @@ use Less_Parser as LessCompiler;
 /**
  * Asset Management
  *
- * This class works with Assetic.
- *
- * @see https://github.com/linkorb/jsmin-php PHP implementation of Douglas Crockford's JSMin on GitHub
- * @see https://code.google.com/archive/p/cssmin/ CssMin by Joe Scylla
- * @see https://github.com/natxet/cssmin CssMin on GitHub
- * @see http://leafo.net/lessphp/ Less Compiler by Leaf Corcoran
- * @see https://github.com/leafo/lessphp Less Compiler on GitHub
+ * @see https://github.com/tedious/JShrink JShrink by Robert Hafner on GitHub
+ * @see https://github.com/natxet/cssmin Clone of CssMin on GitHub
+ * @see https://code.google.com/archive/p/cssmin/ Original CssMin by Joe Scylla
+ * @see https://github.com/oyejorge/less.php Less Compiler by Josh Schmidt on GitHub
  * @see http://leafo.github.io/scssphp/ SCSS Compiler by Leaf Corcoran
- * @see https://github.com/leafo/scssphp SCSS Compiler on GitHub
+ * @see https://github.com/leafo/scssphp SCSS Compiler by Leaf Corcoran on GitHub
  */
 class AssetManager implements AssetManagerContract
 {

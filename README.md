@@ -1,4 +1,4 @@
-#The Pletfix Core.
+#The Pletfix Core
 
 Author: Frank Rohlfing <mail@frank-rohlfing.de>
 
@@ -8,11 +8,11 @@ This is the core for the Pletfix framework.
 
 ##Core Development
 
-If you want to develop at the core, you can create a workbench as follows.
+If you want to develop at the Pletfix Core, you can create a workbench as follows.
 
 1. Install a fresh [Pletfix Application](https://github.com/pletfix/app)
 
-2. Remove the Pletfix core in the vendor path: 
+2. Remove the Pletfix Core in the vendor path: 
     ~~~
     rm -R vendor/pletfix/core
     ~~~
@@ -26,11 +26,11 @@ If you want to develop at the core, you can create a workbench as follows.
 
 4. Modify `composer.json` as below:
 
-    - Replace `"pletfix/core": "dev-master"` in the `require` section with the require packages from the core.
+    - Replace `"pletfix/core": "dev-master"` in the `require` section with the required packages from the core.
     - Add `"Core\\": "workbench/pletfix/core/src/"` to the `psr-4` autoload section.
     - Change the path of the core's function files in the `files` autoload section.
     
-    After then the `autolaod` section looks like below:
+    After this the `autolaod` section looks like below:
     
     ~~~    
     "require": {

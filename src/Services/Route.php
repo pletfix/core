@@ -14,14 +14,7 @@ class Route implements RouteContract
      * 
      * @var object[]
      */
-    protected $routes = [];
-
-//    /**
-//     * Create a new Route instance.
-//     */
-//    public function __construct()
-//    {
-//    }
+    private $routes = [];
 
     /**
      * Dispatch the request to the application.
@@ -31,7 +24,7 @@ class Route implements RouteContract
      */
     public function dispatch(Request $request)
     {
-        $route = $this->findRoute($request);
+        $route = $this->find($request);
         if (is_null($route)) {
             throw new HttpException(404, 'No matching route found!');
         }
@@ -71,7 +64,7 @@ class Route implements RouteContract
      * @param Request $request
      * @return object|null
      */
-    private function findRoute(Request $request)
+    private function find(Request $request)
     {
         $method = $request->method();
         $path   = $request->path();
@@ -120,122 +113,108 @@ class Route implements RouteContract
     }
 
     /**
-     * Adds a GET route.
-     *
-     * @param string $path
-     * @param string|\Closure $action Could by a method name or a function.
+     * @inheritdoc
      */
     public function get($path, $action)
     {
-        $this->addRoute('GET', $path, $action);
+        $this->add('GET',  $path, $action);
+        $this->add('HEAD', $path, $action);
     }
 
     /**
-     * Adds a HEAD route.
-     *
-     * @param string $path
-     * @param string|\Closure $action Could by a method name or a function.
+     * @inheritdoc
      */
     public function head($path, $action)
     {
-        $this->addRoute('HEAD', $path, $action);
+        $this->add('HEAD', $path, $action);
     }
 
     /**
-     * Adds a POST route.
-     *
-     * @param string $path
-     * @param string|\Closure $action Could by a method name or a function.
+     * @inheritdoc
      */
     public function post($path, $action)
     {
-        $this->addRoute('POST', $path, $action);
+        $this->add('POST', $path, $action);
     }
 
     /**
-     * Adds a PUT route.
-     *
-     * @param string $path
-     * @param string|\Closure $action Could by a method name or a function.
+     * @inheritdoc
      */
     public function put($path, $action)
     {
-        $this->addRoute('PUT', $path, $action);
+        $this->add('PUT', $path, $action);
     }
 
     /**
-     * Adds a PATCH route.
-     *
-     * @param string $path
-     * @param string|\Closure $action Could by a method name or a function.
+     * @inheritdoc
      */
     public function patch($path, $action)
     {
-        $this->addRoute('PATCH', $path, $action);
+        $this->add('PATCH', $path, $action);
     }
 
     /**
-     * Adds a DELETE route.
-     *
-     * @param string $path
-     * @param string|\Closure $action Could by a method name or a function.
+     * @inheritdoc
      */
     public function delete($path, $action)
     {
-        $this->addRoute('DELETE', $path, $action);
+        $this->add('DELETE', $path, $action);
     }
 
     /**
-     * Adds routes for each method.
-     *
-     * @param string $path
-     * @param string|\Closure $action Could by a method name or a function.
+     * @inheritdoc
+     */
+    public function options($path, $action)
+    {
+        $this->add('OPTIONS', $path, $action);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function multi($methods, $path, $action = null)
+    {
+        foreach ($methods as $method) {
+            if (!in_array($method, ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'])) {
+                throw new \InvalidArgumentException('Invalid HTTP method: ' . $method);
+            }
+            $this->add($method, $path, $action);
+        }
+    }
+
+    /**
+     * @inheritdoc
      */
     public function any($path, $action = null)
     {
-        $this->addRoute(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'], $path, $action);
+        foreach (['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'] as $method) {
+            $this->add($method, $path, $action);
+        }
     }
-
+    
     /**
-     * Route a resource to a controller.
-     *
-     * Example : $route->resource('articles', 'ArticleController');
-     *
-     * Method	 | Path	                    | Name             | Action                    | Used for
-     * ---------------------------------------------------------------------------------------------------------------------------
-     * GET|HEAD  | articles                 | articles.index   | ArticleController@index   | Display a list of all articles.
-     * GET|HEAD  | articles/create          | articles.create  | ArticleController@create  | Show the form to create a new article.
-     * POST      | articles                 | articles.store   | ArticleController@store   | Store a new article to the database.
-     * DELETE    | articles/{article}       | articles.destroy | ArticleController@destroy | Delete an article from the database.
-     * GET|HEAD  | articles/{article}/edit  | articles.edit    | ArticleController@edit    | Show the form to edit an article.
-     * PUT|PATCH | articles/{article}       | articles.update  | ArticleController@update  | Update an article to the database.
-     * GET|HEAD  | articles/{article}       | articles.show    | ArticleController@show    | Show a single article (readonly).
-     *
-     * todo Name wird nicht unterstützt!
-     *
-     * @param string $path
-     * @param string $controller
+     * @inheritdoc
      */
     public function resource($path, $controller /*, array $options = [] */)
     {
         $var = 'id';
-        $this->get(   $path,                          $controller . '@index');
-        $this->get(   $path . '/create',              $controller . '@create');
-        $this->post(  $path,                          $controller . '@store');
-        $this->delete($path . '/{' . $var . '}',      $controller . '@destroy');
-        $this->get(   $path . '/{' . $var . '}/edit', $controller . '@edit');
-        $this->put(   $path . '/{' . $var . '}',      $controller . '@update');
-        $this->get(   $path . '/{' . $var . '}',      $controller . '@show');
+        $this->add('GET',    $path,                          $controller . '@index');
+        $this->add('GET',    $path . '/create',              $controller . '@create');
+        $this->add('POST',   $path,                          $controller . '@store');
+        $this->add('DELETE', $path . '/{' . $var . '}',      $controller . '@destroy');
+        $this->add('GET',    $path . '/{' . $var . '}/edit', $controller . '@edit');
+        $this->add('PUT',    $path . '/{' . $var . '}',      $controller . '@update');
+        $this->add('GET',    $path . '/{' . $var . '}',      $controller . '@show');
     }
 
     /**
      * Add a route to the underlying route collection.
      *
-     * @param string|string[] $method HTTP method (GET, POST, PUT, PATCH or DELETE)
-     * @param string $path Path of the route, e.g. "/photos/:id/edit"
+     * @param string $method HTTP method (either 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE' or 'OPTIONS')
+     * @param string $path Path of the route, e.g. "/photos/{id}/edit"
      * @param \Closure|string $action, e.g. "PhotoController@edit"
      */
-    protected function addRoute($method, $path, $action)
+    private function add($method, $path, $action)
     {
         $this->routes[] = (object)[
             'method' => $method,

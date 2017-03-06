@@ -1,6 +1,6 @@
 <?php
 
-use Core\Services\DI;
+use Core\Services\Contracts\DI;
 
 if (!function_exists('asset_manager')) {
     /**
@@ -40,23 +40,6 @@ if (! function_exists('collect')) {
     }
 }
 
-if (!function_exists('config')) {
-    /**
-     * Get the Configuration
-     *
-     * @param string|null $key Key using "dot" notation.
-     * @param mixed $default
-     * @return mixed
-     */
-    function config($key = null, $default = null)
-    {
-        /** @var \Core\Services\Config $config */
-        $config = \Core\Services\DI::getInstance()->get('config');
-
-        return $config->get($key, $default);
-    }
-}
-
 if (!function_exists('database')) {
     /**
      * Get the database by given connection name.
@@ -67,6 +50,19 @@ if (!function_exists('database')) {
     function database($store = null)
     {
         return DI::getInstance()->get('database-factory')->store($store);
+    }
+}
+
+if (!function_exists('datetime')) {
+    /**
+     * Returns a new DateTime object.
+     *
+     * @param string $dateTime
+     * @return \Core\Services\Contracts\DateTime
+     */
+    function datetime($dateTime = 'now')
+    {
+        return DI::getInstance()->get('date-time', [$dateTime]);
     }
 }
 
@@ -88,19 +84,6 @@ if (!function_exists('di')) {
     }
 }
 
-if (!function_exists('dt')) {
-    /**
-     * Returns a new DateTime object.
-     *
-     * @param string $dateTime
-     * @return \Core\Services\Contracts\DateTime
-     */
-    function dt($dateTime = 'now')
-    {
-        return DI::getInstance()->get('date-time', [$dateTime]);
-    }
-}
-
 if (!function_exists('logger')) {
     /**
      * Get the Logger.
@@ -115,7 +98,7 @@ if (!function_exists('logger')) {
 
 if (!function_exists('migrator')) {
     /**
-     * Get the database by given connection name.
+     * Get the Migrator for the given store.
      *
      * @param string|null $store Name of the database store
      * @param string|null $path Subfolder in the migration directory

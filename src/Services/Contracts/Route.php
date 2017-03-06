@@ -61,7 +61,24 @@ interface Route
     public function delete($path, $action);
 
     /**
-     * Adds routes for each method.
+     * Adds a OPTIONS route.
+     *
+     * @param string $path
+     * @param string|\Closure $action Could by a method name or a function.
+     */
+    public function options($path, $action);
+
+    /**
+     * Adds routes for the method 'GET', 'HEAD', 'POST', 'PUT', 'PATCH' and 'DELETE'.
+     *
+     * @param string[] $methods Array of HTTP methods ('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE' and 'OPTIONS')
+     * @param string $path
+     * @param string|\Closure $action Could by a method name or a function.
+     */
+    public function multi($methods, $path, $action = null);
+
+    /**
+     * Adds routes for the method 'GET', 'HEAD', 'POST', 'PUT', 'PATCH' and 'DELETE'.
      *
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
@@ -69,19 +86,19 @@ interface Route
     public function any($path, $action = null);
 
     /**
-     * Route a resource to a controller.
+     * Route a resource to a CRUD controller.
      *
      * Example : $route->resource('articles', 'ArticleController');
      *
-     * Method     | Path                        | Name             | Action                    | Used for
-     * ---------------------------------------------------------------------------------------------------------------------------
-     * GET|HEAD  | articles                 | articles.index   | ArticleController@index   | Display a list of all articles.
-     * GET|HEAD  | articles/create          | articles.create  | ArticleController@create  | Show the form to create a new article.
-     * POST      | articles                 | articles.store   | ArticleController@store   | Store a new article to the database.
-     * DELETE    | articles/{article}       | articles.destroy | ArticleController@destroy | Delete an article from the database.
-     * GET|HEAD  | articles/{article}/edit  | articles.edit    | ArticleController@edit    | Show the form to edit an article.
-     * PUT|PATCH | articles/{article}       | articles.update  | ArticleController@update  | Update an article to the database.
-     * GET|HEAD  | articles/{article}       | articles.show    | ArticleController@show    | Show a single article (readonly).
+     * Method	 | Path	               | Name             | Action                    | Used for
+     * -----------------------------------------------------------------------------------------------------------------------
+     * GET|HEAD  | articles            | articles.index   | ArticleController@index   | Display a list of all articles.
+     * GET|HEAD  | articles/create     | articles.create  | ArticleController@create  | Show the form to create a new article.
+     * POST      | articles            | articles.store   | ArticleController@store   | Store a new article to the database.
+     * DELETE    | articles/{id}       | articles.destroy | ArticleController@destroy | Delete an article from the database.
+     * GET|HEAD  | articles/{id}/edit  | articles.edit    | ArticleController@edit    | Show the form to edit an article.
+     * PUT|PATCH | articles/{id}       | articles.update  | ArticleController@update  | Update an article to the database.
+     * GET|HEAD  | articles/{id}       | articles.show    | ArticleController@show    | Show a single article (readonly).
      *
      * @param string $path
      * @param string $controller

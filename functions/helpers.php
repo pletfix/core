@@ -1,5 +1,7 @@
 <?php
 
+use Core\Services\Contracts\DI;
+
 if (!function_exists('abort')) {
     /**
      * Throw an HttpException with the given data.
@@ -91,9 +93,23 @@ if (! function_exists('command')) {
     function command($name, array $argv = []) // todo command() testen
     {
         /** @var \Core\Services\Contracts\Command|false $command */
-        $command = \Core\Services\DI::getInstance()->get('command-factory')->command(array_unshift($argv, [$name]));
+        $command = DI::getInstance()->get('command-factory')->command(array_unshift($argv, [$name]));
 
         return $command !== false ? $command->run() : 0;
+    }
+}
+
+if (!function_exists('config')) {
+    /**
+     * Get the Configuration
+     *
+     * @param string|null $key Key using "dot" notation.
+     * @param mixed $default
+     * @return mixed
+     */
+    function config($key = null, $default = null)
+    {
+        return DI::getInstance()->get('config')->get($key, $default);
     }
 }
 

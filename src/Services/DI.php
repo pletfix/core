@@ -130,6 +130,6 @@ class DI implements DIContract
             }
         }
 
-        throw new \RuntimeException('Malformed service definition!');
+        throw new \RuntimeException('Invalid service definition!');
     }
 }

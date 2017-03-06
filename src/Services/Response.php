@@ -348,6 +348,22 @@ class Response implements ResponseContract
 
         return response()->file($pathToFile, $headers);
 
+
+    # todo back()
+
+    The `back()` function generates a redirect response to the user's previous location:
+
+        return back();
+
+
+    # todo redirect()
+
+    The `redirect` function returns a redirect HTTP response, or returns the redirector instance if called with no arguments:
+
+        return redirect('/home');
+
+        return redirect()->route('route.name');
+
     */
 
 }

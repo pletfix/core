@@ -36,7 +36,7 @@ class AssetCommand extends AbstractCommand
      */
     protected $options = [
         'no-minify' => ['type' => 'bool',   'short' => 'n', 'description' => 'Do not minimize the file.'],
-        'plugin=?'  => ['type' => 'string', 'short' => 'p', 'default' => null, 'description' => 'Name of the plugin (without vendor). If not set, "resources/assets/build.php" will be compiled.'],
+        'plugin=?'  => ['type' => 'string', 'short' => 'p', 'default' => null, 'description' => 'Name of the plugin (without vendor) which the the assets are from.'],
         'remove'    => ['type' => 'bool',   'short' => 'r', 'description' => 'Remove the assets'],
     ];
 
