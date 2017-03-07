@@ -1,6 +1,6 @@
 <?php
 
-use Core\Services\Contracts\DI;
+use Core\Services\DI;
 
 if (!function_exists('abort')) {
     /**
