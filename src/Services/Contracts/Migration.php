@@ -2,21 +2,19 @@
 
 namespace Core\Services\Contracts;
 
-use Core\Services\PDOs\Schemas\Contracts\Schema;
-
 interface Migration
 {
     /**
      * Migrate Up
      *
-     * @param Schema $schema
+     * @param Database $db
      */
-    public function up(Schema $schema);
+    public function up(Database $db);
 
     /**
      * Migrate Down
      *
-     * @param Schema $schema
+     * @param Database $db
      */
-    public function down(Schema $schema);
+    public function down(Database $db);
 }
