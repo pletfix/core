@@ -55,7 +55,7 @@ class Migrator implements MigratorContract
 
         foreach ($migrations as $migration) {
             $this->db->transaction(function (Database $db) use ($migration, $batch) {
-                $this->makeMigrationClass($migration)->up($db->schema());
+                $this->makeMigrationClass($migration)->up($db);
                 $db->insert('_migrations', [
                     'name'  => $migration,
                     'batch' => $batch,
@@ -75,7 +75,7 @@ class Migrator implements MigratorContract
 
         foreach ($migrations as $migration) {
             $this->db->transaction(function (Database $db) use ($migration, $batch) {
-                $this->makeMigrationClass($migration)->down($db->schema());
+                $this->makeMigrationClass($migration)->down($db);
                 $db->delete('_migrations', 'name=?', [$migration]);
 //                $db->delete('_migrations', [
 //                    'name' => $migration
