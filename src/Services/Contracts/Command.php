@@ -2,12 +2,12 @@
 
 namespace Core\Services\Contracts;
 
+use Core\Exceptions\StopException;
+
 interface Command
 {
-    /*
+    /**
      * Exit Codes
-     *
-     * @see http://www.unix.com/man-page/freebsd/3/sysexits/
      */
     const EXIT_SUCCESS = 0;
     const EXIT_FAILURE = 1;
@@ -27,10 +27,25 @@ interface Command
      */
     public function run();
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Generate Help
+
     /**
      * Print the Help
      */
     public function printHelp();
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Error Handling
+
+    /**
+     * Throw an StopException with the given message.
+     *
+     * @param string $message
+     * @param int $exitCode
+     * @throws StopException
+     */
+    public function abort($message, $exitCode = self::EXIT_FAILURE);
 
     ///////////////////////////////////////////////////////////////////////////
     // Terminal functions
@@ -127,7 +142,7 @@ interface Command
      * Format text.
      *
      * @param string $text The message
-     * @param array $styles Possible styles: Command::STYLE_...
+     * @param array $styles Combination of Stdio::STYLE constants
      * @return string
      */
     public function format($text, array $styles = []);
@@ -137,7 +152,7 @@ interface Command
      *
      * @param string $text The message
      * @param bool $newline Whether to add a newline
-     * @param array $styles Possible styles: Command::STYLE_...
+     * @param array $styles Combination of Stdio::STYLE constants
      * @param int $verbosity Determine if the output should be only at the verbose level
      */
     public function write($text, $newline = false, array $styles = [], $verbosity = Stdio::VERBOSITY_NORMAL);
@@ -188,7 +203,7 @@ interface Command
      * Output at the quiet level.
      *
      * @param string $text
-     * @param array $styles Possible styles: Command::STYLE_...
+     * @param array $styles Combination of Stdio::STYLE constants
      */
     public function quiet($text, array $styles = []);
 
@@ -196,7 +211,7 @@ interface Command
      * Output at the verbose level.
      *
      * @param string $text
-     * @param array $styles Possible styles: Command::STYLE_...
+     * @param array $styles Combination of Stdio::STYLE constants
      */
     public function verbose($text, array $styles = []);
 
@@ -204,7 +219,7 @@ interface Command
      * Output at the debug level.
      *
      * @param string $text
-     * @param array $styles Possible styles: Command::STYLE_...
+     * @param array $styles Combination of Stdio::STYLE constants
      */
     public function debug($text, array $styles = []);
 

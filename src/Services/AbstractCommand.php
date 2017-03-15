@@ -38,13 +38,13 @@ abstract class AbstractCommand implements CommandContract
      * This is an associative array where the key is the argument name and the value is the argument attributes.
      * Each attribute is a array with following values:
      * - type:        (string) The data type (bool, float, int or string).
-     * - default:     (mixed)  The default value for the argument. If not set, the argument is required.
+     * - default:     (mixed)  The default value for the argument. If not exist, the argument is required.
      * - description: (string) The description of the argument. Default: null
      *
      * @var array
      */
     protected $arguments = [
-        // 'foo' => ['type' => 'string',  'default' => 'bar', 'description' => 'example'],
+        // 'foo' => ['type' => 'string', 'default' => 'bar', 'description' => 'example'],
     ];
 
     /**
@@ -54,7 +54,7 @@ abstract class AbstractCommand implements CommandContract
      * Each attribute is a array with following values:
      * - type:        (string) The data type (bool, float, int or string).
      * - short:       (string) Alternative option name.
-     * - default:     (mixed)  The default value for the option. If the default value is not set and the type is not bool, the option is required.
+     * - default:     (mixed)  The default value for the option. Will be ignored for bool type.
      * - description: (string) The description of the option. Default: null
      *
      * @var array
@@ -157,8 +157,6 @@ abstract class AbstractCommand implements CommandContract
     /**
      * Gets the global command line options.
      *
-     * @see https://github.com/symfony/console/blob/3.2/Output/StreamOutput.php
-     *
      * @return array
      */
     private function globalOptions()
@@ -181,7 +179,10 @@ abstract class AbstractCommand implements CommandContract
             return;
         }
 
-        if (($match = $this->findOption('verbosity', 'v', $argv)) !== false) {
+        if (($match = $this->findOption('verbose', 'v', $argv)) !== false) {
+            if (empty($match[1])) {
+                throw new InvalidArgumentException('Value for option "verbose" expected.');
+            }
             $this->stdio->setVerbosity($match[1]);
             unset($argv[$match[0]]);
         }
@@ -194,7 +195,7 @@ abstract class AbstractCommand implements CommandContract
             }
             else {
                 if (!array_key_exists('default', $def)) {
-                    throw new InvalidArgumentException('Argument ' . $key . ' is required.');
+                    throw new InvalidArgumentException('Argument "' . $key . '"" is required.');
                 }
                 $this->input[$key] = $def['default'];
             }
@@ -206,9 +207,8 @@ abstract class AbstractCommand implements CommandContract
                 list($i, $value) = $match;
                 if ($value !== null) {
                     // option with value
-                    $key = substr($key, 0, -2); // strip "=?"
                     if ($def['type'] == 'bool') {
-                        throw new InvalidArgumentException('Value for option ' . $key . ' does not expected.');
+                        throw new InvalidArgumentException('Value for option "' . $key . '"" does not expected.');
                     }
                     if ($value !== '') {
                         $this->input[$key] = $this->cast($value, $def['type']);
@@ -220,7 +220,7 @@ abstract class AbstractCommand implements CommandContract
                 else {
                     // option without a value
                     if ($def['type'] != 'bool') {
-                        throw new InvalidArgumentException('Value for option ' . $key . ' expected.');
+                        throw new InvalidArgumentException('Value for option "' . $key . '"" expected.');
                     }
                     $this->input[$key] = true;
                 }
@@ -314,14 +314,14 @@ abstract class AbstractCommand implements CommandContract
         $namelen = 0;
         $options = array_merge($this->options, $this->globalOptions());
         foreach ($options as $name => $def) {
-            $n = strlen($name) + (array_key_exists('default', $def) ? 2 : 0);
+            $n = strlen($name) + ($def['type'] != 'bool' ? 2 : 0);
             if ($namelen < $n) {
                 $namelen = $n;
             }
         }
 
         foreach ($options as $name => $def) {
-            $value = array_key_exists('default', $def) ? '=?' : '';
+            $value = $def['type'] != 'bool' ? '=?' : '';
             $s = '  --' . $name . $value;
             if (isset($def['short'])) {
                 $s .=  ',' . str_repeat(' ', $namelen - strlen($name . $value)) . ' -' . $def['short'] . $value;
@@ -380,11 +380,7 @@ abstract class AbstractCommand implements CommandContract
     // Error Handling
 
     /**
-     * Throw an StopException with the given message.
-     *
-     * @param string $message
-     * @param int $exitCode
-     * @throws StopException
+     * @inheritdoc
      */
     public function abort($message, $exitCode = self::EXIT_FAILURE)
     {
@@ -395,7 +391,7 @@ abstract class AbstractCommand implements CommandContract
     // Terminal functions
     
     /**
-     * Clear the console
+     * @inheritdoc
      */
     public function clear() // toto in eigenständige Terminal Class
     {

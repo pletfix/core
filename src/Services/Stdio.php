@@ -606,6 +606,8 @@ class Stdio implements StdioContract
      */
     public function setVerbosity($level)
     {
+        $level = (int)$level;
+
         if ($level < self::VERBOSITY_QUIET || $level > self::VERBOSITY_DEBUG) {
             throw new InvalidArgumentException('Verbose level ' . $level . ' is not defined.');
         }

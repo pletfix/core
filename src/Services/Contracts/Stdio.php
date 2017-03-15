@@ -13,7 +13,7 @@ interface Stdio
      * Based on the `ANSI/VT100 Terminal Control reference` at <http://www.termsys.demon.co.uk/vtansi.htm>.
      * @see https://github.com/auraphp/Aura.Cli/blob/2.x/src/Stdio/Formatter.php
      * @see https://www.if-not-true-then-false.com/2010/php-class-for-coloring-php-command-line-cli-scripts-output-php-output-colorizing-using-bash-shell-colors/
-     * @see https://github.com/cakephp/cakephp/blob/master/src/Console/ConsoleOutput.php
+     * @see https://github.com/cakephp/cakephp/blob/3.next/src/Console/ConsoleOutput.php
      */
     //const STYLE_RESET    = 0;
     const STYLE_BOLD       = 1;
@@ -127,7 +127,7 @@ interface Stdio
      * Format text.
      *
      * @param string $text The message
-     * @param array $styles Possible styles: Command::STYLE_...
+     * @param array $styles Combination of Stdio::STYLE constants
      * @return string
      */
     public function format($text, array $styles = []);
@@ -137,7 +137,7 @@ interface Stdio
      *
      * @param string $text The message
      * @param bool $newline Whether to add a newline
-     * @param array $styles Possible styles: Command::STYLE_...
+     * @param array $styles Combination of Stdio::STYLE constants
      * @param int $verbosity Determine if the output should be only at the verbose level
      */
     public function write($text, $newline = false, array $styles = [], $verbosity = self::VERBOSITY_NORMAL);
@@ -188,7 +188,7 @@ interface Stdio
      * Output at the quiet level.
      *
      * @param string $text
-     * @param array $styles Possible styles: Command::STYLE_...
+     * @param array $styles Combination of Stdio::STYLE constants
      */
     public function quiet($text, array $styles = []);
 
@@ -196,7 +196,7 @@ interface Stdio
      * Output at the verbose level.
      *
      * @param string $text
-     * @param array $styles Possible styles: Command::STYLE_...
+     * @param array $styles Combination of Stdio::STYLE constants
      */
     public function verbose($text, array $styles = []);
 
@@ -204,7 +204,7 @@ interface Stdio
      * Output at the debug level.
      *
      * @param string $text
-     * @param array $styles Possible styles: Command::STYLE_...
+     * @param array $styles Combination of Stdio::STYLE constants
      */
     public function debug($text, array $styles = []);
 
@@ -233,49 +233,49 @@ interface Stdio
     public function table(array $headers, array $rows);
 
     /**
-     * Prints text to standard error.
+     * Prints text to Standard Error.
      *
      * @param string $text
      */
     public function err($text = null);
 
     /**
-     * Returns the Standard Input Handle.
+     * Returns the Standard Input handle.
      *
      * @return resource
      */
     public function getStdin();
 
     /**
-     * Set a Standard Input Handle
+     * Set a Standard Input Handle.
      *
      * @param resource $stdin
      */
     public function setStdin($stdin);
 
     /**
-     * Returns the Standard Output Handle.
+     * Returns the Standard Output handle.
      *
      * @return resource
      */
     public function getStdout();
 
     /**
-     * Set a Standard Output Handle
+     * Set a Standard Output handle.
      *
      * @param resource $stdout
      */
     public function setStdout($stdout);
 
     /**
-     * Returns the Standard Error Handle.
+     * Returns the Standard Error handle.
      *
      * @return resource
      */
     public function getStderr();
 
     /**
-     * Set a Standard Error Handle
+     * Set a Standard Error handle.
      *
      * @param resource $stderr
      */
@@ -284,14 +284,14 @@ interface Stdio
     /**
      * Sets the verbosity of the output.
      *
-     * @param int $level The level of verbosity (one of the VERBOSITY constants)
+     * @param int $level The level of verbosity (one of the Stdio::VERBOSITY constants)
      */
     public function setVerbosity($level);
 
     /**
      * Gets the current verbosity of the output.
      *
-     * @return int The current level of verbosity (one of the VERBOSITY constants)
+     * @return int The current level of verbosity (one of the Stdio::VERBOSITY constants)
      */
     public function getVerbosity();
 
