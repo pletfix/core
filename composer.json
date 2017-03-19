@@ -1,6 +1,7 @@
 {
     "name": "pletfix/core",
     "description": "The Pletfix Core.",
+    "license": "MIT",
     "authors": [
         {
             "name": "Frank Rohlfing",
@@ -10,7 +11,6 @@
     "minimum-stability": "stable",
     "require": {
         "php": ">=5.6.4",
-        "pletfix/core": "dev-master",
         "aura/sqlquery": "^2.7",
         "doctrine/cache": "^1.6",
         "fightbulc/moment": "^1.25",
@@ -28,12 +28,12 @@
         "behat/mink-goutte-driver": "^1.2",
         "phpunit/phpunit": "^5.7|^6.0"
     },
-    "files": [
-        "functions/helpers.php",
-        "functions/http_status.php",
-        "functions/services.php"
-    ],
     "autoload": {
+        "files": [
+            "functions/helpers.php",
+            "functions/http_status.php",
+            "functions/services.php"
+        ],
         "psr-4": {
             "Core\\": "src/"
         }

@@ -107,11 +107,22 @@ class AssetManager implements AssetManagerContract
             $build = require resource_path('assets/build.php');
         }
 
+        // get only one asset if specified
         if ($dest !== null) {
             if (!isset($build[$dest])) {
                 throw new \InvalidArgumentException('Asset "' . $dest . '" is not defined.');
             }
             $build = [$dest => $build[$dest]];
+        }
+
+        // make relative path to absolute
+        $basePath = base_path();
+        foreach ($build as $asset => $sources) {
+            foreach ($sources as $i => $source) {
+                if ($source[0] != DIRECTORY_SEPARATOR) { // not absolute? todo testen, ob das auch für Windows geht (hängt davon ab wie BASE_PATH aussieht)
+                    $build[$asset][$i] = $basePath . DIRECTORY_SEPARATOR . $source;
+                }
+            }
         }
 
         return $build;

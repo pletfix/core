@@ -20,7 +20,7 @@ class PluginManager implements PluginManagerContract
     protected $vendor;
 
     /**
-     * Name of the plugin
+     * Name of the plugin (without vendor)
      *
      * @var string
      */
@@ -77,8 +77,8 @@ class PluginManager implements PluginManagerContract
 
         // be sure the manifest path is exits
         $dir = dirname($manifest);
-        if (!@file_exists($dir)) {
-            if (@mkdir($dir, 0755, true) === false) {
+        if (!@file_exists($dir . '/lang')) {
+            if (@mkdir($dir . '/lang', 0755, true) === false) {
                 throw new \RuntimeException('Unable to create directory ' . $dir);
             }
         }
@@ -94,7 +94,7 @@ class PluginManager implements PluginManagerContract
     {
         // Determine if a plugin with the same name is already registered.
         foreach ($this->packages as $package => $path) {
-            if (strpos($package, '/' . $this->plugin) !== false) {
+            if (strpos($package, DIRECTORY_SEPARATOR . $this->plugin) !== false) {
                 throw new PluginException('Plugin with the name "' . $this->plugin . '" already registered.');
             }
         }
@@ -107,8 +107,8 @@ class PluginManager implements PluginManagerContract
      */
     public function update()
     {
-        if (!isset($this->packages[$this->vendor . '/' . $this->plugin])) {
-            throw new PluginException('Package "' . $this->vendor . '/' . $this->plugin . '" is not registered.');
+        if (!isset($this->packages[$this->vendor . DIRECTORY_SEPARATOR . $this->plugin])) {
+            throw new PluginException('Package "' . $this->vendor . DIRECTORY_SEPARATOR . $this->plugin . '" is not registered.');
         }
 
         $this->publish(true);
@@ -119,8 +119,8 @@ class PluginManager implements PluginManagerContract
      */
     public function unregister()
     {
-        if (!isset($this->packages[$this->vendor . '/' . $this->plugin])) {
-            throw new PluginException('Package "' . $this->vendor . '/' . $this->plugin . '" is not registered.');
+        if (!isset($this->packages[$this->vendor . DIRECTORY_SEPARATOR . $this->plugin])) {
+            throw new PluginException('Package "' . $this->vendor . DIRECTORY_SEPARATOR . $this->plugin . '" is not registered.');
         }
 
         $this->publish(false);
@@ -173,7 +173,7 @@ class PluginManager implements PluginManagerContract
      */
     private function publishConfig($register)
     {
-        $src = $this->path . '/config.php';
+        $src = $this->path . '/config/config.php';
         if (!@file_exists($src)) {
             return;
         }
@@ -250,10 +250,25 @@ class PluginManager implements PluginManagerContract
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
         if ($register) {
+
+            // make absolute path to relative path
+            $basePath = base_path();
+            $basePathLength = strlen($basePath);
+            $assets = include $build;
+            foreach ($assets as $asset => $sources) {
+                foreach ($sources as $i => $source) {
+                    if (substr($source, 0, $basePathLength) == $basePath) {
+                        $assets[$asset][$i] = substr($source, $basePathLength + 1);
+                    }
+                }
+            }
+
+            // insert asset build information
             /** @noinspection PhpIncludeInspection */
-            $list[$this->plugin] = include $build;
+            $list[$this->plugin] = $assets;
         }
         else {
+            // remove asset build information
             unset($list[$this->plugin]);
         }
         $this->saveArray($manifest, $list);
@@ -306,7 +321,7 @@ class PluginManager implements PluginManagerContract
      */
     private function publishMigrations($register)
     {
-        // read views from folder
+        // read migrations from folder
         $migrationPath = $this->path . '/migrations';
         if (!@file_exists($migrationPath)) {
             return;
@@ -318,7 +333,7 @@ class PluginManager implements PluginManagerContract
         $manifest = manifest_path('plugins/migrations.php');
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
-        $basePathLength  = strlen(base_path()) + 1;
+        $basePathLength = strlen(base_path()) + 1;
         foreach ($files as $file) {
             $name = basename($file, '.php');
             if ($register) {
@@ -349,7 +364,7 @@ class PluginManager implements PluginManagerContract
         foreach ($files as $file) {
             // update manifest
             $lang = basename($file, '.php');
-            $manifest = manifest_path('plugins/lang_' . $lang . '.php');
+            $manifest = manifest_path('plugins/lang/' . $lang . '.php');
             /** @noinspection PhpIncludeInspection */
             $list = @file_exists($manifest) ? include $manifest : [];
             if ($register) {
@@ -405,7 +420,7 @@ class PluginManager implements PluginManagerContract
      */
     private function publishRoutes($register)
     {
-        if (!@file_exists($this->path . '/routes.php')) {
+        if (!@file_exists($this->path . '/config/routes.php')) {
             return;
         }
 
@@ -421,7 +436,7 @@ class PluginManager implements PluginManagerContract
         }
 
         foreach ($packages as $package => $path) {
-            $file = $path . '/routes.php';
+            $file = base_path($path . '/config/routes.php');
             if (!@file_exists($file)) {
                 continue;
             }
@@ -458,7 +473,7 @@ class PluginManager implements PluginManagerContract
      */
     private function publishServices($register)
     {
-        if (!@file_exists($this->path . '/services.php')) {
+        if (!@file_exists($this->path . '/config/services.php')) {
             return;
         }
 
@@ -474,7 +489,7 @@ class PluginManager implements PluginManagerContract
         }
 
         foreach ($packages as $package => $path) {
-            $file = $path . '/services.php';
+            $file = base_path($path . '/config/services.php');
             if (!@file_exists($file)) {
                 continue;
             }
@@ -527,7 +542,8 @@ class PluginManager implements PluginManagerContract
 
         $dest = '<?php' . PHP_EOL;
 
-        foreach ($packages as $package => $path) {
+        foreach ($packages as $package => $relativePath) {
+            $path = base_path($relativePath);
             $classes = [];
             if (@file_exists($path . '/src/Bootstraps')) {
                 $namespace = $this->getNamespace($path . '/composer.json');
@@ -570,11 +586,12 @@ class PluginManager implements PluginManagerContract
     private function listPackages($register)
     {
         if ($register) {
-            $this->packages[$this->vendor . '/' . $this->plugin] = $this->path;
+            $relativePath = substr($this->path, strlen(base_path()) + 1);
+            $this->packages[$this->vendor . DIRECTORY_SEPARATOR . $this->plugin] = $relativePath;
             ksort($this->packages);
         }
         else {
-            unset($this->packages[$this->vendor . '/' . $this->plugin]);
+            unset($this->packages[$this->vendor . DIRECTORY_SEPARATOR . $this->plugin]);
         }
 
         return $this->packages;

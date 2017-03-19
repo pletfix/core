@@ -88,6 +88,7 @@ class View implements ViewContract
      */
     private function templateFile($name)
     {
+        // todo .manifest/plugins/routes.php berücksichtigen
         return view_path(str_replace('.', DIRECTORY_SEPARATOR, $name) . '.blade.php');
     }
 

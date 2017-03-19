@@ -116,6 +116,7 @@ class Migrator implements MigratorContract
     private function loadMigrations()
     {
         // Load the migrations already performed
+
         $migrated = [];
         $rows = $this->db->query('SELECT name FROM _migrations');
         foreach ($rows as $row) {
@@ -123,13 +124,28 @@ class Migrator implements MigratorContract
         }
 
         // Load the outstanding migrations
+
         $migrations = [];
-        foreach (scandir($this->migrationPath) as $file) {
-            if (is_file($this->migrationPath . DIRECTORY_SEPARATOR . $file) && $file[0] != '.' && substr($file, -4) == '.php') {
-                $name = basename($file, '.php');
-                if (!in_array($name, $migrated)) {
-                    $migrations[] = $name;
-                }
+
+        // read migrations from folder
+        $files = [];
+        list_files($files, $this->migrationPath, ['php']);
+
+        // read migrations included by plugins
+        $pluginManifest = manifest_path('plugins/migrations.php');
+        if (file_exists($pluginManifest)) {
+            $basePath = base_path();
+            /** @noinspection PhpIncludeInspection */
+            $pluginMigrations = include $pluginManifest;
+            foreach ($pluginMigrations as $pluginMigration) {
+                $files[] = $basePath . DIRECTORY_SEPARATOR . $pluginMigration;
+            }
+        }
+
+        foreach ($files as $file) {
+            $name = basename($file, '.php');
+            if (!in_array($name, $migrated)) {
+                $migrations[] = $name;
             }
         }
 

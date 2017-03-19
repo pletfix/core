@@ -1,4 +1,4 @@
-<?php
+.<?php
 
 /*
  * Save the start time for benchmark tests.
