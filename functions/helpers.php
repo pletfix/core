@@ -316,7 +316,7 @@ if (!function_exists('list_classes')) {
     }
 }
 
-if (!function_exists('remove_folder')) {
+if (!function_exists('remove_path')) {
     /**
      * Delete a folder (or file).
      *
