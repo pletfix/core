@@ -7,6 +7,11 @@ use Core\Services\Contracts\Request;
 use Core\Services\Contracts\Response;
 use Core\Services\Contracts\Route as RouteContract;
 
+/**
+ * The Route class represents a HTTP Router.
+ *
+ * @package Core\Services
+ */
 class Route implements RouteContract
 {
     /**

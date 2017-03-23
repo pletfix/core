@@ -7,9 +7,9 @@ use Core\Services\Contracts\Response as ResponseContract;
 /**
  * The Response class represents an HTTP response.
  *
- * The class based on Flight: An extensible micro-framework.
- * Copyright (c) 2011, Mike Cao <mike@mikecao.com>, MIT, http://flightphp.com/license
- * https://github.com/mikecao/flight/blob/master/flight/net/Response.php
+ * The class based on Flight, an extensible micro-framework by Mike Cao <mike@mikecao.com> (http://flightphp.com/license MIT License)
+ *
+ * @see https://github.com/mikecao/flight/blob/master/flight/net/Response.php
  */
 class Response implements ResponseContract
 {

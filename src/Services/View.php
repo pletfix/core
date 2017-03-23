@@ -31,6 +31,13 @@ class View implements ViewContract
     private $scope = [];
 
     /**
+     * Plugin's Views
+     *
+     * @var array
+     */
+    private static $manifest;
+
+    /**
      * View constructor.
      *
      * @param object|null &$scope
@@ -88,8 +95,20 @@ class View implements ViewContract
      */
     private function templateFile($name)
     {
-        // todo .manifest/plugins/routes.php berücksichtigen
-        return view_path(str_replace('.', DIRECTORY_SEPARATOR, $name) . '.blade.php');
+        $filename = view_path(str_replace('.', DIRECTORY_SEPARATOR, $name) . '.blade.php');
+        if (file_exists($filename)) {
+            return $filename;
+        }
+
+        if (self::$manifest === null) {
+            $pluginManifest = manifest_path('plugins/views.php');
+            if (file_exists($pluginManifest)) {
+                /** @noinspection PhpIncludeInspection */
+                self::$manifest = include $pluginManifest;
+            }
+        }
+
+        return isset(self::$manifest[$name]) ? base_path(self::$manifest[$name]) : null;
     }
 
     /**

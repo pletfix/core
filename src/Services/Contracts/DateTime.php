@@ -2,12 +2,6 @@
 
 namespace Core\Services\Contracts;
 
-interface DateTime
+interface DateTime extends \DateTimeInterface, \JsonSerializable
 {
-    /**
-     * Create a new DateTime instance.
-     *
-     * @param string $dateTime
-     */
-    public function __construct($dateTime = 'now');
 }
