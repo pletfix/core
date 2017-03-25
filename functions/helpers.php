@@ -109,7 +109,15 @@ if (!function_exists('config')) {
      */
     function config($key = null, $default = null)
     {
-        return DI::getInstance()->get('config')->get($key, $default);
+//        return DI::getInstance()->get('config')->get($key, $default);
+
+        /** @var \Core\Services\Contracts\Config $service */
+        static $service;
+        if ($service === null) { // promote fast access...
+            $service = DI::getInstance()->get('config');
+        }
+
+        return $service->get($key, $default);
     }
 }
 
@@ -206,6 +214,45 @@ if (!function_exists('env')) {
         return $value;
     }
 }
+
+//if (!function_exists('format_datetime')) {
+//    /**
+//     * Returns the given datetime formatted by the apps settings.
+//     *
+//     * @param string $value DateTime
+//     * @return string
+//     */
+//    function format_datetime($value)
+//    {
+//        return date_create($value)->format(config('app.date_formats.' . config('app.locale') . '.datetime'));
+//    }
+//}
+//
+//if (!function_exists('format_date')) {
+//    /**
+//     * Returns the given date formatted by the apps settings.
+//     *
+//     * @param string $value Date
+//     * @return string
+//     */
+//    function format_date($value)
+//    {
+//        return date_create($value)->format(config('app.date_formats.' . config('app.locale') . '.date'));
+//    }
+//}
+//
+//if (!function_exists('format_time')) {
+//    /**
+//     * Returns the given time formatted by the apps settings.
+//     *
+//     * @param string $value Time
+//     * @return string
+//     */
+//    function format_time($value)
+//    {
+//        return date_create($value)->format(config('app.date_formats.' . config('app.locale') . '.time'));
+//    }
+//}
 
 if (!function_exists('is_console')) {
     /**

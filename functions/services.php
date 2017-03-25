@@ -57,12 +57,46 @@ if (!function_exists('datetime')) {
     /**
      * Returns a new DateTime object.
      *
-     * @param string $dateTime
+     * @param DateTimeInterface|array|int|string|null $dateTime
+     * @param DateTimeZone|string|null $timezone
+     * @param string|null $format
      * @return \Core\Services\Contracts\DateTime
      */
-    function datetime($dateTime = 'now')
+    function datetime($dateTime = null, $timezone = null, $format = null)
     {
-        return DI::getInstance()->get('date-time', [$dateTime]);
+        /** @var \Core\Services\Contracts\DateTime $service */
+        static $service;
+        if ($service === null) { // promote fast access...
+            $service = DI::getInstance()->get('date-time');
+        }
+
+        if ($dateTime instanceof DateTimeInterface) {
+            return $service::instance($dateTime);
+        }
+
+        if (is_array($dateTime)) {
+            return $service::createFromParts($dateTime, $timezone);
+        }
+
+        if (is_int($dateTime)) {
+            return $service::createFromTimestamp($dateTime, $timezone);
+        }
+
+        if ($format !== null) {
+            if ($format == 'locale') {
+                $format = config('app.date_formats.' . config('app.locale') . '.datetime'); // todo - t('datetime.time_format');
+            }
+            else if ($format == 'locale.date') {
+                $format = config('app.date_formats.' . config('app.locale') . '.date');
+            }
+            else if ($format == 'locale.time') {
+                $format = config('app.date_formats.' . config('app.locale') . '.time');
+            }
+            // todo klasse bietet auch createFromLocalFormat()! Nutzen oder reuawerfen!
+            return $service::createFromFormat($format, $dateTime, $timezone);
+        }
+
+        return new $service($dateTime, $timezone);
     }
 }
 
@@ -203,25 +237,5 @@ if (!function_exists('view')) {
         }
 
         return $view->render($name, $variables);
-    }
-}
-
-
-//////////////////////////////////////////////////////
-// Baustelle
-
-if (!function_exists('moment')) {
-    /**
-     * Get a moment.
-     *
-     * todo Ich hab mich noch nicht entschieden, diese Lib einzusetzen. Wenn ja, muss ein Adapter darauf gesetzt werden.
-     * todo Eignes Interface verwenden!
-     *
-     * @param string $dateTime
-     * @return \Moment\Moment
-     */
-    function moment($dateTime = 'now')
-    {
-        return new \Moment\Moment($dateTime);
     }
 }

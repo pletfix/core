@@ -11,8 +11,8 @@ use InvalidArgumentException;
 /**
  * A simple PHP API extension for DateTime
  *
- * Function createTimeZone() und create() based on Carbon (https://github.com/briannesbitt/Carbon/blob/1.22.1/LICENSE MIT license).
- * Function createFromFormat(), createFromDateTime(), and functions for addition/subtraction based on Chronos
+ * Function createTimeZone() based on Carbon (https://github.com/briannesbitt/Carbon/blob/1.22.1/LICENSE MIT license).
+ * Function createFromFormat(), instance(), and functions for addition/subtraction based on Chronos
  *
  * @see https://github.com/briannesbitt/Carbon/blob/1.22.1/src/Carbon/Carbon.php
  * @see https://github.com/cakephp/chronos/blob/1.1.0/src/Traits/FactoryTrait.php
@@ -21,99 +21,52 @@ use InvalidArgumentException;
 class DateTime extends BaseDateTime implements DateTimeContract
 {
     /**
-     * The day constants
-     */
-    const SUNDAY    = 0;
-    const MONDAY    = 1;
-    const TUESDAY   = 2;
-    const WEDNESDAY = 3;
-    const THURSDAY  = 4;
-    const FRIDAY    = 5;
-    const SATURDAY  = 6;
-
-    /**
-     * First day of week
-     *
-     * @var int
-     */
-    protected static $weekStartsAt = self::MONDAY;
-
-    /**
-     * Format to use for __toString.
-     *
-     * @var string
-     */
-    protected static $toStringFormat = 'Y-m-d H:i:s';
-
-    /**
-     * The default timezone
+     * The default timezone (will be loaded from the config files).
      *
      * @var DateTimeZone
      */
     private static $timezone;
 
     /**
-     * The default locale
+     * First day of week (will be loaded from the config files).
      *
-     * @var string
+     * @var int
      */
-    private static $locale; // todo locale richtig aus config lesen, testen
-
+    private static $firstDayOfWeek;
+    
     /**
-     * The actual locale
+     * The locale (will be loaded from the config files).
      *
      * @var string
      */
-    private $actualLocale; // todo entfernen
+    private static $locale;
+    
+    /**
+     * The local date time format (will be loaded from the language files).
+     *
+     * @var array
+     */
+    private static $localeFormat;
 
     /**
      * Create a new DateTime instance.
      *
-     * @param int|DateTimeInterface|array|string|null $dateTime
+     * @param int|DateTimeInterface|array|string|null $dateTimeString
      * @param DateTimeZone|string|null $timezone
-     * @param string|null $format
      */
-    public function __construct($dateTime = null, $timezone = null, $format = null)
+    public function __construct($dateTimeString = null, $timezone = null)
     {
-        if (is_int($dateTime)) {
-            parent::__construct(null, static::createTimeZone($timezone))->setTimestamp($dateTime);
-        }
-        else {
-            if ($dateTime instanceof DateTimeInterface) {
-                if ($timezone === null) {
-                    $timezone = $dateTime->getTimezone();
-                }
-                $dateTime = $dateTime->format('Y-m-d H:i:s.u');
-            }
-            else if (is_array($dateTime)) {
-                $year   = isset($dateTime[0]) ? $dateTime[0] : date('Y');
-                $month  = isset($dateTime[1]) ? $dateTime[1] : date('n');
-                $day    = isset($dateTime[2]) ? $dateTime[2] : date('j');
-                $hour   = isset($dateTime[3]) ? $dateTime[3] : 0; //date('G');
-                $minute = isset($dateTime[4]) ? $dateTime[4] : 0; //date('i');
-                $second = isset($dateTime[5]) ? $dateTime[5] : 0; //date('s');
-                $micro  = isset($dateTime[6]) ? $dateTime[6] : 0; //date('u');
-                $dateTime = sprintf('%04s-%02s-%02s %02s:%02s:%02s.%06s', $year, $month, $day, $hour, $minute, $second, $micro);
-            }
-            else if ($format !== null) {
-                if ($format == 'locale') {
-                    $format = self::localeFormat();
-                }
-                else if ($format == 'locale.date') {
-                    $format = self::localeFormat('date');
-                }
-                else if ($format == 'locale.time') {
-                    $format = self::localeFormat('time');
-                }
-                if (($dt = parent::createFromFormat($format, $dateTime)) === false) {
-                    $errors = parent::getLastErrors();
-                    throw new InvalidArgumentException(implode(PHP_EOL, $errors['errors']));
-                }
-                $dateTime = $dt->format('Y-m-d H:i:s.u');
-            }
+        parent::__construct($dateTimeString, static::createTimeZone($timezone));
+    }
 
-            parent::__construct($dateTime, static::createTimeZone($timezone));
-        }
+    /**
+     * Get a copy of the instance
+     *
+     * @return static
+     */
+    public function copy()
+    {
+        return clone $this;
     }
 
     /**
@@ -123,7 +76,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
      */
     public function __toString()
     {
-        return $this->format(static::$toStringFormat);
+        return $this->format('Y-m-d H:i:s');
     }
 
     /**
@@ -136,16 +89,126 @@ class DateTime extends BaseDateTime implements DateTimeContract
         return (string)$this->toIso8601String();
     }
 
+    ///////////////////////////////////////////////////////////////////
+    // Create a DateTime Instance
+
     /**
-     * Get a copy of the instance
+     * Create a DateTime instance from a DateTime one
      *
-     * Todo oder cloning()
-     *
+     * @param DateTimeInterface $dateTime
      * @return static
      */
-    public function copy()
+    public static function instance(DateTimeInterface $dateTime)
     {
-        return clone $this;
+        if ($dateTime instanceof static) {
+            return clone $dateTime;
+        }
+
+        return new static($dateTime->format('Y-m-d H:i:s.u'), $dateTime->getTimezone());
+    }
+
+    /**
+     * Create a new DateTime instance from a specific parts of date and time.
+     *
+     * The default of any part of date (year, month or day) is today.
+     * The default of any part of time (hour, minute, second or microsecond) is 0.
+     *
+     * @param array $parts [$year, $month, $day, $hour, $minute, $second, $micro] All parts are optional.
+     * @param DateTimeZone|string|null $timezone
+     * @return static
+     */
+    public static function createFromParts($parts, $timezone = null)
+    {
+        $year   = isset($parts[0]) ? $parts[0] : date('Y');
+        $month  = isset($parts[1]) ? $parts[1] : date('m');
+        $day    = isset($parts[2]) ? $parts[2] : date('d');
+        $hour   = isset($parts[3]) ? $parts[3] : 0; //date('H');
+        $minute = isset($parts[4]) ? $parts[4] : 0; //date('i');
+        $second = isset($parts[5]) ? $parts[5] : 0; //date('s');
+        $micro  = isset($parts[6]) ? $parts[6] : 0; //date('u');
+        $dateTimeString = sprintf('%04s-%02s-%02s %02s:%02s:%02s.%06s', $year, $month, $day, $hour, $minute, $second, $micro);
+
+        return new static($dateTimeString, $timezone);
+    }
+
+    /**
+     * Create a DateTime instance from a specific format
+     *
+     * @param string $format
+     * @param string $dateTimeString
+     * @param DateTimeZone|string|null $timezone
+     * @throws InvalidArgumentException
+     * @return static
+     */
+    public static function createFromFormat($format, $dateTimeString, $timezone = null)
+    {
+        $dateTime = parent::createFromFormat($format, $dateTimeString);
+
+        if ($dateTime === false) {
+            $errors = parent::getLastErrors();
+            throw new InvalidArgumentException(implode(PHP_EOL, $errors['errors']));
+        }
+
+        return new static($dateTime->format('Y-m-d H:i:s.u'), $timezone);
+    }
+
+    /**
+     * Create a DateTime instance from a locale format
+     *
+     * @param string $dateTimeString
+     * @param DateTimeZone|string|null $timezone
+     * @return static
+     */
+    public static function createFromLocaleFormat($dateTimeString, $timezone = null)
+    {
+        return static::createFromFormat(self::localeFormat(), $dateTimeString, $timezone);
+    }
+
+    /**
+     * Create a DateTime instance from a locale date format
+     *
+     * @param string $dateString
+     * @param DateTimeZone|string|null $timezone
+     * @return static
+     */
+    public static function createFromLocaleDateFormat($dateString, $timezone = null)
+    {
+        return static::createFromFormat(self::localeFormat('date'), $dateString, $timezone);
+    }
+
+    /**
+     * Create a DateTime instance from a locale time format
+     *
+     * @param string $timeString
+     * @param DateTimeZone|string|null $timezone
+     * @return static
+     */
+    public static function createFromLocaleTimeFormat($timeString, $timezone = null)
+    {
+        return static::createFromFormat(self::localeFormat('time'), $timeString, $timezone);
+    }
+
+    /**
+     * Create a DateTime instance from a timestamp.
+     *
+     * @param int $timestamp
+     * @param DateTimeZone|string|null $timezone
+     * @return static
+     */
+    public static function createFromTimestamp($timestamp, $timezone = null)
+    {
+        return (new static(null, $timezone))->setTimestamp($timestamp);
+    }
+
+    /**
+     * Create a DateTime instance from an UTC timestamp.
+     *
+     * @param int $timestamp
+     * @return static
+     */
+    public static function createFromTimestampUTC($timestamp)
+    {
+        return new static('@'.$timestamp);
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -986,9 +1049,6 @@ class DateTime extends BaseDateTime implements DateTimeContract
         return $abs ? abs($value) : $value;
     }
 
-
-
-
     ///////////////////////////////////////////////////////////////////
     // Start Of and End Of
 
@@ -1057,14 +1117,15 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the date to the first day of week (defined in $weekStartsAt) and the time to 00:00:00
+     * Resets the date to the first day of week (defined in $firstDayOfWeek) and the time to 00:00:00
      *
      * @return static
      */
     public function startOfWeek()
     {
-        if ($this->dayOfWeek() !== static::$weekStartsAt) {
-            $this->previous(static::$weekStartsAt);
+        $dow = self::getFirstDayOfWeek();
+        if ($this->dayOfWeek() !== $dow) {
+            $this->previous($dow);
         }
 
         return $this->startOfDay();
@@ -1077,7 +1138,8 @@ class DateTime extends BaseDateTime implements DateTimeContract
      */
     public function endOfWeek()
     {
-        $weekEndsAt = static::$weekStartsAt > 0 ? static::$weekStartsAt - 1 : 6;
+        $dow = self::getFirstDayOfWeek();
+        $weekEndsAt = $dow > 0 ? $dow - 1 : 6;
         if ($this->dayOfWeek() !== $weekEndsAt) {
             $this->next($weekEndsAt);
         }
@@ -1164,18 +1226,18 @@ class DateTime extends BaseDateTime implements DateTimeContract
         }
 
         $days = [
-            self::SUNDAY => 'Sunday',
-            self::MONDAY => 'Monday',
-            self::TUESDAY => 'Tuesday',
+            self::SUNDAY    => 'Sunday',
+            self::MONDAY    => 'Monday',
+            self::TUESDAY   => 'Tuesday',
             self::WEDNESDAY => 'Wednesday',
-            self::THURSDAY => 'Thursday',
-            self::FRIDAY => 'Friday',
-            self::SATURDAY => 'Saturday',
+            self::THURSDAY  => 'Thursday',
+            self::FRIDAY    => 'Friday',
+            self::SATURDAY  => 'Saturday',
         ];
 
         $dow = $days[$dayOfWeek];
 
-        return $this->startOfDay()->modify("next $dow"); // todo geht nicht auch assDays(7) ?
+        return $this->startOfDay()->modify("next $dow"); // todo geht nicht auch addDays(7) ?
     }
 
     /**
@@ -1197,13 +1259,13 @@ class DateTime extends BaseDateTime implements DateTimeContract
         }
 
         $days = [
-            self::SUNDAY => 'Sunday',
-            self::MONDAY => 'Monday',
-            self::TUESDAY => 'Tuesday',
+            self::SUNDAY    => 'Sunday',
+            self::MONDAY    => 'Monday',
+            self::TUESDAY   => 'Tuesday',
             self::WEDNESDAY => 'Wednesday',
-            self::THURSDAY => 'Thursday',
-            self::FRIDAY => 'Friday',
-            self::SATURDAY => 'Saturday',
+            self::THURSDAY  => 'Thursday',
+            self::FRIDAY    => 'Friday',
+            self::SATURDAY  => 'Saturday',
         ];
 
         $dow = $days[$dayOfWeek];
@@ -1212,17 +1274,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     ///////////////////////////////////////////////////////////////////
-    // Timezone
-
-    /**
-     * Set the default timezone.
-     *
-     * @param DateTimeZone|string $timezone
-     */
-    public static function setDefaultTimezone($timezone)
-    {
-        self::$timezone = $timezone;
-    }
+    // Settings
 
     /**
      * Get the default timezone.
@@ -1231,11 +1283,31 @@ class DateTime extends BaseDateTime implements DateTimeContract
      */
     public static function getDefaultTimezone()
     {
+        if (self::$timezone === null) {
+            self::$timezone = new DateTimeZone(config('app.timezone', date_default_timezone_get()));
+        }
+
         return self::$timezone;
     }
 
     /**
+     * Set the default timezone.
+     *
+     * If null is passed, the default will be reset.
+     *
+     * @param DateTimeZone|string|null $timezone
+     */
+    public static function setDefaultTimezone($timezone)
+    {
+        if (self::$timezone !== $timezone) {
+            self::$timezone = null && self::$timezone = self::createTimeZone($timezone);
+        }
+    }
+
+    /**
      * Set the actual timezone.
+     *
+     * If null is passed, the default will be used.
      *
      * @param DateTimeZone|string|null $timezone
      * @return $this
@@ -1248,7 +1320,9 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Creates a DateTimeZone from a string or a DateTimeZone
+     * Creates a DateTimeZone from a string or a DateTimeZone.
+     *
+     * If null is passed, the default will be used.
      *
      * @param DateTimeZone|string|null $timezone
      * @throws InvalidArgumentException
@@ -1257,67 +1331,67 @@ class DateTime extends BaseDateTime implements DateTimeContract
     private static function createTimeZone($timezone)
     {
         if ($timezone === null) {
-            $def = config('app.timezone', date_default_timezone_get());
-            return new DateTimeZone($def);
+            return self::getDefaultTimezone();
         }
 
         if ($timezone instanceof DateTimeZone) {
             return $timezone;
         }
 
-        if (($tz = @timezone_open((string)$timezone)) === false) {
+        if (($timezone = @timezone_open((string)$timezone)) === false) {
             throw new InvalidArgumentException('Unknown or bad timezone (' . $timezone . ')');
         }
 
-        return $tz;
-    }
-
-    ///////////////////////////////////////////////////////////////////
-    // Locale
-
-    /**
-     * Set the default locale.
-     *
-     * @param string $locale
-     */
-    public static function setDefaultLocale($locale)
-    {
-        self::$locale = $locale;
+        return $timezone;
     }
 
     /**
-     * Get the default locale.
+     * Get the first day of week
      *
-     * @return string
+     * @return int
      */
-    public static function getDefaultLocale()
+    public static function getFirstDayOfWeek()
     {
+        if (self::$firstDayOfWeek === null) {
+            self::$firstDayOfWeek = config('app.first_dow');
+        }
+
+        return static::$firstDayOfWeek;
+    }
+
+    /**
+     * Set the first day of week
+     *
+     * @param int
+     */
+    public static function setFirstDayOfWeek($dow)
+    {
+        static::$firstDayOfWeek = $dow;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function getLocale()
+    {
+        if (self::$locale === null) {
+            self::$locale = config('app.locale');
+        }
+
         return self::$locale;
     }
 
     /**
-     * Set locale.
-     *
-     * @param string $locale
-     * @return $this
+     * @inheritdoc
      */
-    public function setLocale($locale)
+    public static function setLocale($locale)
     {
-        $this->actualLocale = $locale;
-
-        return $this;
+        if (self::$locale !== $locale) {
+            self::$localeFormat = null;
+            self::$locale = $locale;    
+        }
     }
-
-    /**
-     * Get the actual locale.
-     *
-     * @return string
-     */
-    public function getLocale()
-    {
-        return $this->actualLocale;
-    }
-
+    
     /**
      * Returns the locale date time format.
      *
@@ -1326,30 +1400,20 @@ class DateTime extends BaseDateTime implements DateTimeContract
      */
     private static function localeFormat($part = 'datetime')
     {
-        $locale = config('app.locale');
+        if (self::$localeFormat === null) {
+            $locale = self::getLocale();
+            $file = resource_path('lang/' . $locale . '/datetime.php');
+            if (@file_exists($file)) {
+                /** @noinspection PhpIncludeInspection */
+                self::$localeFormat = include $file; // todo translator nutzen
+            }
+            else {
+                $file = resource_path('lang/' . config('app.fallback_locale') . '/datetime.php');
+                /** @noinspection PhpIncludeInspection */
+                self::$localeFormat = @file_exists($file) ? include $file : ['datetime' => 'Y-m-d H:i', 'date' => 'Y-m-d', 'time' => 'H:i'];
+            }
+        }
 
-        // todo
-
-        return config('app.date_formats.' . $locale . '.' . $part); //t('datetime.time_fromat');
-    }
-
-    /**
-     * Get the first day of week
-     *
-     * @return int
-     */
-    public static function getWeekStartsAt()
-    {
-        return static::$weekStartsAt;
-    }
-
-    /**
-     * Set the first day of week
-     *
-     * @param int
-     */
-    public static function setWeekStartsAt($dow)
-    {
-        static::$weekStartsAt = $dow;
+        return self::$localeFormat[$part];
     }
 }
