@@ -77,8 +77,8 @@ class PluginManager implements PluginManagerContract
 
         // be sure the manifest path is exits
         $dir = dirname($manifest);
-        if (!@file_exists($dir . '/lang')) {
-            if (@mkdir($dir . '/lang', 0755, true) === false) {
+        if (!@file_exists($dir)) {
+            if (@mkdir($dir, 0755, true) === false) {
                 throw new \RuntimeException('Unable to create directory ' . $dir);
             }
         }
@@ -361,21 +361,29 @@ class PluginManager implements PluginManagerContract
         $files = [];
         list_files($files, $langPath, ['php'], false);
 
+        // update manifest
+        $manifest = manifest_path('plugins/languages.php');
+        /** @noinspection PhpIncludeInspection */
+        $list = @file_exists($manifest) ? include $manifest : [];
+        $basePathLength = strlen(base_path()) + 1;
         foreach ($files as $file) {
-            // update manifest
-            $lang = basename($file, '.php');
-            $manifest = manifest_path('plugins/lang/' . $lang . '.php');
-            /** @noinspection PhpIncludeInspection */
-            $list = @file_exists($manifest) ? include $manifest : [];
+            $locale = basename($file, '.php');
             if ($register) {
-                /** @noinspection PhpIncludeInspection */
-                $list[$this->plugin] = include $file;
+                if (!isset($list[$locale])) {
+                    $list[$locale] = [];
+                }
+                $list[$locale][$this->plugin] = substr($file, $basePathLength);
             }
             else {
-                unset($list[$this->plugin]);
+                if (isset($list[$locale])) {
+                    unset($list[$locale][$this->plugin]);
+                    if (empty($list[$locale])) {
+                        unset($list[$locale]);
+                    }
+                }
             }
-            $this->saveArray($manifest, $list);
         }
+        $this->saveArray($manifest, $list);
     }
 
     /**

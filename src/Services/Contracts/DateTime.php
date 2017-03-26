@@ -823,10 +823,9 @@ interface DateTime extends DateTimeInterface, JsonSerializable
     public static function getLocale();
 
     /**
-     * Overwrite the locale.
+     * Set the locale.
      *
      * @param string $locale
-     * @return \Core\Services\DateTime
      */
     public static function setLocale($locale);
 }

@@ -290,21 +290,6 @@ if (!function_exists('is_win')) {
     }
 }
 
-if (!function_exists('lang')) {
-    /**
-     * Get the translation for the given key.
-     *
-     * @param string $key
-     * @param array $replace
-     * @param string|null $locale
-     * @return string|array|null
-     */
-    function lang(/** @noinspection PhpUnusedParameterInspection */ $key, $replace = array(), $locale = null)
-    {
-        return 'Tach auch!';
-    }
-}
-
 if (!function_exists('list_files')) {
     /**
      * Read files recursive.
@@ -363,7 +348,27 @@ if (!function_exists('list_classes')) {
     }
 }
 
-if (!function_exists('remove_path')) {
+if (!function_exists('locale')) {
+    /**
+     * Get and set the current locale.
+     *
+     * @param string $lang
+     * @return string
+     */
+    function locale($lang = null)
+    {
+        if ($lang === null) {
+            DI::getInstance()->get('config')->set('app.locale', $lang);
+            DI::getInstance()->get('translator')->setLocale($lang);
+            \Core\Services\DateTime::setLocale($lang); // todo andere Lösung suchen. Hier wurde eine Abhängigkeit geschaffen, da es nicht über DI geht!
+            return $lang;
+        }
+
+        return config('app.locale');
+    }
+}
+
+if (!function_exists('remove_dir')) {
     /**
      * Delete a folder (or file).
      *
@@ -371,7 +376,7 @@ if (!function_exists('remove_path')) {
      * @return bool
      */
     //
-    function remove_path($path)
+    function remove_dir($path)
     {
         if (is_file($path) || is_link($path)) {
             return unlink($path);
@@ -382,7 +387,7 @@ if (!function_exists('remove_path')) {
                 continue;
             }
             if (@is_dir($file)) {
-                remove_path($path . DIRECTORY_SEPARATOR . $file);
+                remove_dir($path . DIRECTORY_SEPARATOR . $file);
             }
             else {
                 unlink($path);
@@ -390,6 +395,22 @@ if (!function_exists('remove_path')) {
         }
 
         return rmdir($path);
+    }
+}
+
+if (!function_exists('t')) {
+    /**
+     * Get the translation for the given key.
+     *
+     * If the key does not exist, the key is returned.
+     *
+     * @param string $key Key using "dot" notation.
+     * @param array $replace Values replacing the placeholders.
+     * @return string|array
+     */
+    function t($key, $replace = [])
+    {
+        return DI::getInstance()->get('translator')->translate($key, $replace);
     }
 }
 

@@ -11,25 +11,14 @@ class Config implements ConfigContract
      *
      * @var array
      */
-    protected $items = [];
-
-//    /**
-//     * Create a new configuration repository.
-//     */
-//    public function __construct()
-//    {
-//    }
+    private $items = []; // todo oder statisch? bringt das was?
 
     /**
-     * Get the specified configuration value.
-     *
-     * @param string|null $key Key using "dot" notation.
-     * @param mixed $default
-     * @return mixed
+     * @inheritdoc
      */
     public function get($key = null, $default = null)
     {
-        if (is_null($key)) {
+        if ($key === null) {
             return $this->items;
         }
 
@@ -45,14 +34,11 @@ class Config implements ConfigContract
     }
 
     /**
-     * Set a given configuration value.
-     *
-     * @param string|null $key Key using "dot" notation.
-     * @param mixed $value
+     * @inheritdoc
      */
     public function set($key, $value)
     {
-        if (is_null($key)) {
+        if ($key === null) {
             $this->items = $value;
             return;
         }
@@ -75,10 +61,7 @@ class Config implements ConfigContract
     }
 
     /**
-     * Determine if the given configuration value exists.
-     *
-     * @param string $key Key using "dot" notation.
-     * @return bool
+     * @inheritdoc
      */
     public function has($key)
     {
@@ -92,16 +75,4 @@ class Config implements ConfigContract
 
         return true;
     }
-
-//    /**
-//     * Merge the given array to the current configuration.
-//     *
-//     * @param array $array
-//     */
-//    public function merge($array)
-//    {
-//        foreach ($array as $key => $value) {
-//            $this->items[$key] = $value;
-//        }
-//    }
 }

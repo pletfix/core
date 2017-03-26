@@ -262,7 +262,7 @@ class AssetManager implements AssetManagerContract
     {
         if (@is_dir($dest)) {
             foreach ($sources as $source) {
-                remove_path($dest . DIRECTORY_SEPARATOR . basename($source));
+                remove_dir($dest . DIRECTORY_SEPARATOR . basename($source));
             }
         }
         else {

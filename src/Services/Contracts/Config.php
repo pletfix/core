@@ -28,11 +28,4 @@ interface Config
      * @return bool
      */
     public function has($key);
-
-//    /**
-//     * Merge the given array to the current configuration.
-//     *
-//     * @param array $array
-//     */
-//    public function merge($array);
 }

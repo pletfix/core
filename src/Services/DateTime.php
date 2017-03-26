@@ -21,7 +21,7 @@ use InvalidArgumentException;
 class DateTime extends BaseDateTime implements DateTimeContract
 {
     /**
-     * The default timezone (will be loaded from the config files).
+     * The default timezone.
      *
      * @var DateTimeZone
      */
@@ -56,7 +56,26 @@ class DateTime extends BaseDateTime implements DateTimeContract
      */
     public function __construct($dateTimeString = null, $timezone = null)
     {
-        parent::__construct($dateTimeString, static::createTimeZone($timezone));
+        if (is_string($timezone)) {
+            $timezone = self::createTimezone($timezone);
+        }
+
+        parent::__construct($dateTimeString, $timezone);
+    }
+
+    /**
+     * Returns new DateTimeZone object.
+     *
+     * @param string $name
+     * @return DateTimeZone
+     */
+    private static function createTimezone($name)
+    {
+        if (($timezone = @timezone_open($name)) === false) {
+            throw new InvalidArgumentException('Unknown or bad timezone: ' . $name . '!');
+        }
+
+        return $timezone;
     }
 
     /**
@@ -1284,7 +1303,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     public static function getDefaultTimezone()
     {
         if (self::$timezone === null) {
-            self::$timezone = new DateTimeZone(config('app.timezone', date_default_timezone_get()));
+            self::$timezone = new DateTimeZone(date_default_timezone_get() ?: 'UTC');
         }
 
         return self::$timezone;
@@ -1299,8 +1318,16 @@ class DateTime extends BaseDateTime implements DateTimeContract
      */
     public static function setDefaultTimezone($timezone)
     {
-        if (self::$timezone !== $timezone) {
-            self::$timezone = null && self::$timezone = self::createTimeZone($timezone);
+        if ($timezone instanceof DateTimeZone) {
+            self::$timezone = $timezone;
+            date_default_timezone_set($timezone->getName());
+        }
+        else {
+            if ($timezone === null) {
+                $timezone = config('app.timezone', 'UTC');
+            }
+            self::$timezone = self::createTimezone($timezone);
+            date_default_timezone_set($timezone);
         }
     }
 
@@ -1314,35 +1341,16 @@ class DateTime extends BaseDateTime implements DateTimeContract
      */
     public function setTimezone($timezone)
     {
-        parent::setTimezone(static::createTimeZone($timezone));
+        if ($timezone === null) {
+            $timezone = self::getDefaultTimezone();
+        }
+        else if (is_string($timezone)) {
+            $timezone = self::createTimezone($timezone);
+        }
+
+        parent::setTimezone($timezone);
 
         return $this;
-    }
-
-    /**
-     * Creates a DateTimeZone from a string or a DateTimeZone.
-     *
-     * If null is passed, the default will be used.
-     *
-     * @param DateTimeZone|string|null $timezone
-     * @throws InvalidArgumentException
-     * @return DateTimeZone
-     */
-    private static function createTimeZone($timezone)
-    {
-        if ($timezone === null) {
-            return self::getDefaultTimezone();
-        }
-
-        if ($timezone instanceof DateTimeZone) {
-            return $timezone;
-        }
-
-        if (($timezone = @timezone_open((string)$timezone)) === false) {
-            throw new InvalidArgumentException('Unknown or bad timezone (' . $timezone . ')');
-        }
-
-        return $timezone;
     }
 
     /**
