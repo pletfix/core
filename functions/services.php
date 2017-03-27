@@ -84,15 +84,14 @@ if (!function_exists('datetime')) {
 
         if ($format !== null) {
             if ($format == 'locale') {
-                $format = config('app.date_formats.' . config('app.locale') . '.datetime'); // todo - t('datetime.time_format');
+                return $service::createFromLocaleFormat($dateTime, $timezone);
             }
             else if ($format == 'locale.date') {
-                $format = config('app.date_formats.' . config('app.locale') . '.date');
+                return $service::createFromLocaleDateFormat($dateTime, $timezone);
             }
             else if ($format == 'locale.time') {
-                $format = config('app.date_formats.' . config('app.locale') . '.time');
+                return $service::createFromLocaleTimeFormat($dateTime, $timezone);
             }
-            // todo klasse bietet auch createFromLocalFormat()! Nutzen oder reuawerfen!
             return $service::createFromFormat($format, $dateTime, $timezone);
         }
 

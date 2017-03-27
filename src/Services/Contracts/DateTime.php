@@ -55,7 +55,7 @@ interface DateTime extends DateTimeInterface, JsonSerializable
      * @param DateTimeZone|string|null $timezone
      * @return static
      */
-    public static function createFromParts($parts, $timezone = null);
+    public static function createFromParts(array $parts, $timezone = null);
 
     /**
      * Create a DateTime instance from a specific format

@@ -357,10 +357,11 @@ if (!function_exists('locale')) {
      */
     function locale($lang = null)
     {
-        if ($lang === null) {
+        if ($lang !== null) {
             DI::getInstance()->get('config')->set('app.locale', $lang);
             DI::getInstance()->get('translator')->setLocale($lang);
-            \Core\Services\DateTime::setLocale($lang); // todo andere Lösung suchen. Hier wurde eine Abhängigkeit geschaffen, da es nicht über DI geht!
+            $dt = DI::getInstance()->get('date-time');
+            $dt::setLocale($lang);
             return $lang;
         }
 

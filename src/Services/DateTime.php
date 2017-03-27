@@ -79,9 +79,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get a copy of the instance
-     *
-     * @return static
+     * @inheritdoc
      */
     public function copy()
     {
@@ -99,9 +97,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Returns a ISO8601 representation of the instance.
-     *
-     * @return string
+     * @inheritdoc
      */
     public function jsonSerialize()
     {
@@ -112,10 +108,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     // Create a DateTime Instance
 
     /**
-     * Create a DateTime instance from a DateTime one
-     *
-     * @param DateTimeInterface $dateTime
-     * @return static
+     * @inheritdoc
      */
     public static function instance(DateTimeInterface $dateTime)
     {
@@ -136,7 +129,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
      * @param DateTimeZone|string|null $timezone
      * @return static
      */
-    public static function createFromParts($parts, $timezone = null)
+    public static function createFromParts(array $parts, $timezone = null)
     {
         $year   = isset($parts[0]) ? $parts[0] : date('Y');
         $month  = isset($parts[1]) ? $parts[1] : date('m');
@@ -151,13 +144,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Create a DateTime instance from a specific format
-     *
-     * @param string $format
-     * @param string $dateTimeString
-     * @param DateTimeZone|string|null $timezone
-     * @throws InvalidArgumentException
-     * @return static
+     * @inheritdoc
      */
     public static function createFromFormat($format, $dateTimeString, $timezone = null)
     {
@@ -172,11 +159,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Create a DateTime instance from a locale format
-     *
-     * @param string $dateTimeString
-     * @param DateTimeZone|string|null $timezone
-     * @return static
+     * @inheritdoc
      */
     public static function createFromLocaleFormat($dateTimeString, $timezone = null)
     {
@@ -184,11 +167,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Create a DateTime instance from a locale date format
-     *
-     * @param string $dateString
-     * @param DateTimeZone|string|null $timezone
-     * @return static
+     * @inheritdoc
      */
     public static function createFromLocaleDateFormat($dateString, $timezone = null)
     {
@@ -196,11 +175,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Create a DateTime instance from a locale time format
-     *
-     * @param string $timeString
-     * @param DateTimeZone|string|null $timezone
-     * @return static
+     * @inheritdoc
      */
     public static function createFromLocaleTimeFormat($timeString, $timezone = null)
     {
@@ -208,11 +183,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Create a DateTime instance from a timestamp.
-     *
-     * @param int $timestamp
-     * @param DateTimeZone|string|null $timezone
-     * @return static
+     * @inheritdoc
      */
     public static function createFromTimestamp($timestamp, $timezone = null)
     {
@@ -220,10 +191,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Create a DateTime instance from an UTC timestamp.
-     *
-     * @param int $timestamp
-     * @return static
+     * @inheritdoc
      */
     public static function createFromTimestampUTC($timestamp)
     {
@@ -234,9 +202,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     // String Formatting
 
     /**
-     * Format the instance as date and time.
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toDateTimeString()
     {
@@ -244,9 +210,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as date
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toDateString()
     {
@@ -254,9 +218,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as time
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toTimeString()
     {
@@ -264,9 +226,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as date and time.
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toLocaleDateTimeString()
     {
@@ -274,9 +234,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as date
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toLocaleDateString()
     {
@@ -284,9 +242,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as time
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toLocaleTimeString()
     {
@@ -294,9 +250,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as ATOM
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toAtomString()
     {
@@ -304,9 +258,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as COOKIE
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toCookieString()
     {
@@ -314,9 +266,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as ISO8601
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toIso8601String()
     {
@@ -328,9 +278,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as RFC822
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toRfc822String()
     {
@@ -338,9 +286,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as RFC850
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toRfc850String()
     {
@@ -348,9 +294,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as RFC1036
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toRfc1036String()
     {
@@ -358,9 +302,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as RFC1123
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toRfc1123String()
     {
@@ -368,9 +310,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as RFC2822
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toRfc2822String()
     {
@@ -378,9 +318,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as RFC3339
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toRfc3339String()
     {
@@ -388,9 +326,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as RSS
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toRssString()
     {
@@ -398,9 +334,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as W3C
-     *
-     * @return string
+     * @inheritdoc
      */
     public function toW3cString()
     {
@@ -411,9 +345,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     // Parts of Date Time
 
     /**
-     * Get the year.
-     *
-     * @return int
+     * @inheritdoc
      */
     public function getYear()
     {
@@ -421,10 +353,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Set the year.
-     *
-     * @param $year
-     * @return $this
+     * @inheritdoc
      */
     public function setYear($year)
     {
@@ -434,9 +363,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get the month.
-     *
-     * @return int
+     * @inheritdoc
      */
     public function getMonth()
     {
@@ -444,10 +371,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Set the month.
-     *
-     * @param $month
-     * @return $this
+     * @inheritdoc
      */
     public function setMonth($month)
     {
@@ -457,9 +381,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get the day of month.
-     *
-     * @return int
+     * @inheritdoc
      */
     public function getDay()
     {
@@ -467,10 +389,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Set the day of month.
-     *
-     * @param $day
-     * @return $this
+     * @inheritdoc
      */
     public function setDay($day)
     {
@@ -480,9 +399,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get the hour.
-     *
-     * @return int
+     * @inheritdoc
      */
     public function getHour()
     {
@@ -490,10 +407,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Set the hour.
-     *
-     * @param $hour
-     * @return $this
+     * @inheritdoc
      */
     public function setHour($hour)
     {
@@ -503,9 +417,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get the minute.
-     *
-     * @return int
+     * @inheritdoc
      */
     public function getMinute()
     {
@@ -513,10 +425,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Set the minute.
-     *
-     * @param $minute
-     * @return $this
+     * @inheritdoc
      */
     public function setMinute($minute)
     {
@@ -526,9 +435,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get the second.
-     *
-     * @return int
+     * @inheritdoc
      */
     public function getSecond()
     {
@@ -536,10 +443,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Set the second.
-     *
-     * @param $second
-     * @return $this
+     * @inheritdoc
      */
     public function setSecond($second)
     {
@@ -549,16 +453,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Set the date and time all together
-     *
-     * @param int $year
-     * @param int $month
-     * @param int $day
-     * @param int $hour
-     * @param int $minute
-     * @param int $second
-     *
-     * @return static
+     * @inheritdoc
      */
     public function setDateTime($year, $month, $day, $hour, $minute, $second = 0)
     {
@@ -566,9 +461,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Returns the microseconds.
-     *
-     * @return int
+     * @inheritdoc
      */
     public function micro()
     {
@@ -576,9 +469,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Returns the day of the week.
-     *
-     * @return int 0 (for Sunday) through 6 (for Saturday)
+     * @inheritdoc
      */
     public function dayOfWeek()
     {
@@ -586,9 +477,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Returns the day of the year (starting from 0).
-     *
-     * @return int 0 through 365
+     * @inheritdoc
      */
     public function dayOfYear()
     {
@@ -596,11 +485,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Week number of month.
-     *
-     * Weeks starting on Monday.
-     *
-     * @return int
+     * @inheritdoc
      */
     public function weekOfMonth()
     {
@@ -608,11 +493,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * ISO-8601 week number of year.
-     *
-     * Weeks starting on Monday.
-     *
-     * @return int
+     * @inheritdoc
      */
     public function weekOfYear()
     {
@@ -620,9 +501,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Number of days in the month.
-     *
-     * @return int
+     * @inheritdoc
      */
     public function daysInMonth()
     {
@@ -630,9 +509,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Seconds since the Unix Epoch (January 1 1970 00:00:00 GMT).
-     *
-     * @return int
+     * @inheritdoc
      */
     public function timestamp()
     {
@@ -640,9 +517,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Alias for diffInYears().
-     *
-     * @return int
+     * @inheritdoc
      */
     public function age()
     {
@@ -650,9 +525,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Returns the quarter of the year.
-     *
-     * @return int
+     * @inheritdoc
      */
     public function quarter()
     {
@@ -660,9 +533,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Determines if the instance is a leap year
-     *
-     * @return bool
+     * @inheritdoc
      */
     public function isLeapYear()
     {
@@ -670,9 +541,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Checks if this day is a Sunday.
-     *
-     * @return bool
+     * @inheritdoc
      */
     public function isSunday()
     {
@@ -680,9 +549,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Checks if this day is a Monday.
-     *
-     * @return bool
+     * @inheritdoc
      */
     public function isMonday()
     {
@@ -690,9 +557,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Checks if this day is a Tuesday.
-     *
-     * @return bool
+     * @inheritdoc
      */
     public function isTuesday()
     {
@@ -700,9 +565,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Checks if this day is a Wednesday.
-     *
-     * @return bool
+     * @inheritdoc
      */
     public function isWednesday()
     {
@@ -710,9 +573,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Checks if this day is a Thursday.
-     *
-     * @return bool
+     * @inheritdoc
      */
     public function isThursday()
     {
@@ -720,9 +581,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Checks if this day is a Friday.
-     *
-     * @return bool
+     * @inheritdoc
      */
     public function isFriday()
     {
@@ -730,9 +589,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Checks if this day is a Saturday.
-     *
-     * @return bool
+     * @inheritdoc
      */
     public function isSaturday()
     {
@@ -743,10 +600,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     // Addition and Subtraction
 
     /**
-     * Add years to the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function addYears($value)
     {
@@ -756,10 +610,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Subtract years from the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function subYears($value)
     {
@@ -769,10 +620,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Add quarters to the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function addQuarters($value)
     {
@@ -782,10 +630,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Subtract quarters from the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function subQuarters($value)
     {
@@ -795,10 +640,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Add months to the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function addMonths($value)
     {
@@ -808,10 +650,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Subtract months from the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function subMonths($value)
     {
@@ -821,10 +660,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Add weeks to the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function addWeeks($value)
     {
@@ -834,10 +670,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Subtract weeks from the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function subWeeks($value)
     {
@@ -847,10 +680,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Add days to the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function addDays($value)
     {
@@ -860,10 +690,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Subtract days from the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function subDays($value)
     {
@@ -873,10 +700,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Add hours to the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function addHours($value)
     {
@@ -886,11 +710,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Subtract hours from the instance
-     *
-     * @param int $value
-     *
-     * @return static
+     * @inheritdoc
      */
     public function subHours($value)
     {
@@ -900,10 +720,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Add minutes to the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function addMinutes($value)
     {
@@ -913,10 +730,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Subtract minutes from the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function subMinutes($value)
     {
@@ -926,10 +740,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Add seconds to the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function addSeconds($value)
     {
@@ -939,10 +750,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Subtract seconds from the instance.
-     *
-     * @param int $value
-     * @return static
+     * @inheritdoc
      */
     public function subSeconds($value)
     {
@@ -955,11 +763,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     // Differences
 
     /**
-     * Get the difference in years.
-     *
-     * @param DateTimeInterface|null $dt
-     * @param bool $abs Get the absolute of the difference
-     * @return int
+     * @inheritdoc
      */
     public function diffInYears(DateTimeInterface $dt = null, $abs = true)
     {
@@ -971,11 +775,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get the difference in quarters.
-     *
-     * @param DateTimeInterface|null $dt
-     * @param bool $abs Get the absolute of the difference
-     * @return int
+     * @inheritdoc
      */
     public function diffInQuarters(DateTimeInterface $dt = null, $abs = true)
     {
@@ -983,11 +783,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get the difference in months.
-     *
-     * @param DateTimeInterface|null $dt
-     * @param bool $abs Get the absolute of the difference
-     * @return int
+     * @inheritdoc
      */
     public function diffInMonths(DateTimeInterface $dt = null, $abs = true)
     {
@@ -999,11 +795,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get the difference in weeks.
-     *
-     * @param DateTimeInterface|null $dt
-     * @param bool $abs Get the absolute of the difference
-     * @return int
+     * @inheritdoc
      */
     public function diffInWeeks(DateTimeInterface $dt = null, $abs = true)
     {
@@ -1011,11 +803,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get the difference in days.
-     *
-     * @param DateTimeInterface|null $dt
-     * @param bool $abs Get the absolute of the difference
-     * @return int
+     * @inheritdoc
      */
     public function diffInDays(DateTimeInterface $dt = null, $abs = true)
     {
@@ -1027,11 +815,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get the difference in hours.
-     *
-     * @param DateTimeInterface|null $dt
-     * @param bool $abs Get the absolute of the difference
-     * @return int
+     * @inheritdoc
      */
     public function diffInHours(DateTimeInterface $dt = null, $abs = true)
     {
@@ -1039,11 +823,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get the difference in minutes.
-     *
-     * @param DateTimeInterface|null $dt
-     * @param bool $abs Get the absolute of the difference
-     * @return int
+     * @inheritdoc
      */
     public function diffInMinutes(DateTimeInterface $dt = null, $abs = true)
     {
@@ -1051,11 +831,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get the difference in seconds.
-     *
-     * @param DateTimeInterface|null $dt
-     * @param bool $abs Get the absolute of the difference
-     * @return int
+     * @inheritdoc
      */
     public function diffInSeconds(DateTimeInterface $dt = null, $abs = true)
     {
@@ -1072,9 +848,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     // Start Of and End Of
 
     /**
-     * Resets the date to the first day of the year and the time to 00:00:00
-     *
-     * @return static
+     * @inheritdoc
      */
     public function startOfYear()
     {
@@ -1082,9 +856,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the date to end of the year and time to 23:59:59
-     *
-     * @return static
+     * @inheritdoc
      */
     public function endOfYear()
     {
@@ -1092,9 +864,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the date to the beginning of the current quarter, 1st day of months, 00:00
-     *
-     * @return static
+     * @inheritdoc
      */
     public function startOfQuarter()
     {
@@ -1104,9 +874,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the date to end of the year and time to 23:59:59
-     *
-     * @return static
+     * @inheritdoc
      */
     public function endOfQuarter()
     {
@@ -1116,9 +884,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the date to the first day of the month and the time to 00:00:00
-     *
-     * @return static
+     * @inheritdoc
      */
     public function startOfMonth()
     {
@@ -1126,9 +892,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the date to end of the month and time to 23:59:59
-     *
-     * @return static
+     * @inheritdoc
      */
     public function endOfMonth()
     {
@@ -1136,9 +900,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the date to the first day of week (defined in $firstDayOfWeek) and the time to 00:00:00
-     *
-     * @return static
+     * @inheritdoc
      */
     public function startOfWeek()
     {
@@ -1151,9 +913,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the date to end of week (defined in $weekEndsAt) and time to 23:59:59
-     *
-     * @return static
+     * @inheritdoc
      */
     public function endOfWeek()
     {
@@ -1167,9 +927,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the time to 00:00:00
-     *
-     * @return static
+     * @inheritdoc
      */
     public function startOfDay()
     {
@@ -1177,9 +935,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the time to 23:59:59
-     *
-     * @return static
+     * @inheritdoc
      */
     public function endOfDay()
     {
@@ -1187,9 +943,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the time to now, but with 0 minutes, 0 seconds.
-     *
-     * @return static
+     * @inheritdoc
      */
     public function startOfHour()
     {
@@ -1197,9 +951,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the time to now, but with 59 minutes, 59 seconds.
-     *
-     * @return static
+     * @inheritdoc
      */
     public function endOfHour()
     {
@@ -1207,9 +959,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the time to now, but with 0 seconds.
-     *
-     * @return static
+     * @inheritdoc
      */
     public function startOfMinute()
     {
@@ -1217,9 +967,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Resets the time to now, but with 59 seconds.
-     *
-     * @return static
+     * @inheritdoc
      */
     public function endOfMinute()
     {
@@ -1296,9 +1044,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     // Settings
 
     /**
-     * Get the default timezone.
-     *
-     * @return DateTimeZone
+     * @inheritdoc
      */
     public static function getDefaultTimezone()
     {
@@ -1310,11 +1056,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Set the default timezone.
-     *
-     * If null is passed, the default will be reset.
-     *
-     * @param DateTimeZone|string|null $timezone
+     * @inheritdoc
      */
     public static function setDefaultTimezone($timezone)
     {
@@ -1332,12 +1074,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Set the actual timezone.
-     *
-     * If null is passed, the default will be used.
-     *
-     * @param DateTimeZone|string|null $timezone
-     * @return $this
+     * @inheritdoc
      */
     public function setTimezone($timezone)
     {
@@ -1354,9 +1091,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Get the first day of week
-     *
-     * @return int
+     * @inheritdoc
      */
     public static function getFirstDayOfWeek()
     {
@@ -1368,9 +1103,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Set the first day of week
-     *
-     * @param int
+     * @inheritdoc
      */
     public static function setFirstDayOfWeek($dow)
     {
@@ -1413,7 +1146,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
             $file = resource_path('lang/' . $locale . '/datetime.php');
             if (@file_exists($file)) {
                 /** @noinspection PhpIncludeInspection */
-                self::$localeFormat = include $file; // todo translator nutzen
+                self::$localeFormat = include $file;
             }
             else {
                 $file = resource_path('lang/' . config('app.fallback_locale') . '/datetime.php');
