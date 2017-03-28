@@ -369,6 +369,55 @@ if (!function_exists('locale')) {
     }
 }
 
+if (!function_exists('generate_token')) {
+    /**
+     * Generate cryptographically secure pseudo-random alpha-numeric string.
+     *
+     * This function is copied from Laravel's Illuminate\Support\Str::random() function.
+     *
+     * @param int $length
+     * @return string
+     */
+    function generate_token($length = 32)
+    {
+        $string = '';
+        while (($len = strlen($string)) < $length) {
+            $size = $length - $len;
+            $string .= substr(str_replace(['/', '+', '='], '', base64_encode(random_bytes($size))), 0, $size);
+        }
+
+        return $string;
+    }
+}
+
+//if (!function_exists('random_bytes')) { // since PHP 7
+//    /**
+//     * Generates cryptographically secure pseudo-random bytes
+//     *
+//     * @param int $length The length of the random string that should be returned in bytes.
+//     * @return string
+//     * @throws RuntimeException if neither openssl nor mcrypt is available.
+//     */
+//    function random_bytes($length)
+//    {
+//        //if (extension_loaded('mcrypt')) {
+//        if (function_exists('mcrypt_create_iv')) {
+//            return mcrypt_create_iv($length, MCRYPT_DEV_URANDOM);
+//        }
+//
+//        //if (extension_loaded('openssl')) {
+//        if (function_exists('openssl_random_pseudo_bytes')) {
+//            return openssl_random_pseudo_bytes($length);
+//        }
+//
+//        throw new RuntimeException(
+//            "Cannot generate cryptographically secure random values. "
+//            . "Please install extension 'openssl' or 'mcrypt', or use "
+//            . "another cryptographically secure implementation."
+//        );
+//    }
+//}
+
 if (!function_exists('remove_dir')) {
     /**
      * Delete a folder (or file).

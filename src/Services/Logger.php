@@ -43,7 +43,7 @@ class Logger implements LoggerContract
         $this->log = new Monolog('name');
         $this->log->pushProcessor(new PsrLogMessageProcessor);
 
-        $config = config('app.log', [
+        $config = config('logger', [
             'type'       => 'daily',
             'level'      => 'debug',
             'max_files'  => 5,

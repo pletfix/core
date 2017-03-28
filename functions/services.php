@@ -205,6 +205,29 @@ if (!function_exists('response')) {
 //    }
 //}
 
+if (!function_exists('session')) {
+    /**
+     * Get the Session.
+     *
+     * @param string|Closure|null $keyOrCallback Key using "dot" notation or callback function to writing data
+     * @param mixed $default
+     * @return \Core\Services\Contracts\Session|mixed
+     */
+    function session($keyOrCallback = null, $default = null)
+    {
+        $session = DI::getInstance()->get('session');
+        if ($keyOrCallback === null) {
+            return $session;
+        }
+
+        if (is_callable($keyOrCallback)) {
+            return $session->lock($keyOrCallback);
+        }
+
+        return $session->get($keyOrCallback, $default);
+    }
+}
+
 if (!function_exists('stdio')) {
     /**
      * Get the standard input/output streams.

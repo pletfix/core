@@ -2,50 +2,82 @@
 
 namespace Core\Services\Contracts;
 
+use Closure;
+use Core\Exceptions\SessionException;
+
 interface Session
 {
     /**
-     * End the current session and store session data.
+     * Determine if the session is started and therefore writable.
      *
-     * This function calls `session_write_close()`internally.
+     * @return boolean
      */
-    public function save();
+    public function isStarted();
+
+    /**
+     * Start new or resume existing session.
+     *
+     * Simultaneous requests must now wait until the session is committed or aborted.
+     *
+     * @return $this
+     * @throws SessionException
+     */
+    public function start();
+
+    /**
+     * Write session data and end session.
+     *
+     * From here on out, concurrent requests are no longer blocked.
+     *
+     * @return $this
+     */
+    public function commit();
 
     /**
      * Discard the changes made during the current request.
      *
-     * This function calls `session_abort()` internally.
+     * From here on out, concurrent requests are no longer blocked.
      *
-     * @see session_abort()
+     * @return $this
      */
-    public function cancel();
+    public function abort();
+
+    /**
+     * Kill the session completely (both values as well as session cookie).
+     *
+     * @see http://php.net/manual/en/function.session-destroy.php
+     *
+     * @return $this
+     */
+    public function kill();
 
     /**
      * Regenerate the session id.
      *
      * Any time a user has a change in privilege be sure to regenerate the session id!
      * This method also regenerates the CSRF token value.
+     *
+     * @return $this
      */
     public function regenerate();
 
     /**
-     * Set the session lifetime in minutes.
+     * Closure for writing session data.
      *
-     * @param int $minutes
+     * The session is started and committed automatically.
+     *
+     * @param Closure $callback
+     * @return $this
      */
-    public function lifetime($minutes);
+    public function lock(Closure $callback);
 
     /**
-     * Removes all items from the session.
-     */
-    public function clear();
-
-    /**
-     * Get all session items.
+     * Determine if the given value exist in the session.
      *
-     * @return array
+     * @param string $key Key using "dot" notation.
+     * @return bool
      */
-    public function all();
+    public function has($key);
 
     /**
      * Get the specified value from the session
@@ -61,14 +93,31 @@ interface Session
      *
      * @param string|null $key Key using "dot" notation.
      * @param mixed $value
+     * @return $this
      */
     public function set($key, $value);
+
+    /**
+     * Remove a value from the session.
+     *
+     * @param string $key
+     * @return $this
+     */
+    public function delete($key);
+
+    /**
+     * Remove all items from the session.
+     *
+     * @return $this
+     */
+    public function clear();
 
     /**
      * Store a value only be available during the subsequent HTTP request.
      *
      * @param $key
      * @param string $value
+     * @return $this
      */
     public function flash($key, $value);
 
@@ -78,23 +127,9 @@ interface Session
      * Omit the keys to keep all flash data.
      *
      * @param array $keys
+     * @return $this
      */
     public function reflash(array $keys = null);
-
-    /**
-     * Remove a value from the session.
-     *
-     * @param string $key
-     */
-    public function delete($key);
-
-    /**
-     * Determine if the given value exist in the session.
-     *
-     * @param string $key Key using "dot" notation.
-     * @return bool
-     */
-    public function has($key);
 
     /**
      * Get a CSRF token value.
