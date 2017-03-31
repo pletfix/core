@@ -24,6 +24,7 @@ interface Cache
      * @param string $key
      * @param mixed $value
      * @param float|int $minutes The lifetime in number of minutes for this cache entry.
+     * @return $this
      */
     public function set($key, $value, $minutes = 0);
 
@@ -39,11 +40,14 @@ interface Cache
      * Remove an item from the cache.
      *
      * @param string $key
+     * @return $this
      */
     public function delete($key);
 
     /**
      * Remove all items from the cache.
+     *
+     * @return $this
      */
     public function clear();
 }

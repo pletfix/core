@@ -43,14 +43,14 @@ class Logger implements LoggerContract
         $this->log = new Monolog('name');
         $this->log->pushProcessor(new PsrLogMessageProcessor);
 
-        $config = config('logger', [
+        $config = array_merge([
             'type'       => 'daily',
             'level'      => 'debug',
             'max_files'  => 5,
             'app_file'   => 'app.log',
             'cli_file'   => 'cli.log',
             'permission' => 0664,
-        ]);
+        ], config('logger'));
 
         $file   = storage_path('logs/' . $config[is_console() ? 'cli_file' : 'app_file']);
         $levels = $this->log->getLevels();

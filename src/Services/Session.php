@@ -8,10 +8,6 @@ use Core\Services\Contracts\Session as SessionContract;
 
 /**
  * The Session Object is an adapter of the [PHP Session](http://php.net/manual/en/session.examples.basic.php).
- *
- * This class based on Aura.Session (https://github.com/auraphp/Aura.Session/blob/3.x/LICENSE BSD 2-clause License)
- *
- * @see https://github.com/auraphp/Aura.Session/tree/3.x
  */
 class Session implements SessionContract
 {
@@ -30,20 +26,31 @@ class Session implements SessionContract
     private $readable = false;
 
     /**
+     * Lifetime of the session cookie, defined in seconds.
+     *
+     * The value 0 means "until the browser is closed."
+     *
+     * @var int
+     */
+    private $lifetime;
+
+    /**
      * Create a new instance.
      */
     public function __construct()
     {
-        $config = config('session', [
-            'lifetime'  => 120,
+        $config = array_merge([
+            'lifetime'  => 0,
             'path'      => '/',
             'domain'    => null,
             'secure'    => false,
             'http_only' => true,
-        ]);
+        ], config('session'));
+
+        $this->lifetime = $config['lifetime'] * 60;
 
         session_set_cookie_params(
-            $config['lifetime'] * 60,
+            $this->lifetime,
             $config['path'],
             $config['domain'],
             $config['secure'],
@@ -51,15 +58,6 @@ class Session implements SessionContract
         );
 
         session_name($config['name']);
-
-        // todo Testen!
-        // If the cookie has a specific lifetime (not unlimited) then ensure it is extended on each use of the session.
-        if ((int)$config['lifetime'] > 0) {
-            ini_set('session.gc_maxlifetime', $config['lifetime'] * 60);
-
-            // PHP doesn't automatically update the cookie on session_start()!
-            setcookie($config['name'], session_id(), time() + $config['lifetime'] * 60);
-        }
     }
 
     /**
@@ -79,6 +77,16 @@ class Session implements SessionContract
             if (!session_start()) {
                 throw new SessionException('Start of session failed!');
             }
+
+            // Reset the cookie with a new expiration date, every time the user interacts with the backend.
+            // (PHP doesn't automatically update the cookie on session_start().)
+            if ($this->lifetime > 0 && ini_get('session.use_cookies')) {
+                $params = session_get_cookie_params();
+                if (!setcookie(session_name(), session_id(), time() + $this->lifetime, $params['path'], $params['domain'], $params['secure'], $params['httponly'])) {
+                    throw new SessionException('Refresh session cookies failed!');
+                }
+            }
+
             $this->readable = true;
             $this->writable = true;
         }

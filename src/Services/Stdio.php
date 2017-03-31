@@ -9,8 +9,8 @@ use RuntimeException;
 /**
  * Provides a wrapper for standard input/output streams.
  *
- * This class based on Aura.Cli's Stdio and Handle implementation (http://opensource.org/licenses/bsd-license.php BSD License)
- * Function read() based on CakePHP's ConsoleInput. (http://www.opensource.org/licenses/mit-license.php MIT License)
+ * This class based on Aura.Cli's Stdio and Handle implementation (http://opensource.org/licenses/bsd-license.php BSD License).
+ * Function read() based on CakePHP's ConsoleInput (http://www.opensource.org/licenses/mit-license.php MIT License).
  * VERBOSITY constants and the functions ask(), choice(), getInput() and hr() are from CakePHP's ConsoleIo.
  * The clear function is copied from CakePHP's Shell
  * The verbosity functions are from Symfony's Console Output Interface.

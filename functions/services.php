@@ -40,6 +40,25 @@ if (! function_exists('collect')) {
     }
 }
 
+if (!function_exists('cookie')) {
+    /**
+     * Return a cookie
+     *
+     * @param string|Closure|null $name The name of the cookie.
+     * @param mixed $default
+     * @return \Core\Services\Contracts\Cookie|string
+     */
+    function cookie($name = null, $default = null)
+    {
+        $cookie = DI::getInstance()->get('cookie');
+        if ($name === null) {
+            return $cookie;
+        }
+
+        return $cookie->get($name, $default);
+    }
+}
+
 if (!function_exists('database')) {
     /**
      * Get the database by given connection name.

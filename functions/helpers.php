@@ -369,55 +369,6 @@ if (!function_exists('locale')) {
     }
 }
 
-if (!function_exists('generate_token')) {
-    /**
-     * Generate cryptographically secure pseudo-random alpha-numeric string.
-     *
-     * This function is copied from Laravel's Illuminate\Support\Str::random() function.
-     *
-     * @param int $length
-     * @return string
-     */
-    function generate_token($length = 32)
-    {
-        $string = '';
-        while (($len = strlen($string)) < $length) {
-            $size = $length - $len;
-            $string .= substr(str_replace(['/', '+', '='], '', base64_encode(random_bytes($size))), 0, $size);
-        }
-
-        return $string;
-    }
-}
-
-//if (!function_exists('random_bytes')) { // since PHP 7
-//    /**
-//     * Generates cryptographically secure pseudo-random bytes
-//     *
-//     * @param int $length The length of the random string that should be returned in bytes.
-//     * @return string
-//     * @throws RuntimeException if neither openssl nor mcrypt is available.
-//     */
-//    function random_bytes($length)
-//    {
-//        //if (extension_loaded('mcrypt')) {
-//        if (function_exists('mcrypt_create_iv')) {
-//            return mcrypt_create_iv($length, MCRYPT_DEV_URANDOM);
-//        }
-//
-//        //if (extension_loaded('openssl')) {
-//        if (function_exists('openssl_random_pseudo_bytes')) {
-//            return openssl_random_pseudo_bytes($length);
-//        }
-//
-//        throw new RuntimeException(
-//            "Cannot generate cryptographically secure random values. "
-//            . "Please install extension 'openssl' or 'mcrypt', or use "
-//            . "another cryptographically secure implementation."
-//        );
-//    }
-//}
-
 if (!function_exists('remove_dir')) {
     /**
      * Delete a folder (or file).
@@ -478,11 +429,9 @@ if (!function_exists('url')) {
     }
 }
 
-/*
- * --------------------------------------------------------------------------------------------------------------
- * Path Helper
- * --------------------------------------------------------------------------------------------------------------
- */
+// --------------------------------------------------------------------
+// Path Helper
+// --------------------------------------------------------------------
 
 if (!function_exists('app_path')) {
     /**
@@ -650,7 +599,409 @@ if (!function_exists('workbench_path')) {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////
+// --------------------------------------------------------------------
+// String Manipulation
+// --------------------------------------------------------------------
+
+if (!function_exists('plural')) {
+    /**
+     * Get the plural form of an english word.
+     *
+     * @param string $word
+     * @return string
+     */
+    function plural($word)
+    {
+        static $uncountable;
+        if (!isset($uncountable)) {
+            $uncountable = [
+                'audio',
+                'bison',
+                'chassis',
+                'compensation',
+                'coreopsis',
+                'data',
+                'deer',
+                'education',
+                'emoji',
+                'equipment',
+                'fish',
+                'furniture',
+                'gold',
+                'information',
+                'knowledge',
+                'love',
+                'rain',
+                'money',
+                'moose',
+                'nutrition',
+                'offspring',
+                'plankton',
+                'pokemon',
+                'police',
+                'rice',
+                'series',
+                'sheep',
+                'species',
+                'swine',
+                'traffic',
+                'wheat',
+            ];
+        }
+
+        if (in_array(strtolower($word), $uncountable)) {
+            return $word;
+        }
+
+        $plural = Doctrine\Common\Inflector\Inflector::pluralize($word);
+
+        if (mb_strtolower($word) === $word) {
+            return mb_strtolower($plural);
+        }
+
+        if (mb_strtoupper($word) === $word) {
+            return mb_strtoupper($plural);
+        }
+
+        if (ucfirst($word) === $word) {
+            return ucfirst($plural);
+        }
+
+        if (ucwords($word) === $word) {
+            return ucwords($plural);
+        }
+
+        return $plural;
+    }
+}
+
+if (!function_exists('singular')) {
+
+    /**
+     * Get the singular form of an english word.
+     *
+     * @param string $word
+     * @return string
+     */
+    function singular($word)
+    {
+        $singular = Doctrine\Common\Inflector\Inflector::singularize($word);
+
+        if (mb_strtolower($word) === $word) {
+            return mb_strtolower($singular);
+        }
+
+        if (mb_strtoupper($word) === $word) {
+            return mb_strtoupper($singular);
+        }
+
+        if (ucfirst($word) === $word) {
+            return ucfirst($singular);
+        }
+
+        if (ucwords($word) === $word) {
+            return ucwords($singular);
+        }
+
+        return $singular;
+    }
+}
+
+if (!function_exists('camel_case')) {
+    /**
+     * Converts a word to camel case (camelCase).
+     *
+     * This is useful to convert a word into the format for a variable or method name.
+     *
+     * @param string $word
+     * @return string
+     */
+    function camel_case($word)
+    {
+        return lcfirst(pascal_case($word));
+    }
+}
+
+if (!function_exists('lower_case')) {
+    /**
+     * Convert the given word to lower case.
+     *
+     * @param string $word
+     * @return string
+     */
+    function lower_case($word)
+    {
+        return mb_strtolower($word, 'UTF-8');
+    }
+}
+
+if (!function_exists('pascal_case')) {
+    /**
+     * Converts the given word to pascal case, also known as studly caps case (PascalCase).
+     *
+     * This is useful to convert a word into the format for a class name.
+     *
+     * @param string $word
+     * @return string
+     */
+    function pascal_case($word)
+    {
+        return str_replace(' ', '', ucwords(strtr($word, '_-', '  ')));
+    }
+}
+
+if (!function_exists('random_string')) {
+    /**
+     * Generate cryptographically secure pseudo-random alpha-numeric string.
+     *
+     * This function is copied from Laravel's Illuminate\Support\Str::random() function.
+     *
+     * @param int $length
+     * @return string
+     */
+    function random_string($length = 32)
+    {
+        $string = '';
+        while (($len = strlen($string)) < $length) {
+            $size = $length - $len;
+            $string .= substr(str_replace(['/', '+', '='], '', base64_encode(random_bytes($size))), 0, $size);
+        }
+
+        return $string;
+    }
+}
+
+if (!function_exists('snake_case')) {
+    /**
+     * Convert the given word to snake case (snake_case).
+     *
+     * This is useful to converts a word into the format for a table or a global function name.
+     *
+     * @param string $word
+     * @return string
+     */
+    function snake_case($word)
+    {
+        return mb_strtolower(preg_replace('~(?<=\\w)([A-Z])~', '_$1', $word), 'UTF-8');
+
+        // Laravels version:
+        //if (!ctype_lower($word)) {
+        //    return mb_strtolower(preg_replace('/(.)(?=[A-Z])/u', '$1_', preg_replace('/\s+/u', '', $word)), 'UTF-8');
+        //}
+        //return $word;
+    }
+}
+
+if (!function_exists('title_case')) {
+    /**
+     * Convert the given word to title case (Title Case).
+     *
+     * @param string $word
+     * @return string
+     */
+    function title_case($word)
+    {
+        return mb_convert_case($word, MB_CASE_TITLE, 'UTF-8');
+    }
+}
+
+if (!function_exists('upper_case')) {
+    /**
+     * Convert the given word to upper case.
+     *
+     * @param string $word
+     * @return string
+     */
+    function upper_case($word)
+    {
+        return mb_strtoupper($word, 'UTF-8');
+    }
+}
+
+if (!function_exists('limit_string')) {
+    /**
+     * Limit the number of characters in a string.
+     *
+     * @param string $value
+     * @param int $limit
+     * @param string $end
+     * @return string
+     */
+    function limit_string($value, $limit = 100, $end = '...')
+    {
+        if (mb_strwidth($value, 'UTF-8') <= $limit) {
+            return $value;
+        }
+
+        return rtrim(mb_strimwidth($value, 0, $limit, '', 'UTF-8')).$end;
+    }
+}
+
+if (!function_exists('slug')) {
+    /**
+     * Generate a URL friendly "slug" from a given string.
+     *
+     * @param string $title
+     * @param string $separator
+     * @return string
+     */
+    function slug($title, $separator = '-')
+    {
+        $title = utf8_to_ascii($title);
+
+        // Convert all dashes/underscores into separator.
+        $flip = $separator == '-' ? '_' : '-';
+
+        $title = preg_replace('!['.preg_quote($flip).']+!u', $separator, $title);
+
+        // Remove all characters that are not the separator, letters, numbers, or whitespace.
+        $title = preg_replace('![^'.preg_quote($separator).'\pL\pN\s]+!u', '', mb_strtolower($title));
+
+        // Replace all separator characters and whitespace by a single separator.
+        $title = preg_replace('!['.preg_quote($separator).'\s]+!u', $separator, $title);
+
+        return trim($title, $separator);
+    }
+}
+
+if (!function_exists('utf8_to_ascii')) {
+    /**
+     * Transliterate a UTF-8 value to ASCII.
+     *
+     * @param string $value UTF-8 string
+     * @return string ASCII string
+     */
+    function utf8_to_ascii($value)
+    {
+        static $charsArray;
+        if (!isset($charsArray)) {
+            $charsArray = [
+                // ASCII => UTF-8
+                '0'    => ['°', '₀', '۰'],
+                '1'    => ['¹', '₁', '۱'],
+                '2'    => ['²', '₂', '۲'],
+                '3'    => ['³', '₃', '۳'],
+                '4'    => ['⁴', '₄', '۴', '٤'],
+                '5'    => ['⁵', '₅', '۵', '٥'],
+                '6'    => ['⁶', '₆', '۶', '٦'],
+                '7'    => ['⁷', '₇', '۷'],
+                '8'    => ['⁸', '₈', '۸'],
+                '9'    => ['⁹', '₉', '۹'],
+                'a'    => ['à', 'á', 'ả', 'ã', 'ạ', 'ă', 'ắ', 'ằ', 'ẳ', 'ẵ', 'ặ', 'â', 'ấ', 'ầ', 'ẩ', 'ẫ', 'ậ', 'ā', 'ą', 'å', 'α', 'ά', 'ἀ', 'ἁ', 'ἂ', 'ἃ', 'ἄ', 'ἅ', 'ἆ', 'ἇ', 'ᾀ', 'ᾁ', 'ᾂ', 'ᾃ', 'ᾄ', 'ᾅ', 'ᾆ', 'ᾇ', 'ὰ', 'ά', 'ᾰ', 'ᾱ', 'ᾲ', 'ᾳ', 'ᾴ', 'ᾶ', 'ᾷ', 'а', 'أ', 'အ', 'ာ', 'ါ', 'ǻ', 'ǎ', 'ª', 'ა', 'अ', 'ا'],
+                'b'    => ['б', 'β', 'Ъ', 'Ь', 'ب', 'ဗ', 'ბ'],
+                'c'    => ['ç', 'ć', 'č', 'ĉ', 'ċ'],
+                'd'    => ['ď', 'ð', 'đ', 'ƌ', 'ȡ', 'ɖ', 'ɗ', 'ᵭ', 'ᶁ', 'ᶑ', 'д', 'δ', 'د', 'ض', 'ဍ', 'ဒ', 'დ'],
+                'e'    => ['é', 'è', 'ẻ', 'ẽ', 'ẹ', 'ê', 'ế', 'ề', 'ể', 'ễ', 'ệ', 'ë', 'ē', 'ę', 'ě', 'ĕ', 'ė', 'ε', 'έ', 'ἐ', 'ἑ', 'ἒ', 'ἓ', 'ἔ', 'ἕ', 'ὲ', 'έ', 'е', 'ё', 'э', 'є', 'ə', 'ဧ', 'ေ', 'ဲ', 'ე', 'ए', 'إ', 'ئ'],
+                'f'    => ['ф', 'φ', 'ف', 'ƒ', 'ფ'],
+                'g'    => ['ĝ', 'ğ', 'ġ', 'ģ', 'г', 'ґ', 'γ', 'ဂ', 'გ', 'گ'],
+                'h'    => ['ĥ', 'ħ', 'η', 'ή', 'ح', 'ه', 'ဟ', 'ှ', 'ჰ'],
+                'i'    => ['í', 'ì', 'ỉ', 'ĩ', 'ị', 'î', 'ï', 'ī', 'ĭ', 'į', 'ı', 'ι', 'ί', 'ϊ', 'ΐ', 'ἰ', 'ἱ', 'ἲ', 'ἳ', 'ἴ', 'ἵ', 'ἶ', 'ἷ', 'ὶ', 'ί', 'ῐ', 'ῑ', 'ῒ', 'ΐ', 'ῖ', 'ῗ', 'і', 'ї', 'и', 'ဣ', 'ိ', 'ီ', 'ည်', 'ǐ', 'ი', 'इ'],
+                'j'    => ['ĵ', 'ј', 'Ј', 'ჯ', 'ج'],
+                'k'    => ['ķ', 'ĸ', 'к', 'κ', 'Ķ', 'ق', 'ك', 'က', 'კ', 'ქ', 'ک'],
+                'l'    => ['ł', 'ľ', 'ĺ', 'ļ', 'ŀ', 'л', 'λ', 'ل', 'လ', 'ლ'],
+                'm'    => ['м', 'μ', 'م', 'မ', 'მ'],
+                'n'    => ['ñ', 'ń', 'ň', 'ņ', 'ŉ', 'ŋ', 'ν', 'н', 'ن', 'န', 'ნ'],
+                'o'    => ['ó', 'ò', 'ỏ', 'õ', 'ọ', 'ô', 'ố', 'ồ', 'ổ', 'ỗ', 'ộ', 'ơ', 'ớ', 'ờ', 'ở', 'ỡ', 'ợ', 'ø', 'ō', 'ő', 'ŏ', 'ο', 'ὀ', 'ὁ', 'ὂ', 'ὃ', 'ὄ', 'ὅ', 'ὸ', 'ό', 'о', 'و', 'θ', 'ို', 'ǒ', 'ǿ', 'º', 'ო', 'ओ'],
+                'p'    => ['п', 'π', 'ပ', 'პ', 'پ'],
+                'q'    => ['ყ'],
+                'r'    => ['ŕ', 'ř', 'ŗ', 'р', 'ρ', 'ر', 'რ'],
+                's'    => ['ś', 'š', 'ş', 'с', 'σ', 'ș', 'ς', 'س', 'ص', 'စ', 'ſ', 'ს'],
+                't'    => ['ť', 'ţ', 'т', 'τ', 'ț', 'ت', 'ط', 'ဋ', 'တ', 'ŧ', 'თ', 'ტ'],
+                'u'    => ['ú', 'ù', 'ủ', 'ũ', 'ụ', 'ư', 'ứ', 'ừ', 'ử', 'ữ', 'ự', 'û', 'ū', 'ů', 'ű', 'ŭ', 'ų', 'µ', 'у', 'ဉ', 'ု', 'ူ', 'ǔ', 'ǖ', 'ǘ', 'ǚ', 'ǜ', 'უ', 'उ'],
+                'v'    => ['в', 'ვ', 'ϐ'],
+                'w'    => ['ŵ', 'ω', 'ώ', 'ဝ', 'ွ'],
+                'x'    => ['χ', 'ξ'],
+                'y'    => ['ý', 'ỳ', 'ỷ', 'ỹ', 'ỵ', 'ÿ', 'ŷ', 'й', 'ы', 'υ', 'ϋ', 'ύ', 'ΰ', 'ي', 'ယ'],
+                'z'    => ['ź', 'ž', 'ż', 'з', 'ζ', 'ز', 'ဇ', 'ზ'],
+                'aa'   => ['ع', 'आ', 'آ'],
+                'ae'   => ['ä', 'æ', 'ǽ'],
+                'ai'   => ['ऐ'],
+                'at'   => ['@'],
+                'ch'   => ['ч', 'ჩ', 'ჭ', 'چ'],
+                'dj'   => ['ђ', 'đ'],
+                'dz'   => ['џ', 'ძ'],
+                'ei'   => ['ऍ'],
+                'gh'   => ['غ', 'ღ'],
+                'ii'   => ['ई'],
+                'ij'   => ['ĳ'],
+                'kh'   => ['х', 'خ', 'ხ'],
+                'lj'   => ['љ'],
+                'nj'   => ['њ'],
+                'oe'   => ['ö', 'œ', 'ؤ'],
+                'oi'   => ['ऑ'],
+                'oii'  => ['ऒ'],
+                'ps'   => ['ψ'],
+                'sh'   => ['ш', 'შ', 'ش'],
+                'shch' => ['щ'],
+                'ss'   => ['ß'],
+                'sx'   => ['ŝ'],
+                'th'   => ['þ', 'ϑ', 'ث', 'ذ', 'ظ'],
+                'ts'   => ['ц', 'ც', 'წ'],
+                'ue'   => ['ü'],
+                'uu'   => ['ऊ'],
+                'ya'   => ['я'],
+                'yu'   => ['ю'],
+                'zh'   => ['ж', 'ჟ', 'ژ'],
+                '(c)'  => ['©'],
+                'A'    => ['Á', 'À', 'Ả', 'Ã', 'Ạ', 'Ă', 'Ắ', 'Ằ', 'Ẳ', 'Ẵ', 'Ặ', 'Â', 'Ấ', 'Ầ', 'Ẩ', 'Ẫ', 'Ậ', 'Å', 'Ā', 'Ą', 'Α', 'Ά', 'Ἀ', 'Ἁ', 'Ἂ', 'Ἃ', 'Ἄ', 'Ἅ', 'Ἆ', 'Ἇ', 'ᾈ', 'ᾉ', 'ᾊ', 'ᾋ', 'ᾌ', 'ᾍ', 'ᾎ', 'ᾏ', 'Ᾰ', 'Ᾱ', 'Ὰ', 'Ά', 'ᾼ', 'А', 'Ǻ', 'Ǎ'],
+                'B'    => ['Б', 'Β', 'ब'],
+                'C'    => ['Ç', 'Ć', 'Č', 'Ĉ', 'Ċ'],
+                'D'    => ['Ď', 'Ð', 'Đ', 'Ɖ', 'Ɗ', 'Ƌ', 'ᴅ', 'ᴆ', 'Д', 'Δ'],
+                'E'    => ['É', 'È', 'Ẻ', 'Ẽ', 'Ẹ', 'Ê', 'Ế', 'Ề', 'Ể', 'Ễ', 'Ệ', 'Ë', 'Ē', 'Ę', 'Ě', 'Ĕ', 'Ė', 'Ε', 'Έ', 'Ἐ', 'Ἑ', 'Ἒ', 'Ἓ', 'Ἔ', 'Ἕ', 'Έ', 'Ὲ', 'Е', 'Ё', 'Э', 'Є', 'Ə'],
+                'F'    => ['Ф', 'Φ'],
+                'G'    => ['Ğ', 'Ġ', 'Ģ', 'Г', 'Ґ', 'Γ'],
+                'H'    => ['Η', 'Ή', 'Ħ'],
+                'I'    => ['Í', 'Ì', 'Ỉ', 'Ĩ', 'Ị', 'Î', 'Ï', 'Ī', 'Ĭ', 'Į', 'İ', 'Ι', 'Ί', 'Ϊ', 'Ἰ', 'Ἱ', 'Ἳ', 'Ἴ', 'Ἵ', 'Ἶ', 'Ἷ', 'Ῐ', 'Ῑ', 'Ὶ', 'Ί', 'И', 'І', 'Ї', 'Ǐ', 'ϒ'],
+                'K'    => ['К', 'Κ'],
+                'L'    => ['Ĺ', 'Ł', 'Л', 'Λ', 'Ļ', 'Ľ', 'Ŀ', 'ल'],
+                'M'    => ['М', 'Μ'],
+                'N'    => ['Ń', 'Ñ', 'Ň', 'Ņ', 'Ŋ', 'Н', 'Ν'],
+                'O'    => ['Ó', 'Ò', 'Ỏ', 'Õ', 'Ọ', 'Ô', 'Ố', 'Ồ', 'Ổ', 'Ỗ', 'Ộ', 'Ơ', 'Ớ', 'Ờ', 'Ở', 'Ỡ', 'Ợ', 'Ø', 'Ō', 'Ő', 'Ŏ', 'Ο', 'Ό', 'Ὀ', 'Ὁ', 'Ὂ', 'Ὃ', 'Ὄ', 'Ὅ', 'Ὸ', 'Ό', 'О', 'Θ', 'Ө', 'Ǒ', 'Ǿ'],
+                'P'    => ['П', 'Π'],
+                'R'    => ['Ř', 'Ŕ', 'Р', 'Ρ', 'Ŗ'],
+                'S'    => ['Ş', 'Ŝ', 'Ș', 'Š', 'Ś', 'С', 'Σ'],
+                'T'    => ['Ť', 'Ţ', 'Ŧ', 'Ț', 'Т', 'Τ'],
+                'U'    => ['Ú', 'Ù', 'Ủ', 'Ũ', 'Ụ', 'Ư', 'Ứ', 'Ừ', 'Ử', 'Ữ', 'Ự', 'Û', 'Ū', 'Ů', 'Ű', 'Ŭ', 'Ų', 'У', 'Ǔ', 'Ǖ', 'Ǘ', 'Ǚ', 'Ǜ'],
+                'V'    => ['В'],
+                'W'    => ['Ω', 'Ώ', 'Ŵ'],
+                'X'    => ['Χ', 'Ξ'],
+                'Y'    => ['Ý', 'Ỳ', 'Ỷ', 'Ỹ', 'Ỵ', 'Ÿ', 'Ῠ', 'Ῡ', 'Ὺ', 'Ύ', 'Ы', 'Й', 'Υ', 'Ϋ', 'Ŷ'],
+                'Z'    => ['Ź', 'Ž', 'Ż', 'З', 'Ζ'],
+                'AE'   => ['Ä', 'Æ', 'Ǽ'],
+                'CH'   => ['Ч'],
+                'DJ'   => ['Ђ'],
+                'DZ'   => ['Џ'],
+                'GX'   => ['Ĝ'],
+                'HX'   => ['Ĥ'],
+                'IJ'   => ['Ĳ'],
+                'JX'   => ['Ĵ'],
+                'KH'   => ['Х'],
+                'LJ'   => ['Љ'],
+                'NJ'   => ['Њ'],
+                'OE'   => ['Ö', 'Œ'],
+                'PS'   => ['Ψ'],
+                'SH'   => ['Ш'],
+                'SHCH' => ['Щ'],
+                'SS'   => ['ẞ'],
+                'TH'   => ['Þ'],
+                'TS'   => ['Ц'],
+                'UE'   => ['Ü'],
+                'YA'   => ['Я'],
+                'YU'   => ['Ю'],
+                'ZH'   => ['Ж'],
+                ' '    => ["\xC2\xA0", "\xE2\x80\x80", "\xE2\x80\x81", "\xE2\x80\x82", "\xE2\x80\x83", "\xE2\x80\x84", "\xE2\x80\x85", "\xE2\x80\x86", "\xE2\x80\x87", "\xE2\x80\x88", "\xE2\x80\x89", "\xE2\x80\x8A", "\xE2\x80\xAF", "\xE2\x81\x9F", "\xE3\x80\x80"],
+            ];
+        }
+
+        foreach ($charsArray as $key => $val) {
+            $value = str_replace($val, $key, $value);
+        }
+
+        return preg_replace('/[^\x20-\x7E]/u', '', $value);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////
 // Database
 
 //if (!function_exists('get_sql')) {
