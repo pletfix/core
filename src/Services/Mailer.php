@@ -80,18 +80,7 @@ class Mailer implements MailerContract
         $encoding = mb_detect_encoding($message, "UTF-8, ISO-8859-1, cp1252");
         $isHtml   = strncasecmp($message, '<!DOCTYPE html', 14) === 0 || strncasecmp($message, '<html', 5) === 0;
         $text     = $isHtml ? html_entity_decode(strip_tags($message), ENT_QUOTES, $encoding) : $message;
-
-        // Extract all images below the application and refer to the content ID.
-        $images = [];
-        if ($isHtml && $embeddedImages) {
-            //$baseUrl    = rtrim(config('app.url'), '/');
-            $pattern = ',"(([\./]?)+[^"\.\s]+\.(jpg|gif))",i';
-//            $pattern    = '/(<img'.'\s+[^>]*)src="' . preg_quote($baseUrl) . '\/(\.*)"/,i';
-            $message = preg_replace_callback($pattern, function($match) use (&$images) {
-                $images[] = $match[1];
-                return '"cid:img' . count($images) . '"';
-            }, $message);
-        }
+        $images   = $isHtml && $embeddedImages ? $this->extractImages($message) : [];
 
         //$boundary = md5(uniqid(microtime(), true));
         $uid = uniqid();
@@ -112,100 +101,307 @@ class Mailer implements MailerContract
             $header .= "Reply-To: $reply\r\n";
         }
         $header .= "MIME-Version: 1.0\r\n";
-        $header .= "Content-Type: multipart/mixed;\r\n\tboundary=\"$boundary1\"\r\n";
-        $header .= "\r\n";
 
-        // Content
+        if (!$isHtml) {
+            if (empty($attachments)) {
 
-        $content = "This is a multi-part message in MIME format.\r\n";
-        $content .= "\r\n";
-        $content .= "--$boundary1\r\n";
-        $content .= "Content-Type: multipart/related;\r\n\tboundary=\"$boundary2\";\r\n\ttype=\"multipart/alternative\"\r\n";
-        $content .= "\r\n";
+                // just a simple plain text mail
 
-        $content .= "\r\n";
-        $content .= "--$boundary2\r\n";
-        $content .= "Content-Type: multipart/alternative;\r\n\tboundary=\"$boundary3\"\r\n";
-        $content .= "\r\n";
+                $header .= "Content-Type: text/plain;\r\n\tcharset=\"$encoding\"\r\n";
+                $header .= "Content-Transfer-Encoding: quoted-printable\r\n";
+                $header .= "\r\n";
 
-        // Text Body
-        $content .= "\r\n";
-        $content .= "--$boundary3\r\n";
-        $content .= "Content-Type: text/plain;\r\n\tcharset=\"$encoding\"\r\n";
-//        $content .= "Content-Transfer-Encoding: 8bit\r\n";
-        $content .= "Content-Transfer-Encoding: quoted-printable\r\n";
-        $content .= "\r\n";
-        $content .= "$text\r\n";
+                // Content
 
-        // Html Body
-        if ($isHtml) {
-            $content .= "\r\n";
-            $content .= "--$boundary3\r\n";
-            $content .= "Content-Type: text/html;\r\n\tcharset=\"$encoding\"\r\n";
-//            $content .= "Content-Transfer-Encoding: 8bit\r\n";
-            $content .= "Content-Transfer-Encoding: quoted-printable\r\n";
-            $content .= "\r\n";
-            $content .= "$message\r\n";
-        }
+                $content = "$text\r\n";
+            }
+            else {
 
-        $content .= "--$boundary3--\r\n";
+                // plain text mail with attachments
 
-        // Add the embedded images.
+                $header .= "Content-Type: multipart/mixed;\r\n\tboundary=\"$boundary1\"\r\n";
+                $header .= "\r\n";
 
-        if (!empty($images)) {
-            foreach ($images as $i => $image) {
-                $name = basename($image);
-                if (($data = @file_get_contents($image)) === false) {
-                    throw new MailException('Image could bot be read: ' . $image);
+                // Content
+
+                $content = "This is a multi-part message in MIME format.\r\n";
+                $content .= "\r\n";
+                $content .= "--$boundary1\r\n";
+                $content .= "Content-Type: text/plain;\r\n\tcharset=\"$encoding\"\r\n";
+                $content .= "Content-Transfer-Encoding: quoted-printable\r\n";
+                $content .= "\r\n";
+                $content .= "$text\r\n";
+
+                // Attachments
+
+                foreach($attachments as $name => $file) {
+                    if (is_int($name)) {
+                        $name = basename($file);
+                    }
+                    if (($data = @file_get_contents($file)) === false) {
+                        throw new MailException('File could bot be read: ' . $file);
+                    }
+                    $data = chunk_split(base64_encode($data));
+                    $type = mime_content_type($file);
+                    $content .= "\r\n";
+                    $content .= "--$boundary1\r\n";
+                    $content .= "Content-Type: $type;\r\n\tname=\"$name\"\r\n";
+                    $content .= "Content-Transfer-Encoding: base64\r\n";
+                    $content .= "Content-Description: \"$name\"\r\n";
+                    $content .= "Content-Disposition: attachment;\r\n\tfilename=\"$name\"\r\n";
+                    $content .= "\r\n";
+                    $content .= "$data";
                 }
-                $data = chunk_split(base64_encode($data));
-                $type = self::getMimeTypeOfImage($image);
+
                 $content .= "\r\n";
-                $content .= "--$boundary2\r\n";
-                $content .= "Content-Type: $type;\r\n\tname=\"$name\"\r\n";
-                $content .= "Content-Transfer-Encoding: base64\r\n";
-                $content .= "Content-ID: <img" . ($i + 1) . ">\r\n";
-                $content .= "Content-Description: \"$name\"\r\n";
-                $content .= "Content-Location: \"$name\"\r\n";
-                $content .= "\r\n";
-                $content .= "$data\r\n";
+                $content .= "--$boundary1--";
             }
         }
+        else { // is Html
+            if (empty($images)) {
+                if (empty($attachments)) {
 
-        $content .= "\r\n";
-        $content .= "--$boundary2--\r\n";
+                    // just a simple HTML mail (without embedded images and without attachments)
 
-        // Attachments
+                    $header .= "Content-Type: multipart/alternative;\r\n\tboundary=\"$boundary1\"\r\n";
+                    $header .= "\r\n";
 
-        foreach($attachments as $name => $file) {
-            if (is_int($name)) {
-                $name = basename($file);
+                    // Content
+
+                    $content = "This is a multi-part message in MIME format.\r\n";
+                    $content .= "\r\n";
+                    $content .= "--$boundary1\r\n";
+                    $content .= "Content-Type: text/plain;\r\n\tcharset=\"$encoding\"\r\n";
+                    $content .= "Content-Transfer-Encoding: quoted-printable\r\n";
+                    $content .= "\r\n";
+                    $content .= "$text\r\n";
+                    $content .= "\r\n";
+                    $content .= "\r\n";
+                    $content .= "--$boundary1\r\n";
+                    $content .= "Content-Type: text/html;\r\n\tcharset=\"$encoding\"\r\n";
+                    $content .= "Content-Transfer-Encoding: quoted-printable\r\n";
+                    $content .= "\r\n";
+                    $content .= "$message\r\n";
+                    $content .= "--$boundary1--";
+                }
+                else {
+
+                    // HTML mail with attachments (but without embedded images)
+
+                    $header .= "Content-Type: multipart/mixed;\r\n\tboundary=\"$boundary1\"\r\n";
+                    $header .= "\r\n";
+
+                    // Content
+
+                    $content = "This is a multi-part message in MIME format.\r\n";
+                    $content .= "\r\n";
+                    $content .= "--$boundary1\r\n";
+                    $content .= "Content-Type: multipart/alternative;\r\n\tboundary=\"$boundary2\"\r\n";
+                    $content .= "\r\n";
+                    $content .= "\r\n";
+                    $content .= "--$boundary2\r\n";
+                    $content .= "Content-Type: text/plain;\r\n\tcharset=\"$encoding\"\r\n";
+                    $content .= "Content-Transfer-Encoding: quoted-printable\r\n";
+                    $content .= "\r\n";
+                    $content .= "$text\r\n";
+                    $content .= "\r\n";
+                    $content .= "\r\n";
+                    $content .= "--$boundary2\r\n";
+                    $content .= "Content-Type: text/html;\r\n\tcharset=\"$encoding\"\r\n";
+                    $content .= "Content-Transfer-Encoding: quoted-printable\r\n";
+                    $content .= "\r\n";
+                    $content .= "$message\r\n";
+                    $content .= "--$boundary2--\r\n";
+
+                    // Attachments
+
+                    foreach($attachments as $name => $file) {
+                        if (is_int($name)) {
+                            $name = basename($file);
+                        }
+                        if (($data = @file_get_contents($file)) === false) {
+                            throw new MailException('File could bot be read: ' . $file);
+                        }
+                        $data = chunk_split(base64_encode($data));
+                        $type = mime_content_type($file);
+                        $content .= "\r\n";
+                        $content .= "--$boundary1\r\n";
+                        $content .= "Content-Type: $type;\r\n\tname=\"$name\"\r\n";
+                        $content .= "Content-Transfer-Encoding: base64\r\n";
+                        $content .= "Content-Description: \"$name\"\r\n";
+                        $content .= "Content-Disposition: attachment;\r\n\tfilename=\"$name\"\r\n";
+                        $content .= "\r\n";
+                        $content .= "$data";
+                    }
+
+                    $content .= "\r\n";
+                    $content .= "--$boundary1--";
+                }
             }
-            if (($data = @file_get_contents($file)) === false) {
-                throw new MailException('File could bot be read: ' . $file);
+            else {
+                if (empty($attachments)) {
+
+                    // HTML mail with embedded images (but without attachments)
+
+                    $header .= "Content-Type: multipart/related;\r\n\tboundary=\"$boundary1\";\r\n\ttype=\"multipart/alternative\"\r\n";
+                    $header .= "\r\n";
+
+                    // Content
+
+                    $content = "This is a multi-part message in MIME format.\r\n";
+                    $content .= "\r\n";
+                    $content .= "--$boundary1\r\n";
+                    $content .= "Content-Type: multipart/alternative;\r\n\tboundary=\"$boundary2\"\r\n";
+                    $content .= "\r\n";
+                    $content .= "\r\n";
+                    $content .= "--$boundary2\r\n";
+                    $content .= "Content-Type: text/plain;\r\n\tcharset=\"$encoding\"\r\n";
+                    $content .= "Content-Transfer-Encoding: quoted-printable\r\n";
+                    $content .= "\r\n";
+                    $content .= "$text\r\n";
+                    $content .= "\r\n";
+                    $content .= "\r\n";
+                    $content .= "--$boundary2\r\n";
+                    $content .= "Content-Type: text/html;\r\n\tcharset=\"$encoding\"\r\n";
+                    $content .= "Content-Transfer-Encoding: quoted-printable\r\n";
+                    $content .= "\r\n";
+                    $content .= "$message\r\n";
+                    $content .= "--$boundary2--\r\n";
+
+                    // Add the embedded images.
+
+                    if (!empty($images)) {
+                        foreach ($images as $i => $image) {
+                            $name = basename($image);
+                            if (($data = @file_get_contents($image)) === false) {
+                                throw new MailException('Image could bot be read: ' . $image);
+                            }
+                            $data = chunk_split(base64_encode($data));
+                            $type = self::getMimeTypeOfImage($image);
+                            $content .= "\r\n";
+                            $content .= "--$boundary1\r\n";
+                            $content .= "Content-Type: $type;\r\n\tname=\"$name\"\r\n";
+                            $content .= "Content-Transfer-Encoding: base64\r\n";
+                            $content .= "Content-ID: <img" . ($i + 1) . ">\r\n";
+                            $content .= "Content-Description: \"$name\"\r\n";
+                            $content .= "Content-Location: \"$name\"\r\n";
+                            $content .= "\r\n";
+                            $content .= "$data";
+                        }
+                    }
+
+                    $content .= "\r\n";
+                    $content .= "--$boundary1--";
+                }
+                else {
+
+                    // HTML mail with embedded images and attachments
+
+                    $header .= "Content-Type: multipart/mixed;\r\n\tboundary=\"$boundary1\"\r\n";
+                    $header .= "\r\n";
+
+                    // Content
+
+                    $content = "This is a multi-part message in MIME format.\r\n";
+                    $content .= "\r\n";
+                    $content .= "--$boundary1\r\n";
+                    $content .= "Content-Type: multipart/related;\r\n\tboundary=\"$boundary2\";\r\n\ttype=\"multipart/alternative\"\r\n";
+                    $content .= "\r\n";
+                    $content .= "\r\n";
+                    $content .= "--$boundary2\r\n";
+                    $content .= "Content-Type: multipart/alternative;\r\n\tboundary=\"$boundary3\"\r\n";
+                    $content .= "\r\n";
+                    $content .= "\r\n";
+                    $content .= "--$boundary3\r\n";
+                    $content .= "Content-Type: text/plain;\r\n\tcharset=\"$encoding\"\r\n";
+                    $content .= "Content-Transfer-Encoding: quoted-printable\r\n";
+                    $content .= "\r\n";
+                    $content .= "$text\r\n";
+                    $content .= "\r\n";
+                    $content .= "\r\n";
+                    $content .= "--$boundary3\r\n";
+                    $content .= "Content-Type: text/html;\r\n\tcharset=\"$encoding\"\r\n";
+                    $content .= "Content-Transfer-Encoding: quoted-printable\r\n";
+                    $content .= "\r\n";
+                    $content .= "$message\r\n";
+                    $content .= "--$boundary3--\r\n";
+
+                    // Add the embedded images.
+
+                    if (!empty($images)) {
+                        foreach ($images as $i => $image) {
+                            $name = basename($image);
+                            if (($data = @file_get_contents($image)) === false) {
+                                throw new MailException('Image could bot be read: ' . $image);
+                            }
+                            $data = chunk_split(base64_encode($data));
+                            $type = self::getMimeTypeOfImage($image);
+                            $content .= "\r\n";
+                            $content .= "--$boundary2\r\n";
+                            $content .= "Content-Type: $type;\r\n\tname=\"$name\"\r\n";
+                            $content .= "Content-Transfer-Encoding: base64\r\n";
+                            $content .= "Content-ID: <img" . ($i + 1) . ">\r\n";
+                            $content .= "Content-Description: \"$name\"\r\n";
+                            $content .= "Content-Location: \"$name\"\r\n";
+                            $content .= "\r\n";
+                            $content .= "$data";
+                        }
+                    }
+
+                    $content .= "\r\n";
+                    $content .= "--$boundary2--\r\n";
+
+                    // Attachments
+
+                    foreach($attachments as $name => $file) {
+                        if (is_int($name)) {
+                            $name = basename($file);
+                        }
+                        if (($data = @file_get_contents($file)) === false) {
+                            throw new MailException('File could bot be read: ' . $file);
+                        }
+                        $data = chunk_split(base64_encode($data));
+                        $type = mime_content_type($file);
+                        $content .= "\r\n";
+                        $content .= "--$boundary1\r\n";
+                        $content .= "Content-Type: $type;\r\n\tname=\"$name\"\r\n";
+                        $content .= "Content-Transfer-Encoding: base64\r\n";
+                        $content .= "Content-Description: \"$name\"\r\n";
+                        $content .= "Content-Disposition: attachment;\r\n\tfilename=\"$name\"\r\n";
+                        $content .= "\r\n";
+                        $content .= "$data";
+                    }
+
+                    $content .= "\r\n";
+                    $content .= "--$boundary1--";
+                }
             }
-            $data = chunk_split(base64_encode($data));
-            $size = @filesize($file);
-            $type = mime_content_type($file);
-            $content .= "\r\n";
-            $content .= "--$boundary1\r\n";
-            $content .= "Content-Type: $type;\r\n\tname=\"$name\"\r\n";
-            $content .= "Content-Transfer-Encoding: base64\r\n";
-            $content .= "Content-Description: \"$name\"\r\n";
-            $content .= "Content-Disposition: attachment;\r\n\tfilename=\"$name\"\r\n";
-            //$content .= "Content-Length: .".$size.";\r\n";
-            $content .= "\r\n";
-            $content .= "$data\r\n";
         }
-
-        // Finished...
-
-        $content .= "\r\n";
-        $content .= "--$boundary1--";
 
         if (mail($to, $subject, $content, $header) === false) {
             throw new MailException('The mail was not accepted for delivery.');
         }
+    }
+
+    /**
+     * Extract all images below the application and refer to the content ID.
+     *
+     * @param string &$message HTML message
+     * @return array List of embedded images
+     */
+    private function extractImages(&$message)
+    {
+        $images = [];
+
+        //$baseUrl    = rtrim(config('app.url'), '/');
+        $pattern = ',"(([\./]?)+[^"\.\s]+\.(jpg|gif))",i';
+        //$pattern    = '/(<img'.'\s+[^>]*)src="' . preg_quote($baseUrl) . '\/(\.*)"/,i';
+        $message = preg_replace_callback($pattern, function($match) use (&$images) {
+            $images[] = $match[1];
+            return '"cid:img' . count($images) . '"';
+        }, $message);
+
+        return $images;
     }
 
     /**
@@ -230,7 +426,7 @@ class Mailer implements MailerContract
      * @param string|string[]|null $domains Files only from these domains will be listed. (optional)
      * @return array
      */
-    public static function findEmbeddedFiles($content, $domains = null)
+    protected static function findEmbeddedFiles($content, $domains = null)
     {
         if (!is_null($domains)) {
             if (is_array($domains)) {
@@ -271,7 +467,7 @@ class Mailer implements MailerContract
      * @param string $image
      * @return string
      */
-    public static function getMimeTypeOfImage($image)
+    private static function getMimeTypeOfImage($image)
     {
         static $mimes;
         if (!isset($mimes)) {
