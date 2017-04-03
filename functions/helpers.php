@@ -1,5 +1,21 @@
 <?php
 
+/*
+ * Source hints
+ *
+ * The `plural`and `singular` functions are based on Laravel's Str class and Laravel' Pluralizer by Taylor Otwell,
+ * which again used the Doctrine's Inflector (https://github.com/doctrine/inflector/blob/1.1.x/LICENSE MIT License).
+ *
+ * `pascal_case`, `limit_string`, `slug` and `utf8_to_ascii` are copied from Laravel's Str class.
+ *
+ * $charsArray of the `utf8_to_ascii` method is adapted from Stringy by Daniel St. Jules (https://github.com/danielstjules/Stringy/blob/2.3.1/LICENSE.txt MIT License)
+ *
+ * @see https://github.com/illuminate/support/blob/5.3/Str.php Laravel's Str Class on GitHub
+ * @see https://github.com/illuminate/support/blob/5.3/Pluralizer.php Laravel's Pluralizer on GitHub
+ * @see https://github.com/doctrine/inflector/tree/1.1.x Doctrine's Inflector on GitHub
+ * @see https://github.com/danielstjules/Stringy/blob/master/src/Stringy.php Stringy on GitHub
+ */
+
 use Core\Services\DI;
 
 if (!function_exists('abort')) {
@@ -753,8 +769,6 @@ if (!function_exists('pascal_case')) {
 if (!function_exists('random_string')) {
     /**
      * Generate cryptographically secure pseudo-random alpha-numeric string.
-     *
-     * This function is copied from Laravel's Illuminate\Support\Str::random() function.
      *
      * @param int $length
      * @return string

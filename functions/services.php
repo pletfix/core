@@ -148,6 +148,18 @@ if (!function_exists('logger')) {
     }
 }
 
+if (!function_exists('mailer')) {
+    /**
+     * Get the Mailer.
+     *
+     * @return \Core\Services\Contracts\Mailer
+     */
+    function mailer()
+    {
+        return DI::getInstance()->get('mailer');
+    }
+}
+
 if (!function_exists('migrator')) {
     /**
      * Get the Migrator for the given store.
