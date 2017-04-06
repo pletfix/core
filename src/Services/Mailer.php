@@ -15,14 +15,45 @@ use Core\Services\Contracts\Mailer as MailerContract;
 class Mailer implements MailerContract
 {
     /**
-     * From Address
+     * Attachments.
+     *
+     * @var array
+     */
+    private $attachments = [];
+
+    /**
+     * Content-ID of embedded files
+     *
+     * @var array
+     */
+    private $cids = [];
+
+    /**
+     * Default Reply-to address or addresses
+     *
+     * The formatting of the address must comply with RFC 2822. Some examples are:
+     *      "user@example.com"
+     *      "user@example.com, anotheruser@example.com"
+     *      "User <user@example.com>"
+     *      "User <user@example.com>, Another User <anotheruser@example.com>"
+     *
+     * @var string
+     */
+    private $replyTo;
+
+    /**
+     * Default Sender address
+     *
+     * The formatting of the address must comply with RFC 2822, e.g.:
+     *      "user@example.com"
+     *      "User <user@example.com>"
      *
      * @var string
      */
     private $from;
 
     /**
-     * Pretended Mail
+     * Pretended mail
      *
      * @var string
      */
@@ -34,46 +65,137 @@ class Mailer implements MailerContract
     public function __construct()
     {
         $config = array_merge([
+            'replyTo' => null,
             'from'    => null,
             'pretend' => false,
         ], config('mail'));
 
+        $this->replyTo = $config['replyTo'];
         $this->from    = $config['from'];
         $this->pretend = $config['pretend'];
     }
 
     /**
+     * Attach a file.
+     *
+     * @param string $file Path of the file
+     * @param string $name Display name
+     * @return $this
+     */
+    public function attach($file, $name = null)
+    {
+        if ($name === null) {
+            $name = basename($file);
+        }
+        $this->attachments[$file] = $name;
+
+        return $this;
+    }
+
+    /**
+     * Remove an already attached file.
+     *
+     * @param string $file Path of the file
+     * @return $this
+     */
+    public function detach($file)
+    {
+        unset($this->attachments[$file]);
+
+        return $this;
+    }
+
+    /**
+     * Clear all attachments.
+     *
+     * @return $this
+     */
+    public function clearAttachments()
+    {
+        $this->attachments = [];
+
+        return $this;
+    }
+
+    /**
+     * Embed a file and get the source reference.
+     *
+     * @param string $file Path or URL of the file.
+     * @return string The source reference.
+     */
+    public function embed($file)
+    {
+        if (isset($this->cids[$file])) {
+            $cid = $this->cids[$file];
+        }
+        else {
+            $cid = uniqid('data_');
+            $this->cids[$file] = $cid;
+        }
+
+        return 'cid:' . $cid;
+    }
+
+    /**
+     * Remove embedded file.
+     *
+     * @param string $file Path or URL of the file.
+     * @return $this
+     */
+    public function removeEmbeddedFile($file)
+    {
+        unset($this->cids[$file]);
+
+        return $this;
+    }
+
+    /**
+     * Clear all embedded files.
+     *
+     * @return $this
+     */
+    public function clearEmbeddedFile()
+    {
+        $this->cids = [];
+
+        return $this;
+    }
+
+    /**
      * Sends an email.
      *
-     * The formatting of the receiver/receivers must comply with RFC 2822. Some examples are:
-     * - user@example.com
-     * - user@example.com, anotheruser@example.com
-     * - User <user@example.com>
-     * - User <user@example.com>, Another User <anotheruser@example.com>
+     * The formatting of the receiver, cc, bcc reply-to and from addresses must comply with RFC 2822.
+     * Some examples are:
+     *      "user@example.com"
+     *      "user@example.com, anotheruser@example.com"
+     *      "User <user@example.com>"
+     *      "User <user@example.com>, Another User <anotheruser@example.com>"
      * @see http://www.faqs.org/rfcs/rfc2822.html RFC 2822
      *
      * @param string $to Receiver, or receivers of the mail.
      * @param string $subject Subject of the email to be sent.
      * @param string $message Message to be sent.
-     * @param array $attachments Attachments to be sent
      * @param string|null $cc Carbon Copy
      * @param string|null $bcc Blind Carbon Copy
-     * @param string|null $reply Reply To
+     * @param string|null $replyTo Reply To
      * @param string|null $from Sender Address If not set, the default setting is used.
-     * @param bool $embeddedImages If true the images are embedded into the mail.
      * @throws MailException
      */
-    public function send($to, $subject, $message, $attachments = [], $cc = null, $bcc = null, $reply = null, $from = null, $embeddedImages = true)
+    public function send($to, $subject, $message, $cc = null, $bcc = null, $replyTo = null, $from = null)
     {
         if (empty($to)) {
             throw new MailException('Receiver not specified.');
+        }
+
+        if ($replyTo === null) {
+            $replyTo = $this->replyTo;
         }
 
         if ($from === null) {
             $from = $this->from;
         }
 
-        if (empty($from)) {
+        if (empty($this->from)) {
             throw new MailException('From Address is not set. Check the configuration in config/mail.php.');
         }
 
@@ -86,19 +208,18 @@ class Mailer implements MailerContract
         if ($bcc !== null) {
             $header .= "Bcc: $bcc\r\n";
         }
-        if ($reply !== null) {
-            $header .= "Reply-To: $reply\r\n";
+        if ($replyTo !== null) {
+            $header .= "Reply-To: $replyTo\r\n";
         }
         $header .= "MIME-Version: 1.0\r\n";
 
         // Content
 
         $encoding = mb_detect_encoding($message, "UTF-8, ISO-8859-1, cp1252");
-        $isHtml   = strncasecmp($message, '<!DOCTYPE html', 14) === 0 || strncasecmp($message, '<html', 5) === 0;
+        $isHtml   = strncasecmp($message, '<html', 5) === 0 || strncasecmp($message, '<!DOCTYPE html', 14) === 0;
         $text     = $isHtml ? html_entity_decode(strip_tags($message), ENT_QUOTES, $encoding) : $message;
-        $images   = $isHtml && $embeddedImages ? $this->extractImages($message) : [];
 
-        if (!$isHtml && empty($attachments)) { // just a simple plain text mail...
+        if (!$isHtml && empty($this->attachments)) { // just a simple plain text mail...
             $header .= "Content-Type: text/plain;\r\n\tcharset=\"$encoding\"\r\n";
             $header .= "Content-Transfer-Encoding: quoted-printable\r\n";
             $header .= "\r\n";
@@ -111,36 +232,36 @@ class Mailer implements MailerContract
             if (!$isHtml) { // plain text mail with attachments...
                 $header .= "Content-Type: multipart/mixed;\r\n\tboundary=\"$boundary1\"\r\n";
                 $header .= "\r\n";
-                $this->embedPlainText($content, $text, $encoding, $boundary1);
-                $this->embedAttachments($content, $attachments, $boundary1);
+                $this->renderPlainText($content, $text, $encoding, $boundary1);
+                $this->renderAttachments($content, $boundary1);
             }
             else { // is HTML mail...
-                if (empty($images)) {
-                    if (empty($attachments)) { // just a simple HTML mail (without embedded images and without attachments)
+                if (empty($this->cids)) {
+                    if (empty($this->attachments)) { // just a simple HTML mail (without embedded files and without attachments)
                         $header .= "Content-Type: multipart/alternative;\r\n\tboundary=\"$boundary1\"\r\n";
                         $header .= "\r\n";
-                        $this->embedPlainText($content, $text, $encoding, $boundary1);
-                        $this->embedHtml($content, $message, $encoding, $boundary1);
+                        $this->renderPlainText($content, $text, $encoding, $boundary1);
+                        $this->renderHtml($content, $message, $encoding, $boundary1);
                     }
-                    else { // HTML mail with attachments (but without embedded images)
+                    else { // HTML mail with attachments (but without embedded files)
                         $header .= "Content-Type: multipart/mixed;\r\n\tboundary=\"$boundary1\"\r\n";
                         $header .= "\r\n";
-                        $this->embedTextAndHtml($content, $text, $message, $encoding, $boundary1);
-                        $this->embedAttachments($content, $attachments, $boundary1);
+                        $this->renderTextAndHtml($content, $text, $message, $encoding, $boundary1);
+                        $this->renderAttachments($content, $boundary1);
                     }
                 }
                 else {
-                    if (empty($attachments)) { // HTML mail with embedded images (but without attachments)
+                    if (empty($this->attachments)) { // HTML mail with embedded files (but without attachments)
                         $header .= "Content-Type: multipart/related;\r\n\tboundary=\"$boundary1\";\r\n\ttype=\"multipart/alternative\"\r\n";
                         $header .= "\r\n";
-                        $this->embedTextAndHtml($content, $text, $message, $encoding, $boundary1);
-                        $this->embedImages($content, $images, $boundary1);
+                        $this->renderTextAndHtml($content, $text, $message, $encoding, $boundary1);
+                        $this->renderEmbeddedFiles($content, $boundary1);
                     }
-                    else { // HTML mail with embedded images and attachments
+                    else { // HTML mail with embedded files and attachments
                         $header .= "Content-Type: multipart/mixed;\r\n\tboundary=\"$boundary1\"\r\n";
                         $header .= "\r\n";
-                        $this->embedTextAndHtmlWithImages($content, $text, $message, $encoding, $images, $boundary1);
-                        $this->embedAttachments($content, $attachments, $boundary1);
+                        $this->renderTextAndHtmlWithEmbededFiles($content, $text, $message, $encoding, $boundary1);
+                        $this->renderAttachments($content, $boundary1);
                     }
                 }
             }
@@ -159,17 +280,19 @@ class Mailer implements MailerContract
         }
     }
 
+    ///////////////////////////////////////////////////////////////////
+    // Render the body
+
     /**
-     * Embed images into the given content.
+     * Render embedded files into the given content.
      *
      * @param string &$content
-     * @param array $images
      * @param string $boundary
      * @throws MailException
      */
-    private function embedImages(&$content, $images, $boundary)
+    private function renderEmbeddedFiles(&$content, $boundary)
     {
-        foreach ($images as $i => $image) {
+        foreach ($this->cids as $image => $cid) {
             $name = basename($image);
             if (($data = @file_get_contents($image)) === false) {
                 throw new MailException('Image could bot be read: ' . $image);
@@ -180,7 +303,7 @@ class Mailer implements MailerContract
             $content .= "--$boundary\r\n";
             $content .= "Content-Type: $type;\r\n\tname=\"$name\"\r\n";
             $content .= "Content-Transfer-Encoding: base64\r\n";
-            $content .= "Content-ID: <img" . ($i + 1) . ">\r\n";
+            $content .= "Content-ID: <" . $cid . ">\r\n";
             $content .= "Content-Description: \"$name\"\r\n";
             $content .= "Content-Location: \"$name\"\r\n";
             $content .= "\r\n";
@@ -189,19 +312,15 @@ class Mailer implements MailerContract
     }
 
     /**
-     * Embed attachments into the given content.
+     * Render attachments into the given content.
      *
      * @param string &$content
-     * @param array $attachments
      * @param string $boundary
      * @throws MailException
      */
-    private function embedAttachments(&$content, $attachments, $boundary)
+    private function renderAttachments(&$content, $boundary)
     {
-        foreach($attachments as $name => $file) {
-            if (is_int($name)) {
-                $name = basename($file);
-            }
+        foreach($this->attachments as $file => $name) {
             if (($data = @file_get_contents($file)) === false) {
                 throw new MailException('File could bot be read: ' . $file);
             }
@@ -219,14 +338,14 @@ class Mailer implements MailerContract
     }
 
     /**
-     * Embed plain text into the given content.
+     * Render plain text into the given content.
      *
      * @param string &$content
      * @param string $text
      * @param string $encoding
      * @param string $boundary
      */
-    private function embedPlainText(&$content, $text, $encoding, $boundary)
+    private function renderPlainText(&$content, $text, $encoding, $boundary)
     {
         $content .= "\r\n";
         $content .= "--$boundary\r\n";
@@ -237,14 +356,14 @@ class Mailer implements MailerContract
     }
 
     /**
-     * Embed HTML into the given content.
+     * Render HTML into the given content.
      *
      * @param string &$content
      * @param string $html
      * @param string $encoding
      * @param string $boundary
      */
-    private function embedHtml(&$content, $html, $encoding, $boundary)
+    private function renderHtml(&$content, $html, $encoding, $boundary)
     {
         $content .= "\r\n";
         $content .= "--$boundary\r\n";
@@ -255,7 +374,7 @@ class Mailer implements MailerContract
     }
 
     /**
-     * Embed text and html into the given content.
+     * Render text and html into the given content.
      *
      * @param string &$content
      * @param string $text
@@ -263,55 +382,35 @@ class Mailer implements MailerContract
      * @param string $encoding
      * @param string $boundary
      */
-    private function embedTextAndHtml(&$content, $text, $html, $encoding, $boundary)
+    private function renderTextAndHtml(&$content, $text, $html, $encoding, $boundary)
     {
         $uid = uniqid();
         $boundary2 = "x----_=_NextPart_003_$uid";
         $content .= "\r\n--$boundary\r\n";
         $content .= "Content-Type: multipart/alternative;\r\n\tboundary=\"$boundary2\"\r\n";
-        $this->embedPlainText($content, $text, $encoding, $boundary2);
-        $this->embedHtml($content, $html, $encoding, $boundary2);
+        $this->renderPlainText($content, $text, $encoding, $boundary2);
+        $this->renderHtml($content, $html, $encoding, $boundary2);
         $content .= "\r\n--$boundary2--\r\n";
     }
 
     /**
-     * Embed text and html into the given content.
+     * Render text and html with embedded files into the given content.
      *
      * @param string &$content
      * @param string $text
      * @param string $html
      * @param string $encoding
-     * @param string $images
      * @param string $boundary
      */
-    private function embedTextAndHtmlWithImages(&$content, $text, $html, $encoding, $images, $boundary)
+    private function renderTextAndHtmlWithEmbededFiles(&$content, $text, $html, $encoding, $boundary)
     {
         $uid = uniqid();
         $boundary2 = "x----_=_NextPart_002_$uid";
         $content .= "\r\n--$boundary\r\n";
         $content .= "Content-Type: multipart/related;\r\n\tboundary=\"$boundary2\";\r\n\ttype=\"multipart/alternative\"\r\n";
-        $this->embedTextAndHtml($content, $text, $html, $encoding, $boundary2);
-        $this->embedImages($content, $images, $boundary2);
+        $this->renderTextAndHtml($content, $text, $html, $encoding, $boundary2);
+        $this->renderEmbeddedFiles($content, $boundary2);
         $content .= "\r\n--$boundary2--\r\n";
-    }
-
-    /**
-     * Extract all images to be embedded and refer to the cid.
-     *
-     * @param string &$message HTML message
-     * @return array List of embedded images
-     */
-    private function extractImages(&$message)
-    {
-        $images = [];
-
-        $pattern = '/<img'.'\s+[^>]*src=["|\']([^"|^\']*)["|\'][^>]*\/?>/i';
-        $message = preg_replace_callback($pattern, function($match) use (&$images) {
-            $images[] = $match[1];
-            return '"cid:img' . count($images) . '"';
-        }, $message);
-
-        return $images;
     }
 
     /**
@@ -360,4 +459,26 @@ class Mailer implements MailerContract
 
         return $type;
     }
+
+    /**
+     * Extract all images to be embedded and refer to the cid.
+     *
+     * todo entfernen!
+     *
+     * @param string &$message HTML message
+     * @return array List of embedded images
+     */
+    /*
+    public static function extractImages(&$message)
+    {
+        $images = [];
+        $pattern = '/<img'.'\s+[^>]*src=["|\']([^"|^\']*)["|\'][^>]*\/?>/i';
+        $message = preg_replace_callback($pattern, function($match) use (&$images) {
+            $images[] = $match[1];
+            return '"cid:img' . count($images) . '"';
+        }, $message);
+
+        return $images;
+    }
+    */
 }
