@@ -1,6 +1,8 @@
 <?php
 
-namespace Core\Services\Contracts;
+namespace Core\Controllers\Contracts;
+
+use Core\Services\Contracts\Response;
 
 interface ResourceController
 {

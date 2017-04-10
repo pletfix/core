@@ -47,7 +47,7 @@ class DatabaseFactory implements DatabaseFactoryContract
      */
     public function store($name = null)
     {
-        if (is_null($name)) {
+        if ($name === null) {
             $name = $this->defaultStore;
         }
 
@@ -56,7 +56,7 @@ class DatabaseFactory implements DatabaseFactoryContract
         }
 
         $config = config('database.stores.' . $name);
-        if (is_null($config)) {
+        if ($config === null) {
             throw new InvalidArgumentException('Database store "' . $name . '" is not defined.');
         }
 

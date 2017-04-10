@@ -17,11 +17,13 @@ use Throwable;
 /**
  * Abstract Database Access Layer
  *
- * The basic functions as perform(), exec() and quote() based on Aura.Sql Extended PDO.
+ * The basic methods as perform(), exec() and quote() based on Aura.Sql Extended PDO.
  * The Transaction Handling and cursor() based on Laravel's Connection Class 5.3.
+ * The insert, update and delete methods were inspired by the CakePHP's Database Library.
  *
  * @see https://github.com/auraphp/Aura.Sql/blob/3.x/src/AbstractExtendedPdo.php Aura.Sql Extended PDO on GitHub
  * @see https://github.com/illuminate/database/blob/5.3/Connection.php Laravel's Connection Class 5.3 on GitHub
+ * @see https://github.com/cakephp/database/tree/3.2 CakePHP's Database Library
  * @see http://php.net/manual/en/class.pdo.php The PDO class
  * @see http://php.net/manual/en/class.pdostatement.php The PDOStatement class
  * @see https://phpdelusions.net/pdo#query PDO Tutorial
@@ -89,7 +91,7 @@ abstract class AbstractDatabase implements DatabaseContract
      */
     public function config($key = null)
     {
-        if (is_null($key)) {
+        if ($key === null) {
             return $this->config;
         }
 
@@ -101,7 +103,7 @@ abstract class AbstractDatabase implements DatabaseContract
      */
     public function schema()
     {
-        if (is_null($this->schema)) {
+        if ($this->schema === null) {
             $this->schema = $this->makeSchema();
         }
 
@@ -434,6 +436,18 @@ abstract class AbstractDatabase implements DatabaseContract
     }
 
     /**
+     * @inheritdoc
+     */
+    public function find($table, $id, $key = 'id', $class = null)
+    {
+        $table = $this->quoteName($table);
+        $key   = $this->quoteName($key);
+
+        /** @noinspection SqlDialectInspection */
+        return $this->single("SELECT * FROM $table WHERE $key = ?", [$id], $class);
+    }
+
+    /**
      * Performs a sql statement with bound values and returns the resulting PDOStatement.
      *
      * * @see http://php.net/manual/en/pdo.prepare.php
@@ -459,53 +473,25 @@ abstract class AbstractDatabase implements DatabaseContract
             }
         }
         else {
-            $sth = $this->pdo->prepare($statement);
-
-            foreach ($bindings as $key => $value) {
-                if (is_int($key)) {
-                    $key += 1;
-                }
-
-                if ($value instanceof DateTimeInterface) {
-                    $value = $value->format($this->dateFormat);
-                }
-                else if ($value === false) { // das macht Eloquent!
-                    $value = 0;
-                }
-
-                $type = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
-
-//                if ($value instanceof DateTimeInterface) {
-//                    $type = PDO::PARAM_STR;
-//                    $value = $value->format($this->dateFormat);
-//                }
-//                else if (is_int($value)) {
-//                    $type = PDO::PARAM_INT;
-//                }
-//                else if (is_bool($value)) {
-//                    $type = PDO::PARAM_BOOL;
-////                    if ($value === false) { // das macht Eloquent!
-////                        $value = 0;
-////                    }
-//                }
-//                else if (is_null($value)) {
-//                    $type = PDO::PARAM_NULL;
-//                }
-//                else if (is_scalar($value)) {
-//                    $type = PDO::PARAM_STR;
-//                }
-////                else if (is_resource($value)) {
-////                    $type = PDO::PARAM_LOB;
-////                }
-//                else {
-//                    $type = gettype($value);
-//                    throw new Exception("Cannot bind value of type '{$type}' to placeholder '{$key}'");
-//                }
-
-                $sth->bindValue($key, $value, $type);
-            }
-
             try {
+                $sth = $this->pdo->prepare($statement);
+
+                foreach ($bindings as $key => $value) {
+                    if (is_int($key)) {
+                        $key += 1;
+                    }
+
+                    if ($value instanceof DateTimeInterface) {
+                        $value = $value->format($this->dateFormat);
+                    }
+                    else if ($value === false) { // das macht Eloquent!
+                        $value = 0;
+                    }
+
+                    $type = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
+                    $sth->bindValue($key, $value, $type);
+                }
+
                 if ($sth->execute() === false) {
                     throw new PDOException('Execute SQL query failed!');
                 }
@@ -515,9 +501,9 @@ abstract class AbstractDatabase implements DatabaseContract
             }
         }
 
-        if (!is_null($class)) {
+        if ($class !== null) {
             /** @noinspection PhpMethodParametersCountMismatchInspection */
-            $sth->setFetchMode(PDO::FETCH_CLASS|PDO::FETCH_PROPS_LATE, $class);
+            $sth->setFetchMode(PDO::FETCH_CLASS, $class);
         }
 
         return $sth;
@@ -599,7 +585,7 @@ abstract class AbstractDatabase implements DatabaseContract
     /**
      * @inheritdoc
      */
-    public function update($table, array $data, /*array $conditions = [],*/ $where = null, array $bindings = null) // todo sginierung ändern:
+    public function updateWhere($table, array $data, $where = null, array $bindings = [])
     {
         $table = $this->quoteName($table);
 
@@ -629,20 +615,64 @@ abstract class AbstractDatabase implements DatabaseContract
         }
         $settings = implode(', ', $settings);
 
-        $where = !empty($where) ? "WHERE $where" : '';
+        $where = !empty($where) ? " WHERE $where" : '';
 
-        return $this->exec(trim("UPDATE $table SET $settings $where"), $bindings);
+        return $this->exec("UPDATE $table SET $settings$where", $bindings);
     }
 
     /**
      * @inheritdoc
      */
-    public function delete($table, $where = null, array $bindings = null)
+    public function update($table, array $data, array $conditions = [])
     {
         $table = $this->quoteName($table);
-        $where = !empty($where) ? "WHERE $where" : '';
 
-        return $this->exec(trim("DELETE FROM $table $where"), $bindings ?: []);
+        $bindings = [];
+
+        $settings = [];
+        foreach ($data as $column => $value) {
+            $settings[] = $this->quoteName($column) . ' = ?';
+            $bindings[] = $value;
+        }
+        $settings = implode(', ', $settings);
+
+        $where = [];
+        foreach ($conditions as $column => $value) {
+            $where[]    = $this->quoteName($column) . ' = ?';
+            $bindings[] = $value;
+        }
+        $where = !empty($where) ? ' WHERE ' . implode(' AND ', $where) : '';
+
+        return $this->exec("UPDATE $table SET $settings$where", $bindings);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function deleteWhere($table, $where = null, array $bindings = [])
+    {
+        $table = $this->quoteName($table);
+        $where = !empty($where) ? " WHERE $where" : '';
+
+        return $this->exec("DELETE FROM $table$where", $bindings);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function delete($table, $conditions = [])
+    {
+        $table = $this->quoteName($table);
+
+        $where    = [];
+        $bindings = [];
+        foreach ($conditions as $column => $value) {
+            $where[]    = $this->quoteName($column) . ' = ?';
+            $bindings[] = $value;
+        }
+        $where = !empty($where) ? ' WHERE ' . implode(' AND ', $where) : '';
+
+        return $this->exec("DELETE FROM $table$where", $bindings);
     }
 
     /**

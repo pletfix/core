@@ -34,7 +34,7 @@ interface Response
      * @param array $headers An array of response headers
      * @return $this
      */
-    public function view($name, $variables = [], $status = 200, $headers = []);
+    public function view($name, array $variables = [], $status = 200, $headers = []);
 
     /**
      * Sets the HTTP status code.

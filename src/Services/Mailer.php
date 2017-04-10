@@ -15,6 +15,82 @@ use Core\Services\Contracts\Mailer as MailerContract;
 class Mailer implements MailerContract
 {
     /**
+     * Subject of the message.
+     *
+     * @var string
+     */
+    private $subject = '';
+
+    /**
+     * HTML or plain text message.
+     *
+     * @var string
+     */
+    private $body = '';
+
+    /**
+     * The plain text message.
+     *
+     * @var string
+     */
+    private $altBody = '';
+
+    /**
+     * List of receivers.
+     *
+     * The formatting of the address must comply with RFC 2822. Some examples are:
+     *      "user@example.com"
+     *      "User <user@example.com>"
+     *
+     * @var array
+     */
+    private $to = [];
+
+    /**
+     * List of Carbon Copies
+     *
+     * The formatting of the address must comply with RFC 2822. Some examples are:
+     *      "user@example.com"
+     *      "User <user@example.com>"
+     *
+     * @var array
+     */
+    private $cc = [];
+
+    /**
+     * List of Blind Carbon Copies.
+     *
+     * The formatting of the address must comply with RFC 2822. Some examples are:
+     *      "user@example.com"
+     *      "User <user@example.com>"
+     *
+     * @var array
+     */
+    private $bcc = [];
+
+    /**
+     * List of Reply-to Addresses
+     *
+     * The formatting of the address must comply with RFC 2822. Some examples are:
+     *      "user@example.com"
+     *      "User <user@example.com>"
+     *
+     * @var string
+     */
+    private $replyTo = [];
+
+    /**
+     * Sender address
+     *
+     * The formatting of the address must comply with RFC 2822, e.g.:
+     *      "user@example.com"
+     *      "User <user@example.com>"
+     *
+     * @var string
+     */
+    private $from;
+
+    /**
      * Attachments.
      *
      * @var array
@@ -29,30 +105,6 @@ class Mailer implements MailerContract
     private $cids = [];
 
     /**
-     * Default Reply-to address or addresses
-     *
-     * The formatting of the address must comply with RFC 2822. Some examples are:
-     *      "user@example.com"
-     *      "user@example.com, anotheruser@example.com"
-     *      "User <user@example.com>"
-     *      "User <user@example.com>, Another User <anotheruser@example.com>"
-     *
-     * @var string
-     */
-    private $replyTo;
-
-    /**
-     * Default Sender address
-     *
-     * The formatting of the address must comply with RFC 2822, e.g.:
-     *      "user@example.com"
-     *      "User <user@example.com>"
-     *
-     * @var string
-     */
-    private $from;
-
-    /**
      * Pretended mail
      *
      * @var string
@@ -65,7 +117,7 @@ class Mailer implements MailerContract
     public function __construct()
     {
         $config = array_merge([
-            'replyTo' => null,
+            'replyTo' => [],
             'from'    => null,
             'pretend' => false,
         ], config('mail'));
@@ -76,11 +128,216 @@ class Mailer implements MailerContract
     }
 
     /**
-     * Attach a file.
-     *
-     * @param string $file Path of the file
-     * @param string $name Display name
-     * @return $this
+     * @inheritdoc
+     */
+    public function subject($subject)
+    {
+        $this->subject = $subject;
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function body($body)
+    {
+        $this->body = $body;
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function altBody($text)
+    {
+        $this->altBody = $text;
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function view($name, array $variables = [])
+    {
+        return $this->body(DI::getInstance()->get('view')->render($name, $variables));
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function to($to, $name = null)
+    {
+        if (!$this->findAddress($to, $this->to) !== false) {
+            $this->to[] = $name !== null ? "$name <$to>" : $to;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function removeTo($to)
+    {
+        if (($index = $this->findAddress($to, $this->to)) !== false) {
+            unset($this->to[$index]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function clearTo()
+    {
+        $this->to = [];
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function cc($cc, $name = null)
+    {
+        if (is_array($cc)) {
+            $this->cc = $cc;
+        }
+        else if (!$this->findAddress($cc, $this->cc) !== false) {
+            $this->cc[] = $name !== null ? "$name <$cc>" : $cc;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function removeCC($cc)
+    {
+        foreach ((array)$cc as $addr) {
+            if (($index = $this->findAddress($addr, $this->cc)) !== false) {
+                unset($this->cc[$index]);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function clearCC()
+    {
+        $this->cc = [];
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function bcc($bcc, $name = null)
+    {
+        if (is_array($bcc)) {
+            $this->bcc = $bcc;
+        }
+        if (!$this->findAddress($bcc, $this->bcc) !== false) {
+            $this->bcc[] = $name !== null ? "$name <$bcc>" : $bcc;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function removeBCC($bcc)
+    {
+        foreach ((array)$bcc as $addr) {
+            if (($index = $this->findAddress($addr, $this->bcc)) !== false) {
+                unset($this->bcc[$index]);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function clearBCC()
+    {
+        $this->bcc = [];
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function replyTo($replyTo, $name = null)
+    {
+        if (is_array($replyTo)) {
+            $this->replyTo = $replyTo;
+        }
+        else if (!$this->findAddress($replyTo, $this->replyTo) !== false) {
+            $this->replyTo[] = $name !== null ? "$name <$replyTo>" : $replyTo;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function removeReplyTo($replyTo)
+    {
+        foreach ((array)$replyTo as $addr) {
+            if (($index = $this->findAddress($addr, $this->replyTo)) !== false) {
+                unset($this->replyTo[$index]);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function clearReplyTo()
+    {
+        $this->replyTo = [];
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function from($from, $name = null)
+    {
+        $this->from = $name !== null ? "$name <$from>" : $from;
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function resetFrom()
+    {
+        $this->from = config('mail.from');
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
      */
     public function attach($file, $name = null)
     {
@@ -93,10 +350,18 @@ class Mailer implements MailerContract
     }
 
     /**
-     * Remove an already attached file.
-     *
-     * @param string $file Path of the file
-     * @return $this
+     * @inheritdoc
+     */
+    public function attachData($data, $name, $mimeType)
+    {
+        // todo!
+        throw new \Exception('Not implemented yet!');
+
+        //return $this;
+    }
+
+    /**
+     * @inheritdoc
      */
     public function detach($file)
     {
@@ -106,9 +371,7 @@ class Mailer implements MailerContract
     }
 
     /**
-     * Clear all attachments.
-     *
-     * @return $this
+     * @inheritdoc
      */
     public function clearAttachments()
     {
@@ -118,10 +381,7 @@ class Mailer implements MailerContract
     }
 
     /**
-     * Embed a file and get the source reference.
-     *
-     * @param string $file Path or URL of the file.
-     * @return string The source reference.
+     * @inheritdoc
      */
     public function embed($file)
     {
@@ -137,10 +397,18 @@ class Mailer implements MailerContract
     }
 
     /**
-     * Remove embedded file.
-     *
-     * @param string $file Path or URL of the file.
-     * @return $this
+     * @inheritdoc
+     */
+    public function embedData($data, $name, $mimeType)
+    {
+        // todo!
+        throw new \Exception('Not implemented yet!');
+//        $cid = 0;
+//        return 'cid:' . $cid;
+    }
+
+    /**
+     * @inheritdoc
      */
     public function removeEmbeddedFile($file)
     {
@@ -150,9 +418,7 @@ class Mailer implements MailerContract
     }
 
     /**
-     * Clear all embedded files.
-     *
-     * @return $this
+     * @inheritdoc
      */
     public function clearEmbeddedFile()
     {
@@ -162,62 +428,59 @@ class Mailer implements MailerContract
     }
 
     /**
-     * Sends an email.
-     *
-     * The formatting of the receiver, cc, bcc reply-to and from addresses must comply with RFC 2822.
-     * Some examples are:
-     *      "user@example.com"
-     *      "user@example.com, anotheruser@example.com"
-     *      "User <user@example.com>"
-     *      "User <user@example.com>, Another User <anotheruser@example.com>"
-     * @see http://www.faqs.org/rfcs/rfc2822.html RFC 2822
-     *
-     * @param string $to Receiver, or receivers of the mail.
-     * @param string $subject Subject of the email to be sent.
-     * @param string $message Message to be sent.
-     * @param string|null $cc Carbon Copy
-     * @param string|null $bcc Blind Carbon Copy
-     * @param string|null $replyTo Reply To
-     * @param string|null $from Sender Address If not set, the default setting is used.
-     * @throws MailException
+     * @inheritdoc
      */
-    public function send($to, $subject, $message, $cc = null, $bcc = null, $replyTo = null, $from = null)
+    public function send($to = null, $subject = null, $body = null)
     {
+        if ($to === null) {
+            $to = $this->to;
+        }
+        else if (is_string($to)) {
+            $to = [$to];
+        }
+
         if (empty($to)) {
             throw new MailException('Receiver not specified.');
         }
 
-        if ($replyTo === null) {
-            $replyTo = $this->replyTo;
+        if ($subject === null) {
+            $subject = $this->subject;
         }
 
-        if ($from === null) {
-            $from = $this->from;
-        }
-
-        if (empty($this->from)) {
-            throw new MailException('From Address is not set. Check the configuration in config/mail.php.');
+        if ($body === null) {
+            $body = $this->body;
         }
 
         // Header
 
+        if (empty($this->from)) {
+            throw new MailException('From Address is not set. Check the configuration in config/mail.php.');
+        }
+        $from = $this->from;
         $header = "From: $from\r\n";
-        if ($cc !== null) {
+
+        if (!empty($this->cc)) {
+            $cc = implode(', ', $this->cc);
             $header .= "Cc: $cc\r\n";
         }
-        if ($bcc !== null) {
+
+        if (!empty($this->bcc)) {
+            $bcc = implode(', ', $this->bcc);
             $header .= "Bcc: $bcc\r\n";
         }
-        if ($replyTo !== null) {
+
+        if (!empty($this->replyTo)) {
+            $replyTo = implode(', ', $this->replyTo);
             $header .= "Reply-To: $replyTo\r\n";
         }
+
         $header .= "MIME-Version: 1.0\r\n";
 
         // Content
 
-        $encoding = mb_detect_encoding($message, "UTF-8, ISO-8859-1, cp1252");
-        $isHtml   = strncasecmp($message, '<html', 5) === 0 || strncasecmp($message, '<!DOCTYPE html', 14) === 0;
-        $text     = $isHtml ? html_entity_decode(strip_tags($message), ENT_QUOTES, $encoding) : $message;
+        $encoding = mb_detect_encoding($body, "UTF-8, ISO-8859-1, cp1252");
+        $isHtml   = strncasecmp($body, '<html', 5) === 0 || strncasecmp($body, '<!DOCTYPE html', 14) === 0;
+        $text     = $isHtml ? ($this->altBody === null ? html_entity_decode(strip_tags($body), ENT_QUOTES, $encoding) : $this->altBody) : $body;
 
         if (!$isHtml && empty($this->attachments)) { // just a simple plain text mail...
             $header .= "Content-Type: text/plain;\r\n\tcharset=\"$encoding\"\r\n";
@@ -241,12 +504,12 @@ class Mailer implements MailerContract
                         $header .= "Content-Type: multipart/alternative;\r\n\tboundary=\"$boundary1\"\r\n";
                         $header .= "\r\n";
                         $this->renderPlainText($content, $text, $encoding, $boundary1);
-                        $this->renderHtml($content, $message, $encoding, $boundary1);
+                        $this->renderHtml($content, $body, $encoding, $boundary1);
                     }
                     else { // HTML mail with attachments (but without embedded files)
                         $header .= "Content-Type: multipart/mixed;\r\n\tboundary=\"$boundary1\"\r\n";
                         $header .= "\r\n";
-                        $this->renderTextAndHtml($content, $text, $message, $encoding, $boundary1);
+                        $this->renderTextAndHtml($content, $text, $body, $encoding, $boundary1);
                         $this->renderAttachments($content, $boundary1);
                     }
                 }
@@ -254,13 +517,13 @@ class Mailer implements MailerContract
                     if (empty($this->attachments)) { // HTML mail with embedded files (but without attachments)
                         $header .= "Content-Type: multipart/related;\r\n\tboundary=\"$boundary1\";\r\n\ttype=\"multipart/alternative\"\r\n";
                         $header .= "\r\n";
-                        $this->renderTextAndHtml($content, $text, $message, $encoding, $boundary1);
+                        $this->renderTextAndHtml($content, $text, $body, $encoding, $boundary1);
                         $this->renderEmbeddedFiles($content, $boundary1);
                     }
                     else { // HTML mail with embedded files and attachments
                         $header .= "Content-Type: multipart/mixed;\r\n\tboundary=\"$boundary1\"\r\n";
                         $header .= "\r\n";
-                        $this->renderTextAndHtmlWithEmbededFiles($content, $text, $message, $encoding, $boundary1);
+                        $this->renderTextAndHtmlWithEmbededFiles($content, $text, $body, $encoding, $boundary1);
                         $this->renderAttachments($content, $boundary1);
                     }
                 }
@@ -279,9 +542,6 @@ class Mailer implements MailerContract
             throw new MailException('The mail was not accepted for delivery.');
         }
     }
-
-    ///////////////////////////////////////////////////////////////////
-    // Render the body
 
     /**
      * Render embedded files into the given content.
@@ -458,6 +718,45 @@ class Mailer implements MailerContract
         $type = isset($mimes[$ext]) ? $mimes[$ext] : 'application/octet-stream'; // RFC 2046 states in section 4.5.1: The "octet-stream" subtype is used to indicate that a body contains arbitrary binary data.
 
         return $type;
+    }
+
+    /**
+     * Get the address without the name.
+     *
+     * @param string $address e.g. "User <user@example.com>"
+     * @return string e.g. "user@example.com"
+     */
+    private function justAddress($address)
+    {
+        if (($pos = strpos($address, '<')) === false) {
+            return $address;
+        }
+
+        $n = strlen($address);
+        if ($address[$n - 1] != '>') {
+            $address = substr($address, $pos + 1, -1);
+        }
+
+        return $address;
+    }
+
+    /**
+     * Get the index of the given address.
+     *
+     * @param string $needle Address with or without name
+     * @param array $haystack List of Addresses (with or without name)
+     * @return int|false Index of the address or FALSE if the address does not exist.
+     */
+    private function findAddress($needle, array $haystack)
+    {
+        $address = $this->justAddress($needle);
+        foreach ($haystack as $i => $item) {
+            if ($this->justAddress($item) == $address) {
+                return $i;
+            }
+        }
+
+        return false;
     }
 
     /**

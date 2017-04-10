@@ -14,7 +14,7 @@ interface View
      * @return string
      * @throws InvalidArgumentException
      */
-    public function render($name, $variables = []);
+    public function render($name, array $variables = []);
 
     /**
      * Determine if a given view exists.

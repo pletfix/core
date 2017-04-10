@@ -58,7 +58,7 @@ class View implements ViewContract
     /**
      * @inheritdoc
      */
-    public function render($name, $variables = [])
+    public function render($name, array $variables = [])
     {
         if ($variables instanceof CollectionContract) {
             $variables = $variables->all();

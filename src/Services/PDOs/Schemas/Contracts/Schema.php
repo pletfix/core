@@ -8,9 +8,9 @@ namespace Core\Services\PDOs\Schemas\Contracts;
 interface Schema
 {
     /**
-     * Returns aa array of tables in the database.
+     * Returns an array of tables in the database.
      *
-     * Each return item is a array with the following values:
+     * Each return item is an array with the following values:
      * - name:      (string) The table name
      * - collation: (string) The default collation of the table.
      * - comment:   (string) A hidden comment.
@@ -22,7 +22,7 @@ interface Schema
     /**
      * Returns an array of columns in a table.
      *
-     * Each return item is a array with the following values:
+     * Each return item is an array with the following values:
      * - name:      (string) The column name
      * - type:      (string) The column data type. Data types are as reported by the database.
      * - size:      (int)    The column size (the maximum number of digits).
@@ -40,7 +40,7 @@ interface Schema
     /**
      * Returns an array of indexes in a table.
      *
-     * Each return item is a array with the following values:
+     * Each return item is an array with the following values:
      * - name:      (string) The index name.
      * - columns:   (array)  The list of column names.
      * - unique:    (bool)   Is the index a unique index?
@@ -55,7 +55,7 @@ interface Schema
      * Create a new table on the schema.
      *
      * Parameter $columns is an associative array where the key is the column name and the value is the column attributes.
-     * A column attribute is a array with the following values:
+     * A column attribute is an array with the following values:
      * - type:      (string) The column data type. Data types are as reported by the database.
      * - size:      (int)    The column size (the maximum number of digits).
      * - scale:     (int)    The number of digits to the right of the numeric point. It must be no larger than size.

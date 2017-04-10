@@ -176,6 +176,17 @@ interface Database
     public function cursor($query, array $bindings = [], $class = null);
 
     /**
+     * Find a single record by the primary key of given table.
+     *
+     * @param string $table Name of the Table
+     * @param int $id Value of the primary Key
+     * @param string $key Name of the primary Key
+     * @param string|null $class Name of the class where the data are mapped to
+     * @return mixed
+     */
+    public function find($table, $id, $key = 'id', $class = null);
+
+    /**
      * Executes a statement and returns the number of affected rows.
      *
      * @param string $statement The SQL statement to prepare and execute.
@@ -188,8 +199,8 @@ interface Database
     /**
      * Insert rows to the given table and returns the number of affected rows.
      *
-     * @param string $table
-     * @param array $data
+     * @param string $table The table to update rows from
+     * @param array $data Values to be updated
      * @return int
      */
     public function insert($table, array $data);
@@ -199,12 +210,21 @@ interface Database
      *
      * @param string $table
      * @param array $data
-     * // param array $conditions Conditions to be set for update statement
      * @param string $where
      * @param array $bindings
      * @return int
      */
-    public function update($table, array $data, $where = null, array $bindings = null);
+    public function updateWhere($table, array $data, $where = null, array $bindings = []);
+
+    /**
+     * Update a table with th given data and returns the number of affected rows.
+     *
+     * @param string $table The table to update rows from
+     * @param array $data Values to be updated
+     * @param array $conditions Conditions to be set for update statement
+     * @return int
+     */
+    public function update($table, array $data, array $conditions = []);
 
     /**
      * Delete rows from a table and returns the number of affected rows.
@@ -214,7 +234,16 @@ interface Database
      * @param array $bindings
      * @return int
      */
-    public function delete($table, $where = null, array $bindings = null);
+    public function deleteWhere($table, $where = null, array $bindings = []);
+
+    /**
+     * Delete rows from a table and returns the number of affected rows.
+     *
+     * @param string $table The table to delete rows from.
+     * @param array $conditions Conditions to be set for delete statement
+     * @return int
+     */
+    public function delete($table, $conditions = []);
 
     /**
      * Truncate a table.
