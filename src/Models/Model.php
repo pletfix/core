@@ -23,6 +23,7 @@ class Model implements ModelContract
     // relationship
     // timestamps
     // setXYZAttribute, getXYZAttribute
+    // Validation Rules
 
     /**
      * The name of the database store.
@@ -132,7 +133,7 @@ class Model implements ModelContract
      */
     private $db;
 
-    ////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////
     // Attribute Handling
 
     /**
@@ -280,7 +281,7 @@ class Model implements ModelContract
         return is_numeric($current) && is_numeric($original) && strcmp((string)$current, (string)$original) === 0;
     }
 
-    ////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////
     // CRUD
 
     /**
@@ -464,7 +465,7 @@ class Model implements ModelContract
         return $instance;
     }
 
-    ////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////
     // Mass Assignment Protection
 
 //    /**
@@ -509,7 +510,7 @@ class Model implements ModelContract
         return true;
     }
 
-    ////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////
     // Relationships
 
     /**
@@ -556,8 +557,8 @@ class Model implements ModelContract
      * Define a one-to-one relationship.
      *
      * @param string $class Name of the related model.
-     * @param string $foreignKey Default: "&lt;this_model&gt;_id"
-     * @param string $localKey Default: "id" (the primary key of this model)
+     * @param string|null $foreignKey Default: "&lt;this_model&gt;_id"
+     * @param string|null $localKey Default: "id" (the primary key of this model)
      * @return Model  // todo Contract verwenden
      */
     public function hasOne($class, $foreignKey = null, $localKey = null)
@@ -567,21 +568,18 @@ class Model implements ModelContract
         $db         = $model->database();
         $table      = $db->quoteName($model->getTable());
         $foreignKey = $db->quoteName($foreignKey ?: $this->getForeignKey());
-
-        if ($localKey === null) {
-            $localKey = $this->key;
-        }
+        $id         = $this->attributes[$localKey ?: $this->key];
 
         /** @noinspection SqlDialectInspection */
-        return $db->single("SELECT * FROM $table WHERE $foreignKey = ?", [$this->attributes[$localKey]], $class);
+        return $db->single("SELECT * FROM $table WHERE $foreignKey = ?", [$id], $class);
     }
 
     /**
      * Define a one-to-many relationship.
      *
      * @param string $class Name of the related model.
-     * @param string $foreignKey Default: "&lt;this_model&gt;_id"
-     * @param string $localKey Default: "id" (the primary key of this model)
+     * @param string|null $foreignKey Default: "&lt;this_model&gt;_id"
+     * @param string|null $localKey Default: "id" (the primary key of this model)
      * @return Model[] // todo Collection und Contract verwenden
      */
     public function hasMany($class, $foreignKey = null, $localKey = null)
@@ -591,21 +589,18 @@ class Model implements ModelContract
         $db         = $model->database();
         $table      = $db->quoteName($model->getTable());
         $foreignKey = $db->quoteName($foreignKey ?: $this->getForeignKey());
-
-        if ($localKey === null) {
-            $localKey = $this->key;
-        }
+        $id         = $this->attributes[$localKey ?: $this->key];
 
         /** @noinspection SqlDialectInspection */
-        return $db->query("SELECT * FROM $table WHERE $foreignKey = ?", [$this->attributes[$localKey]], $class);
+        return $db->query("SELECT * FROM $table WHERE $foreignKey = ?", [$id], $class);
     }
 
     /**
      * Define inverse one-to-one or inverse one-to-many relationships.
      *
      * @param string $class Name of the related model.
-     * @param string $foreignKey Default: "&lt;related_model&gt;_id"
-     * @param string $otherKey Default: "id" (the primary key of the related model)
+     * @param string|null $foreignKey Default: "&lt;related_model&gt;_id"
+     * @param string|null $otherKey Default: "id" (the primary key of the related model)
      * @return Model  // todo Contract verwenden
      */
     public function belongsTo($class, $foreignKey = null, $otherKey = null)
@@ -615,24 +610,21 @@ class Model implements ModelContract
         $db         = $model->database();
         $table      = $db->quoteName($model->getTable());
         $otherKey   = $db->quoteName($otherKey ?: $model->key);
-
-        if ($foreignKey === null) {
-            $foreignKey = $model->getForeignKey();
-        }
+        $id         = $this->attributes[$foreignKey ?: $model->getForeignKey()];
 
         /** @noinspection SqlDialectInspection */
-        return $db->single("SELECT * FROM $table WHERE $otherKey = ?", [$this->attributes[$foreignKey]], $class);
+        return $db->single("SELECT * FROM $table WHERE $otherKey = ?", [$id], $class);
     }
 
     /**
      * Define a many-to-many relationship.
      *
      * @param string $class Name of the related model.
-     * @param string $joiningTable Name of the joining table. Default: <model1>_<model2> (in alphabetical order of models)
-     * @param string $localForeignKey Default: "&lt;this_model&gt;_id"
-     * @param string $otherForeignKey Default: "&lt;related_model&gt;_id"
-     * @param string $localKey Default: "id" (the primary key of this model)
-     * @param string $otherKey Default: "id" (the primary key of the related model)
+     * @param string|null $joiningTable Name of the joining table. Default: &lt;model1&gt;_&lt;model2&gt; (in alphabetical order of models)
+     * @param string|null $localForeignKey Default: "&lt;this_model&gt;_id"
+     * @param string|null $otherForeignKey Default: "&lt;related_model&gt;_id"
+     * @param string|null $localKey Default: "id" (the primary key of this model)
+     * @param string|null $otherKey Default: "id" (the primary key of the related model)
      * @return Model[] // todo Collection und Contract verwenden
      */
     public function belongsToMany($class, $joiningTable = null, $localForeignKey = null, $otherForeignKey = null, $localKey = null, $otherKey = null)
@@ -641,14 +633,11 @@ class Model implements ModelContract
         $model           = new $class;
         $db              = $model->database();
         $table           = $db->quoteName($model->getTable());
-        $joiningTable    = $db->quoteName($joiningTable    ?: $this->getJoiningTable($class));
+        $joiningTable    = $db->quoteName($joiningTable ?: $this->getJoiningTable($class));
         $localForeignKey = $db->quoteName($localForeignKey ?: $this->getForeignKey());
         $otherForeignKey = $db->quoteName($otherForeignKey ?: $model->getForeignKey());
-        $otherKey        = $db->quoteName($otherKey        ?: $model->key);
-
-        if ($localKey === null) {
-            $localKey = $this->key;
-        }
+        $otherKey        = $db->quoteName($otherKey ?: $model->key);
+        $id              = $this->attributes[$localKey ?: $this->key];
 
         /** @noinspection SqlDialectInspection */
         return $db->query("
@@ -659,10 +648,62 @@ class Model implements ModelContract
               FROM $joiningTable 
               WHERE $localForeignKey = ?
             )
-            ", [$this->attributes[$localKey]], $class); // todo prüfen, ob es performanter geht (per join)
+            ", [$id], $class); // todo prüfen, ob es performanter geht (per join)
     }
 
-    ////////////////////////////////////////////////////////////////////
+    /**
+     * Define a polymorphic one-to-many relationship.
+     *
+     * @param string $class Name of the related model.
+     * @param string $prefix Prefix for the type attribute and foreign key
+     * @param string $typeAttribute Default: "&lt;prefix&gt;_type"
+     * @param string $foreignKey Default: "&lt;prefix&gt;_id"
+     * @return Model[] // todo Collection und Contract verwenden
+     */
+    public function morphMany($class, $prefix, $typeAttribute = null, $foreignKey = null)
+    {
+        /** @var Model $model */
+        $model         = new $class;
+        $db            = $model->database();
+        $table         = $db->quoteName($model->getTable());
+        $typeAttribute = $db->quoteName($typeAttribute ?: $prefix . '_type');
+        $foreignKey    = $db->quoteName($foreignKey ?: $prefix . '_id');
+        $type          = static::class;
+        $id            = $this->attributes[$this->key];
+
+        /** @noinspection SqlDialectInspection */
+        return $db->query("SELECT * FROM $table WHERE $typeAttribute = ? AND $foreignKey = ?", [$type, $id], $class);
+    }
+
+    /**
+     * Define a polymorphic, inverse one-to-one or many relationship.
+     *
+     * @param string $prefix Prefix for the type attribute and foreign key
+     * @param string $typeAttribute Default: "&lt;prefix&gt;_type"
+     * @param string $foreignKey Default: "&lt;prefix&gt;_id"
+     * @return Model  // todo Contract verwenden
+     */
+    public function morphTo($prefix, $typeAttribute = null, $foreignKey = null)
+    {
+        $class = $this->attributes[$typeAttribute ?: $prefix . '_type'];
+
+        /** @var Model $model */
+        $model    = new $class;
+        $db       = $model->database();
+        $table    = $db->quoteName($model->getTable());
+        $otherKey = $db->quoteName($model->key);
+        $id       = $this->attributes[$foreignKey ?: $prefix . '_id'];
+
+        /** @noinspection SqlDialectInspection */
+        return $db->single("SELECT * FROM $table WHERE $otherKey = ?", [$id], $class);
+    }
+
+    ///////////////////////////////////////////////////////////////////
+    // Validation Rules
+
+    // todo
+
+    ///////////////////////////////////////////////////////////////////
     // Accessors and Mutators
 
 //    /**
@@ -684,6 +725,14 @@ class Model implements ModelContract
 //    {
 //        $this->attributes['firstname'] = strtolower($value);
 //    }
+
+    ///////////////////////////////////////////////////////////////////
+    // Events
+
+    // todo
+
+    ///////////////////////////////////////////////////////////////////
+    // Arrayable, Countable and Jsonable Implementation
 
 //    /**
 //     * Convert the model to its string representation.
