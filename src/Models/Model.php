@@ -6,6 +6,7 @@ use Core\Exceptions\MassAssignmentException;
 use Core\Models\Contracts\Model as ModelContract;
 use Core\Services\Contracts\Database;
 use Core\Services\DI;
+use Core\Services\PDOs\Builder\Contracts\Builder;
 
 /**
  * The basic functionality (attribute handling) was inspired by Laravel's Active Record called Eloquent.
@@ -303,7 +304,7 @@ class Model implements ModelContract
      *
      * @return string
      */
-    public function getTable()
+    public function getTable() // todo evtl umbennene: "table()"
     {
         if (!isset($this->table)) {
 //            $baseClass = basename(str_replace('\\', '/', static::class));
@@ -311,7 +312,7 @@ class Model implements ModelContract
             $this->table = snake_case(plural($this->getBaseClass()));
         }
 
-        return $this->table;
+        return $this->table; // todo hier könnte direkt ein Tabellen-Objekt erzeugt werden
     }
 
     /**
@@ -319,7 +320,7 @@ class Model implements ModelContract
      *
      * @return string
      */
-    public function getPrimaryKey()
+    public function getPrimaryKey() // todo evtl umbennene: "primaryKey()"
     {
         return $this->key;
     }
@@ -334,7 +335,7 @@ class Model implements ModelContract
     {
         /** @var Model $model */
         $model = new static;
-        $model->attributes = $model->database()->find($model->getTable(), $id, $model->key);
+        $model->attributes = $model->database()->table($model->getTable())->find($id, $model->key);
         $model->original = $model->attributes;
 
         return $model;
@@ -342,6 +343,37 @@ class Model implements ModelContract
         // todo mit static properties ist das eleganter...
         //return static::database()->find(static::getTable(), $id, static::$key, static::class);
     }
+
+    /**
+     * Create a new QueryBuilder instance.
+     *
+     * @return Builder
+     */
+    private function createBuilder()
+    {
+        return $this->db->table($this->getTable())->select()->asClass(static::class);
+    }
+
+    /**
+     * Selects records using a QueryBuilder.
+     *
+     * Multiple calls to select() will append to the list of columns, not overwrite the previous columns.
+     *
+     * @param string|array|Builder|\Closure $columns The columns or sub-select
+     * @param string|null $alias The alias name for the sub-select.
+     * @return Builder
+     */
+    public function select($columns = null, $alias = null)
+    {
+        $builder = $this->createBuilder();
+        if ($columns !== null) {
+            $builder->select($columns);
+        }
+
+        return $builder;
+    }
+
+    // todo weitere Mehtoden des QueryBuilders adaptieren
 
     /**
      * Save the model to the database.
@@ -745,17 +777,6 @@ class Model implements ModelContract
 //    }
 //
 //    /**
-//     * Convert the model instance to JSON.
-//     *
-//     * @param  int  $options
-//     * @return string
-//     */
-//    public function toJson($options = 0)
-//    {
-//        return json_encode($this->jsonSerialize(), $options);
-//    }
-//
-//    /**
 //     * Convert the model instance to an array.
 //     *
 //     * @return array
@@ -775,6 +796,17 @@ class Model implements ModelContract
 //    public function count()
 //    {
 //        return count($this->items); //todo
+//    }
+//
+//    /**
+//     * Convert the model instance to JSON.
+//     *
+//     * @param  int  $options
+//     * @return string
+//     */
+//    public function toJson($options = 0)
+//    {
+//        return json_encode($this->jsonSerialize(), $options);
 //    }
 //
 //    /**

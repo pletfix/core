@@ -3,7 +3,9 @@
 namespace Core\Services\PDOs;
 
 use Core\Services\AbstractDatabase;
+use Core\Services\PDOs\Builder\MySqlBuilder;
 use Core\Services\PDOs\Schemas\MySqlSchema;
+use Core\Services\PDOs\Tables\MySqlTable;
 use PDO;
 
 /**
@@ -35,7 +37,23 @@ class MySql extends AbstractDatabase
     /**
      * @inheritdoc
      */
-    protected function makeSchema()
+    public function quoteName($name)
+    {
+        return '`' . str_replace('`', '``', $name) . '`';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function createBuilder()
+    {
+        return new MySqlBuilder($this);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function createSchema()
     {
         return new MySqlSchema($this);
     }
@@ -43,9 +61,9 @@ class MySql extends AbstractDatabase
     /**
      * @inheritdoc
      */
-    public function quoteName($name)
+    protected function createTable($name)
     {
-        return '`' . str_replace('`', '``', $name) . '`';
+        return new MySqlTable($this, $name);
     }
 
     /**

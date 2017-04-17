@@ -365,7 +365,7 @@ class Session implements SessionContract
     {
         $csrf = $this->get('_csrf');
         if ($csrf === null) {
-            $csrf = generate_token(40);
+            $csrf = random_string(40);
             $this->set('_csrf', $csrf);
         }
 

@@ -3,7 +3,9 @@
 namespace Core\Services\PDOs;
 
 use Core\Services\AbstractDatabase;
+use Core\Services\PDOs\Builder\PostgresBuilder;
 use Core\Services\PDOs\Schemas\SqlServerSchema;
+use Core\Services\PDOs\Tables\SqlServerTable;
 use PDO;
 
 /**
@@ -53,14 +55,6 @@ class SqlServer extends AbstractDatabase
     }
 
     /**
-     * @inheritdoc
-     */
-    protected function makeSchema()
-    {
-        return new SqlServerSchema($this);
-    }
-
-    /**
      * Version
      *
      * @inheritdoc
@@ -76,6 +70,30 @@ class SqlServer extends AbstractDatabase
     public function quoteName($name)
     {
         return '[' . str_replace(']', ']]', $name) . ']';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function createBuilder()
+    {
+        return new PostgresBuilder($this);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function createSchema()
+    {
+        return new SqlServerSchema($this);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function createTable($name)
+    {
+        return new SqlServerTable($this, $name);
     }
 
     /**

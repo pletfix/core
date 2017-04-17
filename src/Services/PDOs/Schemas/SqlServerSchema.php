@@ -247,7 +247,7 @@ class SqlServerSchema extends AbstractSchema
         /** @noinspection SqlNoDataSourceInspection */
         $sql = "CREATE TABLE {$quotedTable} ({$definition})";
 
-        // and this is PostgreSQL specific...
+        // and this is SqlServer specific...
 
         $this->db->transaction(function() use($sql, $table, $columns, $options) {
 

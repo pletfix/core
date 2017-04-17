@@ -3,7 +3,9 @@
 namespace Core\Services\PDOs;
 
 use Core\Services\AbstractDatabase;
+use Core\Services\PDOs\Builder\PostgresBuilder;
 use Core\Services\PDOs\Schemas\PostgresSchema;
+use Core\Services\PDOs\Tables\PostgresTable;
 use PDO;
 
 /**
@@ -40,9 +42,25 @@ class Postgres extends AbstractDatabase
     /**
      * @inheritdoc
      */
-    protected function makeSchema()
+    public function createBuilder()
+    {
+        return new PostgresBuilder($this);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function createSchema()
     {
         return new PostgresSchema($this);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function createTable($name)
+    {
+        return new PostgresTable($this, $name);
     }
 
     /**
@@ -131,13 +149,13 @@ class Postgres extends AbstractDatabase
     /**
      * @inheritdoc
      */
-    public function insert($table, array $data)
+    public function exec($statement, array $bindings = [])
     {
-        $affectedRows = parent::insert($table, $data);
+        if (strncasecmp($statement, 'INSERT INTO ', 12) === 0) {
+            $this->lastInsertTo = trim(substr($statement, 12, strpos($statement, ' ', 12)), '"'); //todo testen
+        }
 
-        $this->lastInsertTo = $table;
-
-        return $affectedRows;
+        return parent::exec($statement, $bindings);
     }
 
     /**

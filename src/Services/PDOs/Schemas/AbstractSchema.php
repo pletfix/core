@@ -101,45 +101,10 @@ abstract class AbstractSchema implements SchemaContract
         return [$type, $comment];
     }
 
-//    /**
-//     * Determine if the given table exists.
-//     *
-//     * @param string $table
-//     * @return bool
-//     */
-//    public function hasTable($table)
-//    {
-//        $tables = $this->tables();
-//
-//        return isset($tables[$table]);
-//    }
-
     /**
      * @inheritdoc
      */
-    public function createTable($table, array $columns, array $options = [])
-    {
-        if (empty($columns)) {
-            throw new InvalidArgumentException("Cannot create table without columns.");
-        }
-
-        $definition = [];
-        foreach ($columns as $column => $attr) {
-            $definition[$column] = $this->db->quoteName($column) . ' ' . $this->compileColumnDefinition($attr);
-        }
-        $definition = implode(', ', $definition);
-
-        $quotedTable = $this->db->quoteName($table);
-        $temporary = isset($options['temporary']) ? $options['temporary'] : false;
-        if ($temporary) {
-            $sql = "CREATE TEMPORARY TABLE {$quotedTable} ({$definition})";
-        }
-        else {
-            $sql = "CREATE TABLE {$quotedTable} ({$definition})";
-        }
-
-        $this->db->exec($sql);
-    }
+    abstract public function createTable($table, array $columns, array $options = []);
 
     // todo createTempTable($table, $selectStatement)
     // “create table temp_table as select * from sync;”
@@ -164,20 +129,6 @@ abstract class AbstractSchema implements SchemaContract
 
         $this->db->exec("ALTER TABLE {$from} RENAME TO {$to}");
     }
-
-//    /**
-//     * Determine if the given table has a given column.
-//     *
-//     * @param string $table
-//     * @param string $column
-//     * @return bool
-//     */
-//    public function hasColumn($table, $column)
-//    {
-//        $columns = array_keys($this->columns($table));
-//
-//        return in_array(strtolower($column), array_map('strtolower', $columns));
-//    }
 
     /**
      * @inheritdoc
@@ -213,18 +164,6 @@ abstract class AbstractSchema implements SchemaContract
 
         $this->db->exec("ALTER TABLE {$table} RENAME COLUMN {$from} TO {$to}");
     }
-
-//    /**
-//     * Determine if the given table has a given index.
-//     *
-//     * @param string $table
-//     * @param string $index
-//     * @return bool
-//     */
-//    public function hasIndex($table, $index)
-//    {
-//        return in_array(strtolower($index), array_map('strtolower', $this->indexes($table)));
-//    }
 
     /**
      * @inheritdoc

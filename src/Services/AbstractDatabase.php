@@ -2,13 +2,13 @@
 
 namespace Core\Services;
 
+use Closure;
 use Core\Exceptions\QueryException;
 use Core\Services\Contracts\Database as DatabaseContract;
-use Core\Services\PDOs\Schemas\Contracts\Schema as SchemaContract;
-use Closure;
+use Core\Services\PDOs\Schemas\Contracts\Schema;
+use Core\Services\PDOs\Tables\Contracts\Table;
 use DateTimeInterface;
 use Exception;
-use InvalidArgumentException;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -48,9 +48,16 @@ abstract class AbstractDatabase implements DatabaseContract
     /**
      * Database Schema
      *
-     * @var SchemaContract
+     * @var Schema
      */
     protected $schema;
+
+    /**
+     * Database Tables
+     *
+     * @var Table[]
+     */
+    protected $tables;
 
     /**
      * The number of active transactions.
@@ -101,10 +108,15 @@ abstract class AbstractDatabase implements DatabaseContract
     /**
      * @inheritdoc
      */
+    abstract public function createBuilder();
+
+    /**
+     * @inheritdoc
+     */
     public function schema()
     {
         if ($this->schema === null) {
-            $this->schema = $this->makeSchema();
+            $this->schema = $this->createSchema();
         }
 
         return $this->schema;
@@ -113,9 +125,29 @@ abstract class AbstractDatabase implements DatabaseContract
     /**
      * Make a new Schema instance.
      *
-     * @return SchemaContract // todo use contract
+     * @return Schema
      */
-    abstract protected function makeSchema();
+    abstract protected function createSchema();
+
+    /**
+     * @inheritdoc
+     */
+    public function table($name)
+    {
+        if (!isset($this->tables[$name])) {
+            $this->tables[$name] = $this->createTable($name);
+        }
+
+        return $this->tables[$name];
+    }
+
+    /**
+     * Make a new Table instance.
+     *
+     * @param string $name Table name
+     * @return Table
+     */
+    abstract protected function createTable($name);
 
     /**
      * @inheritdoc
@@ -436,18 +468,6 @@ abstract class AbstractDatabase implements DatabaseContract
     }
 
     /**
-     * @inheritdoc
-     */
-    public function find($table, $id, $key = 'id', $class = null)
-    {
-        $table = $this->quoteName($table);
-        $key   = $this->quoteName($key);
-
-        /** @noinspection SqlDialectInspection */
-        return $this->single("SELECT * FROM $table WHERE $key = ?", [$id], $class);
-    }
-
-    /**
      * Performs a sql statement with bound values and returns the resulting PDOStatement.
      *
      * * @see http://php.net/manual/en/pdo.prepare.php
@@ -539,150 +559,6 @@ abstract class AbstractDatabase implements DatabaseContract
         }
 
         return $sth->rowCount();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function insert($table, array $data)
-    {
-        if (empty($data)) {
-            throw new InvalidArgumentException('Cannot insert an empty record.');
-        }
-
-        $table = $this->quoteName($table);
-
-        if (is_string(key($data))) {
-            // single record will be inserted
-            $columns  = implode(', ', array_map([$this, 'quoteName'], array_keys($data)));
-            $params   = implode(', ', array_fill(0, count($data), '?'));
-            $bindings = array_values($data);
-        }
-        else {
-            // Bulk insert...
-            $keys = [];
-            foreach ($data as $row) {
-                $keys = array_merge($keys, $row);
-            }
-            $keys     = array_keys($keys);
-            $columns  = implode(', ', array_map([$this, 'quoteName'], $keys));
-            $params   = implode(', ', array_fill(0, count($keys), '?'));
-            $bindings = [];
-            $temp     = [];
-            foreach ($data as $i => $row) {
-                foreach ($keys as $key) {
-                    $bindings[] = isset($row[$key]) ? $row[$key] : null;
-                }
-                $temp[] = $params;
-            }
-            $params = implode('), (', $temp);
-        }
-
-        /** @noinspection SqlDialectInspection */
-        return $this->exec("INSERT INTO $table ($columns) VALUES ($params)", $bindings);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function updateWhere($table, array $data, $where = null, array $bindings = [])
-    {
-        $table = $this->quoteName($table);
-
-        $settings = [];
-        if (empty($bindings) || is_int(key($bindings))) {
-            // without bindings or using question mark placeholders in where condition
-            foreach ($data as $column => $value) {
-                $settings[] = $this->quoteName($column) . ' = ?';
-            }
-            $bindings = array_merge(array_values($data), $bindings ?: []);
-        }
-        else {
-            // using named placeholders in where condition
-            $values = [];
-            foreach ($data as $column => $value) {
-                $key = $column;
-                if (isset($bindings[$key])) {
-                    $i = 0;
-                    do {
-                        $key = $column . '_' . (++$i);
-                    } while (isset($bindings[$key]) || isset($data[$key]));
-                }
-                $settings[] = $this->quoteName($column) . ' = :' . $key;
-                $values[$key] = $value;
-            }
-            $bindings = array_merge($values, $bindings);
-        }
-        $settings = implode(', ', $settings);
-
-        $where = !empty($where) ? " WHERE $where" : '';
-
-        return $this->exec("UPDATE $table SET $settings$where", $bindings);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function update($table, array $data, array $conditions = [])
-    {
-        $table = $this->quoteName($table);
-
-        $bindings = [];
-
-        $settings = [];
-        foreach ($data as $column => $value) {
-            $settings[] = $this->quoteName($column) . ' = ?';
-            $bindings[] = $value;
-        }
-        $settings = implode(', ', $settings);
-
-        $where = [];
-        foreach ($conditions as $column => $value) {
-            $where[]    = $this->quoteName($column) . ' = ?';
-            $bindings[] = $value;
-        }
-        $where = !empty($where) ? ' WHERE ' . implode(' AND ', $where) : '';
-
-        return $this->exec("UPDATE $table SET $settings$where", $bindings);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function deleteWhere($table, $where = null, array $bindings = [])
-    {
-        $table = $this->quoteName($table);
-        $where = !empty($where) ? " WHERE $where" : '';
-
-        return $this->exec("DELETE FROM $table$where", $bindings);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function delete($table, $conditions = [])
-    {
-        $table = $this->quoteName($table);
-
-        $where    = [];
-        $bindings = [];
-        foreach ($conditions as $column => $value) {
-            $where[]    = $this->quoteName($column) . ' = ?';
-            $bindings[] = $value;
-        }
-        $where = !empty($where) ? ' WHERE ' . implode(' AND ', $where) : '';
-
-        return $this->exec("DELETE FROM $table$where", $bindings);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function truncate($table)
-    {
-        $table = $this->quoteName($table);
-
-        $this->exec("TRUNCATE TABLE $table");
     }
 
     /**

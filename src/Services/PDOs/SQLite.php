@@ -3,7 +3,9 @@
 namespace Core\Services\PDOs;
 
 use Core\Services\AbstractDatabase;
+use Core\Services\PDOs\Builder\PostgresBuilder;
 use Core\Services\PDOs\Schemas\SQLiteSchema;
+use Core\Services\PDOs\Tables\SQLiteTable;
 use InvalidArgumentException;
 use PDO;
 
@@ -52,9 +54,25 @@ class SQLite extends AbstractDatabase
     /**
      * @inheritdoc
      */
-    protected function makeSchema()
+    public function createBuilder()
+    {
+        return new PostgresBuilder($this);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function createSchema()
     {
         return new SQLiteSchema($this);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function createTable($name)
+    {
+        return new SQLiteTable($this, $name);
     }
 
     /**
@@ -104,27 +122,13 @@ class SQLite extends AbstractDatabase
     /**
      * @inheritdoc
      */
-    public function truncate($table)
+    public function exec($statement, array $bindings = [])
     {
-        $this->transaction(function() use ($table) {
-            $quotedTable = $this->quoteName($table);
-            $this->exec("DELETE FROM {$quotedTable}");
-            /** @noinspection SqlDialectInspection */
-            $this->exec('DELETE FROM sqlite_sequence WHERE name = ?', [$table]);
-        });
-        //$this->exec('VACUUM');
-    }
+        if (strncasecmp($statement, 'INSERT INTO ', 12)) {
+            $this->lastInsertTo = trim(substr($statement, 12, strpos($statement, ' ', 12)), '"'); //todo testen
+        }
 
-    /**
-     * @inheritdoc
-     */
-    public function insert($table, array $data)
-    {
-        $affectedRows = parent::insert($table, $data);
-
-        $this->lastInsertTo = $table;
-
-        return $affectedRows;
+        return parent::exec($statement, $bindings);
     }
 
     /**
@@ -132,7 +136,7 @@ class SQLite extends AbstractDatabase
      */
     public function lastInsertId()
     {
-        if (is_null($this->lastInsertTo)) {
+        if ($this->lastInsertTo === null) {
             // Is there a bug in sqlite?
             // "SELECT last_insert_rowid();" returns "6" if no value was inserted before.
             return 0;
