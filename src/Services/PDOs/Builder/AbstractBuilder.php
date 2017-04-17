@@ -13,7 +13,7 @@ use Core\Services\PDOs\Builder\Contracts\Builder;
  *
  * @see https://github.com/auraphp/Aura.SqlQuery Aura.SqlQuery
  */
-abstract class AbstractBuilder implements BuilderContract
+abstract class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilder!
 {
     /**
      * Database Access Layer.
@@ -114,6 +114,8 @@ abstract class AbstractBuilder implements BuilderContract
         'order'  => [],
     ];
 
+    // todo union clause
+
     /**
      * This words are Logical operators + "AS", "IS", "NULL", "TRUE, "FALSE", ASC" and "DESC.
      * Tables and fields with this name will not be quoted automatically.
@@ -125,6 +127,15 @@ abstract class AbstractBuilder implements BuilderContract
         'ALL', 'AND', 'ANY', 'AS', 'ASC', 'BETWEEN', 'DESC', 'EXISTS', 'FALSE', 'IN',
         'IS', 'LIKE', 'NOT', 'NULL', 'OR', 'SOME', 'TRUE',
     ];
+
+//    /**
+//     * All of the available clause operators.
+//     *
+//     * @var array
+//     */
+//    protected $operators = [
+//        '=', '<', '>', '<=', '>=', '<>', '!=', 'EXISTS', 'NOT EXISTS', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE'
+//    ];
 
     /**
      * Create a new Database Schema instance.
@@ -230,6 +241,9 @@ abstract class AbstractBuilder implements BuilderContract
             $source = $source->toSql();
         }
 
+        // todo u.u. prüfen, ob es ein tabellenname ist und nur compileExpression aufrufen, wenn es ein subquery ist
+        // todo ebenso bei join
+
         $source = $this->compileExpression($source);
 
         if ($alias !== null) {
@@ -320,8 +334,8 @@ abstract class AbstractBuilder implements BuilderContract
             }
         }
 
-        $operator = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
-        $this->where[] = $operator . $this->compileExpression($condition);
+        $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
+        $this->where[] = $op . $this->compileExpression($condition);
         $this->putBindings('where', $bindings);
 
         return $this;
@@ -335,99 +349,113 @@ abstract class AbstractBuilder implements BuilderContract
         return $this->where($condition, $bindings, true);
     }
 
-//    public function whereEqualArray(array $values)
-//    {
-//        foreach ($values as $column => $value) {
-//            $this->where[] = [$this->db->quoteName($column) . ' = ?'];
-//            $this->bindings['where'][] = $value;
-//        }
-//    }
+    /**
+     * @inheritdoc
+     */
+    public function whereIs($column, $value, $operator = '=', $or = false)
+    {
+        $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
+        $this->where[] = $op . $this->db->quoteName($column) . ' ' . strtoupper($operator) . ' ?';
+        $this->putBindings('where', [$value]);
 
-//    /**
-//     * Add a "where is equal" statement to the query.
-//     *
-//     * @param string $column.
-//     * @param mixed $value
-//     * @param bool $or If false, the condition is added by AND (default), otherwise by OR.
-//     * @param bool $not If true the condition is negated.
-//     * @return Builder
-//     */
-//    public function whereEqual($column, $value, $or = false, $not = false)
-//    {
-//        $operator = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
-//        $this->where[] = $operator . $this->db->quoteName($column) . ($not ? ' <> ?' : '= ?');
-//        $this->putBindings('where', [$value]);
-//
-//        return $this;
-//    }
-//
-//    // todo orWhereEqual, whereNotEqual, orWhereNotEqual
-
-//    /**
-//     * Add a full subquery to the query.
-//     *
-//     * @param  string   $column
-//     * @param  string   $operator
-//     * @param  \Closure $callback
-//     * @param  string   $boolean
-//     * @return $this
-//     */
-//    protected function whereQuery($column, $query, $operator = '=', $or = false, array $bindings = [])
-//    {
-//        if (is_callable($values)) {
-//            $values = $values(new static($this->db));
-//        }
-//
-//        if ($values instanceof Builder) {
-//            $values = $values->toSql();
-//        }
-//
-//        return $this;
-//    }
-
-//    /**
-//     * Add an exists clause to the query.
-//     *
-//     * @param  \Closure $callback
-//     * @param  string   $boolean
-//     * @param  bool     $not
-//     * @return $this
-//     */
-//    public function whereExists(Closure $callback, $boolean = 'and', $not = false) // todo
-//    {
-//
-//    }
+        return $this;
+    }
 
     /**
-     * Add a "where in" clause to the query.
-     *
-     * Examples:
-     * <pre>
-     * whereIn('column1', [1, 2, 3])
-     * </pre>
-     *
-     * @param string $column.
-     * @param array $values
-     * @param bool $or If false, the condition is added by AND (default), otherwise by OR.
-     * @param bool $not If true the condition is negated.
-     * @return Builder
+     * @inheritdoc
+     */
+    public function orWhereIs($column, $value, $operator = '=')
+    {
+        return $this->whereIs($column, $value, $operator, true);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function whereSubQuery($column, $query, $operator = '=', array $bindings = [], $or = false)
+    {
+        if (is_callable($query)) {
+            $query = $query(new static($this->db));
+        }
+
+        if ($query instanceof Builder) {
+            $query = $query->toSql();
+        }
+
+        $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
+        $this->where[] = $op . $this->db->quoteName($column) . ' ' . strtoupper($operator) . ' (' . $query . ')';
+        $this->putBindings('where', $bindings);
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function orWhereSubQuery($column, $query, $operator = '=', array $bindings = [])
+    {
+        return $this->whereSubQuery($column, $query, $operator, $bindings, true);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function whereExists($query, array $bindings = [], $or = false, $not = false)
+    {
+        if (is_callable($query)) {
+            $query = $query(new static($this->db));
+        }
+
+        if ($query instanceof Builder) {
+            $query = $query->toSql();
+        }
+
+        $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
+        $this->where[] = $op . 'EXISTS (' . $query . ')';
+        $this->putBindings('where', $bindings);
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function orWhereExists($query, array $bindings = [])
+    {
+        return $this->whereExists($query, $bindings, true);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function whereNotExists($query, array $bindings = [], $or = false)
+    {
+        return $this->whereExists($query, $bindings, $or, true);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function orWhereNotExists($query, array $bindings = [])
+    {
+        return $this->whereNotExists($query, $bindings, true);
+    }
+
+    /**
+     * @inheritdoc
      */
     public function whereIn($column, array $values, $or = false, $not = false)
     {
-        $operator = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
         $placeholders = implode(', ', array_fill(0, count($values), '?'));
-        $this->where[] = $operator . $this->db->quoteName($column) . ($not ? ' NOT' : '') . ' IN (' . $placeholders . ')';
+        $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
+        $this->where[] = $op . $this->db->quoteName($column) . ($not ? ' NOT' : '') . ' IN (' . $placeholders . ')';
         $this->putBindings('where', $values);
 
         return $this;
     }
 
     /**
-     * Add a "or where in" clause to the query.
-     *
-     * @param string $column
-     * @param array|\Closure|Builder|string $values
-     * @return Builder
+     * @inheritdoc
      */
     public function orWhereIn($column, array $values)
     {
@@ -435,12 +463,7 @@ abstract class AbstractBuilder implements BuilderContract
     }
 
     /**
-     * Add a "where not in" clause to the query.
-     *
-     * @param string $column
-     * @param array|\Closure|Builder|string $values
-     * @param bool $or If false, the condition is added by AND (default), otherwise by OR.
-     * @return Builder
+     * @inheritdoc
      */
     public function whereNotIn($column, array $values, $or = false)
     {
@@ -448,11 +471,7 @@ abstract class AbstractBuilder implements BuilderContract
     }
 
     /**
-     * Add a "or where not in" clause to the query.
-     *
-     * @param string $column
-     * @param array|\Closure|Builder|string $values
-     * @return Builder
+     * @inheritdoc
      */
     public function orWhereNotIn($column, array $values)
     {
@@ -460,31 +479,19 @@ abstract class AbstractBuilder implements BuilderContract
     }
 
     /**
-     * Add a "where between" clause to the query.
-     *
-     * @param string $column.
-     * @param mixed $lowest
-     * @param mixed $highest
-     * @param bool $or If false, the condition is added by AND (default), otherwise by OR.
-     * @param bool $not If true the condition is negated.
-     * @return Builder
+     * @inheritdoc
      */
     public function whereBetween($column, $lowest, $highest, $or = false, $not = false)
     {
-        $operator = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
-        $this->where[] = $operator . $this->db->quoteName($column) . ($not ? ' NOT' : '') . ' BETWEEN ? AND ?';
+        $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
+        $this->where[] = $op . $this->db->quoteName($column) . ($not ? ' NOT' : '') . ' BETWEEN ? AND ?';
         $this->putBindings('where', [$lowest, $highest]);
 
         return $this;
     }
 
     /**
-     * Add a "or where between" clause to the query.
-     *
-     * @param string $column
-     * @param mixed $lowest
-     * @param mixed $highest
-     * @return Builder
+     * @inheritdoc
      */
     public function orWhereBetween($column, $lowest, $highest)
     {
@@ -492,13 +499,7 @@ abstract class AbstractBuilder implements BuilderContract
     }
 
     /**
-     * Add a "where not between" clause to the query.
-     *
-     * @param string $column
-     * @param mixed $lowest
-     * @param mixed $highest
-     * @param bool $or If false, the condition is added by AND (default), otherwise by OR.
-     * @return Builder
+     * @inheritdoc
      */
     public function whereNotBetween($column, $lowest, $highest, $or = false)
     {
@@ -506,12 +507,7 @@ abstract class AbstractBuilder implements BuilderContract
     }
 
     /**
-     * Add a "or where not between" clause to the query.
-     *
-     * @param string $column
-     * @param mixed $lowest
-     * @param mixed $highest
-     * @return Builder
+     * @inheritdoc
      */
     public function orWhereNotBetween($column, $lowest, $highest)
     {
@@ -519,26 +515,18 @@ abstract class AbstractBuilder implements BuilderContract
     }
 
     /**
-     * Add a "where is null" clause to the query.
-     *
-     * @param string $column.
-     * @param bool $or If false, the condition is added by AND (default), otherwise by OR.
-     * @param bool $not If true the condition is negated.
-     * @return Builder
+     * @inheritdoc
      */
     public function whereIsNull($column, $or = false, $not = false)
     {
-        $operator = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
-        $this->where[] = $operator . $this->db->quoteName($column) . ($not ? ' IS NOT NULL' : ' IS NULL');
+        $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
+        $this->where[] = $op . $this->db->quoteName($column) . ($not ? ' IS NOT NULL' : ' IS NULL');
 
         return $this;
     }
 
     /**
-     * Add a "or where is null" clause to the query.
-     *
-     * @param string $column
-     * @return Builder
+     * @inheritdoc
      */
     public function orWhereIsNull($column)
     {
@@ -546,24 +534,17 @@ abstract class AbstractBuilder implements BuilderContract
     }
 
     /**
-     * Add a "where not is null" clause to the query.
-     *
-     * @param string $column
-     * @param bool $or If false, the condition is added by AND (default), otherwise by OR.
-     * @return Builder
+     * @inheritdoc
      */
-    public function whereNotIsNull($column, $or = false)
+    public function whereIsNotNull($column, $or = false)
     {
         return $this->whereIsNull($column, $or, true);
     }
 
     /**
-     * Add a "or where not is null" clause to the query.
-     *
-     * @param string $column
-     * @return Builder
+     * @inheritdoc
      */
-    public function orWhereNotIsNull($column)
+    public function orWhereIsNotNull($column)
     {
         return $this->whereNotIsNull($column, true);
     }
@@ -592,8 +573,8 @@ abstract class AbstractBuilder implements BuilderContract
             }
         }
 
-        $operator = !empty($this->having) ? ($or ? 'OR ' : 'AND ') : '';
-        $this->having[] = $operator . $this->compileExpression($condition);
+        $op = !empty($this->having) ? ($or ? 'OR ' : 'AND ') : '';
+        $this->having[] = $op . $this->compileExpression($condition);
         $this->putBindings('having', $bindings);
 
         return $this;
@@ -689,6 +670,16 @@ abstract class AbstractBuilder implements BuilderContract
     /**
      * @inheritdoc
      */
+    public function cursor()
+    {
+        $result = $this->db->cursor($this->toSql(), $this->bindings(), $this->class);
+
+        return $result;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function first()
     {
         $result = $this->db->single($this->toSql(), $this->bindings(), $this->class);
@@ -705,19 +696,6 @@ abstract class AbstractBuilder implements BuilderContract
 
         return $result;
     }
-
-    /**
-     * @inheritdoc
-     */
-    public function cursor()
-    {
-        $result = $this->db->cursor($this->toSql(), $this->bindings(), $this->class);
-
-        return $result;
-    }
-
-    ///////////////////////////////////////////////////////////////////
-    // Data Manipulation
 
     /**
      * @inheritdoc
@@ -749,11 +727,12 @@ abstract class AbstractBuilder implements BuilderContract
             }
         }
 
+        $from     = ' ' . implode(', ', $this->from);
         $bindings = array_merge($this->bindings['join'], $values, $this->bindings['where']);
         $settings = ' SET ' . implode(', ', $settings);
 
         $query = 'UPDATE'
-            . $this->buildFrom()
+            . $from
             . $this->buildJoin()
             . $settings
             . $this->buildWhere()
@@ -770,7 +749,7 @@ abstract class AbstractBuilder implements BuilderContract
     {
         $bindings = array_merge($this->bindings['join'], $this->bindings['where']);
 
-        $query = 'DELETE FROM'
+        $query = 'DELETE'
             . $this->buildFrom()
             . $this->buildJoin()
             . $this->buildWhere()
@@ -896,9 +875,11 @@ abstract class AbstractBuilder implements BuilderContract
                         if ($i - $j - 1 > 0) {
                             $args[] = substr($expr, $j, $i - $j - 1);
                         }
-                        $args = array_map(function ($arg) {
-                            return $this->compileExpression($arg);
-                        }, $args);
+
+                        $args = array_map([$this, 'compileExpression'], $args);
+//                        $args = array_map(function ($arg) {
+//                            return $this->compileExpression($arg);
+//                        }, $args);
                         $repl = $this->compileFunction($name, $args);
                         $j = $i; // first index of the next part
                     }
