@@ -170,19 +170,11 @@ abstract class AbstractDatabase implements DatabaseContract
     /**
      * @inheritdoc
      */
-    public function quote($value, $type = PDO::PARAM_STR)
+    public function quote($value)
     {
         $this->connect();
 
-        if (!is_array($value)) {
-            return $this->pdo->quote($value, $type);
-        }
-
-        foreach ($value as $k => $v) {
-            $value[$k] = $this->pdo->quote($v, $type);
-        }
-
-        return implode(',', $value);
+        return $this->pdo->quote($value);
     }
 
     /**
@@ -301,17 +293,12 @@ abstract class AbstractDatabase implements DatabaseContract
 //    }
 
     /**
-     * Dump SQL
-     *
-     * @param string $statement The SQL statement to prepare and execute.
-     * @param array $bindings Values to bind to the statement
-     * @param bool $return If true, dump will return its output, instead of printing it.
-     * @return string|null
+     * @inheritdoc
      */
-    private function dump($statement, array $bindings = [], $return = null)
+    public function dump($statement, array $bindings = [], $return = null)
     {
         foreach ($bindings as $binding) {
-            $value = is_string($binding) ? $this->pdo->quote($binding) : $binding; // todo oder immer quote?
+            $value = is_string($binding) ? $this->quote($binding) : $binding; // todo oder immer quote?
             $statement = preg_replace('/\?/', $value, $statement, 1);
             // todo ":name" auflösen
         }
@@ -551,12 +538,7 @@ abstract class AbstractDatabase implements DatabaseContract
             }
         }
 
-        try {
-            $sth = $this->perform($statement, $bindings);
-        }
-        catch (PDOException $e) {
-            throw new QueryException($statement, $bindings, $this->dump($statement, $bindings, true), $e);
-        }
+        $sth = $this->perform($statement, $bindings);
 
         return $sth->rowCount();
     }

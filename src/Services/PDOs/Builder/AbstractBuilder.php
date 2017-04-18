@@ -117,15 +117,18 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     // todo union clause
 
     /**
-     * This words are Logical operators + "AS", "IS", "NULL", "TRUE, "FALSE", ASC" and "DESC.
      * Tables and fields with this name will not be quoted automatically.
      *
-     * @see https://www.w3schools.com/sql/sql_operators.asp)
+     * @see https://www.w3schools.com/sql/sql_operators.asp) Logical operators
      * @var array
      */
     protected static $keywords = [
-        'ALL', 'AND', 'ANY', 'AS', 'ASC', 'BETWEEN', 'DESC', 'EXISTS', 'FALSE', 'IN',
-        'IS', 'LIKE', 'NOT', 'NULL', 'OR', 'SOME', 'TRUE',
+        'ALL', 'AND', 'ANY', 'BETWEEN', 'EXISTS', 'IN', 'LIKE', 'NOT', 'OR', 'SOME',
+        'AS', // alias
+        'IS', 'NULL', 'TRUE', 'FALSE', // literal
+        //'MOD', 'DIV', //kein Standard, sollte nicht verwendet werden! (nur MySQL?)
+        'CASE', 'WHEN', 'THEN', 'ELSE', 'END', // if then else
+        'ASC', 'DESC', // ordering
     ];
 
 //    /**
@@ -209,7 +212,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      */
     public function select($columns, array $bindings = [])
     {
-        $this->columns = array_merge($this->columns, $this->compileColumns($columns));
+        $this->columns = array_merge($this->columns, $this->compileColumns($columns, 'select'));
         $this->putBindings('select', $bindings);
 
         return $this;
@@ -264,7 +267,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      */
     public function join($source, $on, $alias = null, array $bindings = [])
     {
-        return $this->joinTable('INNER', $source, $on, $alias);
+        return $this->joinTable('INNER', $source, $on, $alias, $bindings);
     }
 
     /**
@@ -272,7 +275,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      */
     public function leftJoin($source, $on, $alias = null, array $bindings = [])
     {
-        return $this->joinTable('LEFT', $source, $on, $alias);
+        return $this->joinTable('LEFT', $source, $on, $alias, $bindings);
     }
 
     /**
@@ -280,7 +283,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      */
     public function rightJoin($source, $on, $alias = null, array $bindings = [])
     {
-        return $this->joinTable('RIGHT', $source, $on, $alias);
+        return $this->joinTable('RIGHT', $source, $on, $alias, $bindings);
     }
 
     /**
@@ -295,7 +298,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      * @param array $bindings
      * @return $this
      */
-    protected function joinTable($type, $source, $on, $alias, array $bindings = [])
+    protected function joinTable($type, $source, $on, $alias, array $bindings)
     {
         if (is_callable($source)) {
             $source = $source(new static($this->db));
@@ -379,6 +382,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         }
 
         if ($query instanceof Builder) {
+            $this->putBindings('where', $query->bindings());
             $query = $query->toSql();
         }
 
@@ -407,6 +411,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         }
 
         if ($query instanceof Builder) {
+            $this->putBindings('where', $query->bindings());
             $query = $query->toSql();
         }
 
@@ -554,7 +559,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      */
     public function groupBy($columns, array $bindings = [])
     {
-        $this->groupBy = array_merge($this->groupBy, $this->compileColumns($columns));
+        $this->groupBy = array_merge($this->groupBy, $this->compileColumns($columns, 'group'));
         $this->putBindings('group', $bindings);
 
         return $this;
@@ -593,7 +598,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      */
     public function orderBy($columns, array $bindings = [])
     {
-        $this->orderBy = array_merge($this->orderBy, $this->compileColumns($columns));
+        $this->orderBy = array_merge($this->orderBy, $this->compileColumns($columns, 'order'));
         $this->putBindings('order', $bindings);
 
         return $this;
@@ -648,13 +653,21 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     public function bindings()
     {
         $bindings = [];
-        foreach (array_keys($bindings) as $clause) {
+        foreach (array_keys($this->bindings) as $clause) {
             if (!empty($this->bindings[$clause])) {
                 $bindings = array_merge($bindings, $this->bindings[$clause]);
             }
         }
 
         return $bindings;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function dump($return = null)
+    {
+        return $this->db->dump($this->toSql(), $this->bindings(), $return);
     }
 
     /**
@@ -779,9 +792,10 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      * Render the column list.
      *
      * @param string|array|Builder|\Closure $columns One or more columns or subquery.
+     * @param string $clause Key for the binding list: "select", "group" or "order"
      * @return array
      */
-    protected function compileColumns($columns)
+    protected function compileColumns($columns, $clause)
     {
         $list = [];
         foreach ((array)$columns as $alias => $column) {
@@ -796,6 +810,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
                 }
 
                 if ($column instanceof Builder) {
+                    $this->putBindings($clause, $column->bindings());
                     $column = $column->toSql();
                 }
 

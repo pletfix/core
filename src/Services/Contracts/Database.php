@@ -58,13 +58,10 @@ interface Database
     /**
      * Quotes a value for use in an SQL statement.
      *
-     * This differs from `PDO::quote()` in that it will convert an array into a string of comma-separated quoted values.
-     *
      * @param mixed $value The value to quote.
-     * @param int $type PDO type
      * @return string The quoted value.
      */
-    public function quote($value, $type = PDO::PARAM_STR);
+    public function quote($value);
 
     /**
      * Quotes a single identifier name (e.g. table, column or index name).
@@ -105,6 +102,18 @@ interface Database
      * @return array
      */
     public function errorInfo();
+
+    /**
+     * Dump SQL
+     *
+     * The function binds the given values to a SQL statement and print it out without executing.
+     *
+     * @param string $statement The SQL statement..
+     * @param array $bindings [optional] Values to bind to the statement
+     * @param bool|null $return [optional] If used and set to true, dump will return the variable representation instead of outputing it.
+     * @return string|null The SQL statement when the return parameter is true. Otherwise, this function will return null.
+     */
+    public function dump($statement, array $bindings = [], $return = null);
 
     /**
      * Execute a Closure within a transaction.

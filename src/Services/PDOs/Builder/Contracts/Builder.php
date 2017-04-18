@@ -38,9 +38,6 @@ interface Builder
      *
      * For computed columns, you should only use standard SQL operators and functions, so that the database drivers can
      * translate the expression correctly.
-     * @see https://www.w3schools.com/sql/sql_operators.asp Standard SQL Operators
-     * @see https://www.w3schools.com/sql/sql_functions.asp Standard SQL Aggregate Functions
-     * @see https://www.w3schools.com/sql/sql_isnull.asp Standard SQL NULL Functions
      *
      * Note, that subqueries are not quoted, because the Builder of the subquery should do this work.
      *
@@ -65,7 +62,11 @@ interface Builder
      * select(['c1' => 'column2 * ?'], [$foo])
      * </pre>
      *
-     * @param string|array|Builder|\Closure $columns One or more columns or subquery.
+     * @see https://www.w3schools.com/sql/sql_operators.asp Standard SQL Operators
+     * @see https://www.w3schools.com/sql/sql_functions.asp Standard SQL Aggregate Functions
+     * @see https://www.w3schools.com/sql/sql_isnull.asp Standard SQL NULL Functions
+     *
+     * @param string|array $columns One or more columns.
      * @param array $bindings
      * @return Builder
      */
@@ -114,9 +115,6 @@ interface Builder
      *
      * You should only use standard SQL operators and functions for the ON clause, so that the database drivers can
      * translate the expression correctly.
-     * @see https://www.w3schools.com/sql/sql_operators.asp Standard SQL Operators
-     * @see https://www.w3schools.com/sql/sql_functions.asp Standard SQL Aggregate Functions
-     * @see https://www.w3schools.com/sql/sql_isnull.asp Standard SQL NULL Functions
      *
      * Note, that subqueries are not quoted, because the Builder of the subquery should do this work.
      *
@@ -140,6 +138,10 @@ interface Builder
      * // from subquery with placeholders:
      * join($builder->from('table2')->where('column1 > ?'), 't1.id = t2.table1_id', 't2', [$foo])
      * </pre>
+     *
+     * @see https://www.w3schools.com/sql/sql_operators.asp Standard SQL Operators
+     * @see https://www.w3schools.com/sql/sql_functions.asp Standard SQL Aggregate Functions
+     * @see https://www.w3schools.com/sql/sql_isnull.asp Standard SQL NULL Functions
      *
      * @param string|Builder|\Closure $source A table name or a subquery.
      * @param string $on Join on this condition, e.g.: "foo.id = d.foo_id"
@@ -180,9 +182,6 @@ interface Builder
      *
      * You should only use standard SQL operators and functions, so that the database drivers can translate the
      * expression correctly.
-     * @see https://www.w3schools.com/sql/sql_operators.asp Standard SQL Operators
-     * @see https://www.w3schools.com/sql/sql_functions.asp Standard SQL Aggregate Functions
-     * @see https://www.w3schools.com/sql/sql_isnull.asp Standard SQL NULL Functions
      *
      * Note, that subqueries are not quoted, because the Builder of the subquery should do this work.
      *
@@ -192,6 +191,10 @@ interface Builder
      * where('column1 = (SELECT MAX(i) FROM table2 WHERE c1 = ?)', [$foo])
      * where(function(Builder $builder) { return $builder->where('c1 = ?')->orWhere('c2 = ?'); }, [$foo, $bar])
      * </pre>
+     *
+     * @see https://www.w3schools.com/sql/sql_operators.asp Standard SQL Operators
+     * @see https://www.w3schools.com/sql/sql_functions.asp Standard SQL Aggregate Functions
+     * @see https://www.w3schools.com/sql/sql_isnull.asp Standard SQL NULL Functions
      *
      * @param string|\Closure $condition
      * @param array $bindings
@@ -478,7 +481,7 @@ interface Builder
      * groupBy(['column1', 't2.column2'])
      * </pre>
      *
-     * @param string|array $columns The columns to group by.
+     * @param string|array $columns One or more columns to group by.
      * @param array $bindings
      * @return Builder
      */
@@ -555,6 +558,16 @@ interface Builder
      * @return array
      */
     public function bindings();
+
+    /**
+     * Dump SQL
+     *
+     * The function binds the given values to the query and print the SQL statement out without executing.
+     *
+     * @param bool|null $return [optional] If used and set to true, dump will return the variable representation instead of outputing it.
+     * @return string|null The SQL statement when the return parameter is true. Otherwise, this function will return null.
+     */
+    public function dump($return = null);
 
     /**
      * Execute the query as a "select" statement and returns the result.
