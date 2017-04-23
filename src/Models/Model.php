@@ -10,7 +10,7 @@ use Core\Services\PDOs\Builder\Contracts\Builder;
 
 /**
  * The basic functionality (attribute handling) was inspired by Laravel's Active Record called Eloquent.
- * The methods originalIsNumericallyEquivalent(), getTable(), replicate(), getDirty() and isDirty() are adapted from Laravel's Model class.
+ * The methods originalIsNumericallyEquivalent(), replicate(), getDirty() and isDirty() are adapted from Laravel's Model class.
  * The relationship methods based on CakePHP's ORM.
  *
  * @see https://github.com/illuminate/database/blob/5.3/Eloquent/Model.php Laravel's Model Class 5.3 on GitHub
@@ -128,6 +128,13 @@ class Model implements ModelContract
     protected $original = [];
 
     /**
+     * The loaded relationships for the model.
+     *
+     * @var array
+     */
+    protected $relations;
+
+    /**
      * Database Access Layer.
      *
      * @var Database
@@ -189,9 +196,7 @@ class Model implements ModelContract
     }
 
     /**
-     * Get all of the current attributes on the model.
-     *
-     * @return array
+     * @inheritdoc
      */
     public function getAttributes()
     {
@@ -199,11 +204,25 @@ class Model implements ModelContract
     }
 
     /**
-     * Get the model's original attribute values.
-     *
-     * @param string|null $name
-     * @_param mixed $default
-     * @return mixed|array
+     * @inheritdoc
+     */
+    public function getAttribute($name, $default = null)
+    {
+        return isset($this->attributes[$name]) ? $this->attributes[$name] : $default;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function setAttribute($name, $value)
+    {
+        $this->attributes[$name] = $value;
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
      */
     public function getOriginal($name = null) //, $default = null)
     {
@@ -217,9 +236,7 @@ class Model implements ModelContract
     }
 
     /**
-     * Get the attributes that have been changed since last save.
-     *
-     * @return array
+     * @inheritdoc
      */
     public function getDirty()
     {
@@ -235,12 +252,7 @@ class Model implements ModelContract
     }
 
     /**
-     * Determine if the model or given attribute(s) have been modified.
-     *
-     * If you omit the argument, all attributes are checked.
-     *
-     * @param  array|string|null $attributes
-     * @return bool
+     * @inheritdoc
      */
     public function isDirty($attributes = null)
     {
@@ -283,12 +295,10 @@ class Model implements ModelContract
     }
 
     ///////////////////////////////////////////////////////////////////
-    // CRUD
+    // Database Table Access
 
     /**
-     * Get the database.
-     *
-     * @return Database
+     * @inheritdoc
      */
     public function database()
     {
@@ -300,85 +310,254 @@ class Model implements ModelContract
     }
 
     /**
-     * Get the table associated with the model.
-     *
-     * @return string
+     * @inheritdoc
      */
     public function getTable() // todo evtl umbennene: "table()"
     {
         if (!isset($this->table)) {
-//            $baseClass = basename(str_replace('\\', '/', static::class));
-//            $this->table = snake_case(plural($baseClass));
             $this->table = snake_case(plural($this->getBaseClass()));
         }
 
-        return $this->table; // todo hier könnte direkt ein Tabellen-Objekt erzeugt werden
+        return $this->table;
     }
 
     /**
-     * Get the name of the primary key for the model's table.
-     *
-     * @return string
+     * @inheritdoc
      */
     public function getPrimaryKey() // todo evtl umbennene: "primaryKey()"
     {
         return $this->key;
     }
 
-    /**
-     * Find the model by id.
-     *
-     * @param int $id
-     * @return static
-     */
-    public static function find($id)
-    {
-        /** @var Model $model */
-        $model = new static;
-        $model->attributes = $model->database()->table($model->getTable())->find($id, $model->key);
-        $model->original = $model->attributes;
-
-        return $model;
-
-        // todo mit static properties ist das eleganter...
-        //return static::database()->find(static::getTable(), $id, static::$key, static::class);
-    }
+    ///////////////////////////////////////////////////////////////////
+    // Gets a Query Builder
 
     /**
      * Create a new QueryBuilder instance.
      *
      * @return Builder
      */
-    private function createBuilder()
+    protected function createBuilder()
     {
-        return $this->db->table($this->getTable())->select()->asClass(static::class);
+        return $this->database()->table($this->getTable())->asClass(static::class);
     }
 
     /**
-     * Selects records using a QueryBuilder.
-     *
-     * Multiple calls to select() will append to the list of columns, not overwrite the previous columns.
-     *
-     * @param string|array|Builder|\Closure $columns The columns or sub-select
-     * @param string|null $alias The alias name for the sub-select.
-     * @return Builder
+     * @inheritdoc
      */
-    public function select($columns = null, $alias = null)
+    public static function builder() // todo evtl umbenennen in query()
     {
-        $builder = $this->createBuilder();
-        if ($columns !== null) {
-            $builder->select($columns);
-        }
+        /** @var Model $model */
+        $model = new static;
 
-        return $builder;
+        return $model->database()->table($model->getTable())->asClass(static::class);
     }
 
-    // todo weitere Mehtoden des QueryBuilders adaptieren
+    /**
+     * @inheritdoc
+     */
+    public static function select($columns, array $bindings = [])
+    {
+        return static::builder()->select($columns, $bindings);
+    }
 
     /**
-     * Save the model to the database.
-     *
-     * @return $this
+     * @inheritdoc
+     */
+    public static function distinct()
+    {
+        return static::builder()->distinct();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function from($source, $alias = null, array $bindings = [])
+    {
+        return static::builder()->from($source, $alias, $bindings);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function join($source, $on, $alias = null, array $bindings = [])
+    {
+        return static::builder()->join($source, $on, $alias, $bindings);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function leftJoin($source, $on, $alias = null, array $bindings = [])
+    {
+        return static::builder()->leftJoin($source, $on, $alias, $bindings);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function rightJoin($source, $on, $alias = null, array $bindings = [])
+    {
+        return static::builder()->rightJoin($source, $on, $alias, $bindings);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function where($condition, array $bindings = [])
+    {
+        return static::builder()->where($condition, $bindings);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function whereIs($column, $value, $operator = '=')
+    {
+        return static::builder()->whereIs($column, $value, $operator);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function whereSubQuery($column, $query, $operator = '=', array $bindings = [])
+    {
+        return static::builder()->whereSubQuery($column, $query, $operator, $bindings);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function whereExists($query, array $bindings = [])
+    {
+        return static::builder()->whereExists($query, $bindings);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function whereNotExists($query, array $bindings = [])
+    {
+        return static::builder()->whereNotExists($query, $bindings);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function whereIn($column, array $values)
+    {
+        return static::builder()->whereIn($column, $values);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function whereNotIn($column, array $values)
+    {
+        return static::builder()->whereNotIn($column, $values);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function whereBetween($column, $lowest, $highest)
+    {
+        return static::builder()->whereBetween($column, $lowest, $highest);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function whereNotBetween($column, $lowest, $highest)
+    {
+        return static::builder()->whereBetween($column, $lowest, $highest);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function whereIsNull($column)
+    {
+        return static::builder()->whereIsNull($column);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function whereIsNotNull($column)
+    {
+        return static::builder()->whereIsNotNull($column);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function orderBy($columns, array $bindings = [])
+    {
+        return static::builder()->orderBy($columns, $bindings);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function limit($limit)
+    {
+        return static::builder()->limit($limit);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function offset($offset)
+    {
+        return static::builder()->offset($offset);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function find($id, $key = 'id')
+    {
+        return static::builder()->find($id, $key);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function all()
+    {
+        return static::builder()->all();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function cursor()
+    {
+        return static::builder()->cursor();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function first()
+    {
+        return static::builder()->first();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function count()
+    {
+        return static::builder()->count();
+    }
+
+    ///////////////////////////////////////////////////////////////////
+    // Modification Methods
+
+    /**
+     * @inheritdoc
      */
     public function save()
     {
@@ -390,11 +569,10 @@ class Model implements ModelContract
                 return $this;
             }
             $id = $this->original[$this->key];
-//            $this->database()->update($this->getTable(), $dirty, [$this->key => $id]);
-            $db->updateWhere($this->getTable(), $dirty, $db->quoteName($this->key) . ' = ?', [$id]);
+            $this->builder()->whereIs($this->key, $id)->update($dirty);
         }
         else {
-            $db->insert($this->table, $dirty);
+            $this->builder()->insert($dirty);
             $this->attributes[$this->key] = $db->lastInsertId();
         }
 
@@ -404,10 +582,7 @@ class Model implements ModelContract
     }
 
     /**
-     * Save a new model and return the instance.
-     *
-     * @param array $attributes
-     * @return static
+     * @inheritdoc
      */
     public static function create(array $attributes = [])
     {
@@ -424,20 +599,10 @@ class Model implements ModelContract
         $model->attributes = $attributes;
 
         return $model->save(); // todo performace testen, getDirty() wird in save aufgerufen, ist nicht notwendig.
-
-//        $db = $model->database();
-//        $db->insert($model->getTable(), $attributes);
-//        $model->attributes['id'] = $db->lastInsertId();
-//        $model->original = $model->attributes;
-//
-//        return $model;
     }
 
     /**
-     * Update the model in the database.
-     *
-     * @param array $attributes
-     * @return $this
+     * @inheritdoc
      */
     public function update(array $attributes = [])
     {
@@ -451,24 +616,16 @@ class Model implements ModelContract
         $this->attributes = array_merge($this->attributes, $attributes);
 
         return $this->save();
-
-//        $this->database()->update($this->getTable(), $attributes, ['id' => $this->attributes['id']]);
-//        $this->original = array_merge($this->original, $attributes);
-//
-//        return $this;
     }
 
     /**
-     * Delete the model from the database.
-     *
-     * @return $this
+     * @inheritdoc
      */
     public function delete()
     {
         $db = $this->database();
         $id = $this->original[$this->key];
-        //$db->delete($this->getTable(), [$this->key => $id]);
-        $db->deleteWhere($this->getTable(), $db->quoteName($this->key) . ' = ?', [$id]);
+        $this->builder()->whereIs($this->key, $id)->delete();
         unset($this->attributes[$this->key]); // todo oder null setzen?
         $this->original = [];
 
@@ -476,10 +633,7 @@ class Model implements ModelContract
     }
 
     /**
-     * Clone the model into a new, non-existing instance.
-     *
-     * @param array $except Attributes that will be not copied.
-     * @return $this
+     * @inheritdoc
      */
     public function replicate(array $except = [])
     {
@@ -501,9 +655,7 @@ class Model implements ModelContract
     // Mass Assignment Protection
 
 //    /**
-//     * Get the fillable attributes for the model.
-//     *
-//     * @return array
+//     * @inheritdoc
 //     */
 //    public function getFillable()
 //    {
@@ -516,9 +668,7 @@ class Model implements ModelContract
 //    }
 
     /**
-     * Get the guarded attributes for the model.
-     *
-     * @return array
+     * @inheritdoc
      */
     public function getGuarded()
     {
@@ -526,10 +676,7 @@ class Model implements ModelContract
     }
 
     /**
-     * Determine if the given attribute may be mass assigned.
-     *
-     * @param string|array $attribute Name of the attribute/attributes
-     * @return bool
+     * @inheritdoc
      */
     public function isFillable($attribute)
     {
@@ -563,7 +710,6 @@ class Model implements ModelContract
      */
     private function getForeignKey()
     {
-        //return snake_case(basename(str_replace('\\', '/', static::class))) . '_' . $this->key;
         return snake_case($this->getBaseClass()) . '_' . $this->key;
     }
 
@@ -575,8 +721,6 @@ class Model implements ModelContract
      */
     private function getJoiningTable($class)
     {
-//        $model1 = snake_case(basename(str_replace('\\', '/', static::class)));
-//        $model2 = snake_case(basename(str_replace('\\', '/', $class)));
         $model1 = snake_case($this->getBaseClass());
         $model2 = snake_case($this->getBaseClass($class));
         $models = [$model1, $model2];
@@ -586,148 +730,129 @@ class Model implements ModelContract
     }
 
     /**
-     * Define a one-to-one relationship.
-     *
-     * @param string $class Name of the related model.
-     * @param string|null $foreignKey Default: "&lt;this_model&gt;_id"
-     * @param string|null $localKey Default: "id" (the primary key of this model)
-     * @return Model  // todo Contract verwenden
+     * @inheritdoc
      */
     public function hasOne($class, $foreignKey = null, $localKey = null)
     {
         /** @var Model $model */
-        $model      = new $class;
-        $db         = $model->database();
-        $table      = $db->quoteName($model->getTable());
-        $foreignKey = $db->quoteName($foreignKey ?: $this->getForeignKey());
-        $id         = $this->attributes[$localKey ?: $this->key];
+        $model = new $class;
 
-        /** @noinspection SqlDialectInspection */
-        return $db->single("SELECT * FROM $table WHERE $foreignKey = ?", [$id], $class);
+        if ($foreignKey === null) {
+            $foreignKey = $this->getForeignKey();
+        }
+
+        if ($localKey === null) {
+            $localKey = $this->key;
+        }
+
+        return new HasOneRelation($this, $model->builder(), $foreignKey, $localKey);
     }
 
     /**
-     * Define a one-to-many relationship.
-     *
-     * @param string $class Name of the related model.
-     * @param string|null $foreignKey Default: "&lt;this_model&gt;_id"
-     * @param string|null $localKey Default: "id" (the primary key of this model)
-     * @return Model[] // todo Collection und Contract verwenden
+     * @inheritdoc
      */
     public function hasMany($class, $foreignKey = null, $localKey = null)
     {
         /** @var Model $model */
-        $model      = new $class;
-        $db         = $model->database();
-        $table      = $db->quoteName($model->getTable());
-        $foreignKey = $db->quoteName($foreignKey ?: $this->getForeignKey());
-        $id         = $this->attributes[$localKey ?: $this->key];
+        $model = new $class;
 
-        /** @noinspection SqlDialectInspection */
-        return $db->query("SELECT * FROM $table WHERE $foreignKey = ?", [$id], $class);
+        if ($foreignKey === null) {
+            $foreignKey = $this->getForeignKey();
+        }
+
+        if ($localKey === null) {
+            $localKey = $this->key;
+        }
+
+        return new HasManyRelation($this, $model->builder(), $foreignKey, $localKey);
     }
 
     /**
-     * Define inverse one-to-one or inverse one-to-many relationships.
-     *
-     * @param string $class Name of the related model.
-     * @param string|null $foreignKey Default: "&lt;related_model&gt;_id"
-     * @param string|null $otherKey Default: "id" (the primary key of the related model)
-     * @return Model  // todo Contract verwenden
+     * @inheritdoc
      */
     public function belongsTo($class, $foreignKey = null, $otherKey = null)
     {
         /** @var Model $model */
-        $model      = new $class;
-        $db         = $model->database();
-        $table      = $db->quoteName($model->getTable());
-        $otherKey   = $db->quoteName($otherKey ?: $model->key);
-        $id         = $this->attributes[$foreignKey ?: $model->getForeignKey()];
+        $model = new $class;
 
-        /** @noinspection SqlDialectInspection */
-        return $db->single("SELECT * FROM $table WHERE $otherKey = ?", [$id], $class);
+        if ($foreignKey === null) {
+            $foreignKey = $model->getForeignKey();
+        }
+
+        if ($otherKey === null) {
+            $otherKey = $model->key;
+        }
+
+        return new BelongsToRelation($this, $model->builder(), $foreignKey, $otherKey);
     }
 
     /**
-     * Define a many-to-many relationship.
-     *
-     * @param string $class Name of the related model.
-     * @param string|null $joiningTable Name of the joining table. Default: &lt;model1&gt;_&lt;model2&gt; (in alphabetical order of models)
-     * @param string|null $localForeignKey Default: "&lt;this_model&gt;_id"
-     * @param string|null $otherForeignKey Default: "&lt;related_model&gt;_id"
-     * @param string|null $localKey Default: "id" (the primary key of this model)
-     * @param string|null $otherKey Default: "id" (the primary key of the related model)
-     * @return Model[] // todo Collection und Contract verwenden
+     * @inheritdoc
      */
     public function belongsToMany($class, $joiningTable = null, $localForeignKey = null, $otherForeignKey = null, $localKey = null, $otherKey = null)
     {
         /** @var Model $model */
-        $model           = new $class;
-        $db              = $model->database();
-        $table           = $db->quoteName($model->getTable());
-        $joiningTable    = $db->quoteName($joiningTable ?: $this->getJoiningTable($class));
-        $localForeignKey = $db->quoteName($localForeignKey ?: $this->getForeignKey());
-        $otherForeignKey = $db->quoteName($otherForeignKey ?: $model->getForeignKey());
-        $otherKey        = $db->quoteName($otherKey ?: $model->key);
-        $id              = $this->attributes[$localKey ?: $this->key];
+        $model = new $class;
 
-        /** @noinspection SqlDialectInspection */
-        return $db->query("
-            SELECT * 
-            FROM $table 
-            WHERE $otherKey IN (
-              SELECT $otherForeignKey 
-              FROM $joiningTable 
-              WHERE $localForeignKey = ?
-            )
-            ", [$id], $class); // todo prüfen, ob es performanter geht (per join)
+        if ($joiningTable === null) {
+            $joiningTable = $this->getJoiningTable($class);
+        }
+
+        if ($localForeignKey === null) {
+            $localForeignKey = $this->getForeignKey();
+        }
+
+        if ($otherForeignKey === null) {
+            $otherForeignKey = $model->getForeignKey();
+        }
+
+        if ($localKey === null) {
+            $localKey = $this->key;
+        }
+
+        if ($otherKey === null) {
+            $otherKey = $model->key;
+        }
+
+        return new BelongsToManyRelation($this, $model->builder(), $joiningTable, $localForeignKey, $otherForeignKey, $localKey, $otherKey);
     }
 
     /**
-     * Define a polymorphic one-to-many relationship.
-     *
-     * @param string $class Name of the related model.
-     * @param string $prefix Prefix for the type attribute and foreign key
-     * @param string $typeAttribute Default: "&lt;prefix&gt;_type"
-     * @param string $foreignKey Default: "&lt;prefix&gt;_id"
-     * @return Model[] // todo Collection und Contract verwenden
+     * @inheritdoc
      */
     public function morphMany($class, $prefix, $typeAttribute = null, $foreignKey = null)
     {
         /** @var Model $model */
-        $model         = new $class;
-        $db            = $model->database();
-        $table         = $db->quoteName($model->getTable());
-        $typeAttribute = $db->quoteName($typeAttribute ?: $prefix . '_type');
-        $foreignKey    = $db->quoteName($foreignKey ?: $prefix . '_id');
-        $type          = static::class;
-        $id            = $this->attributes[$this->key];
+        $model = new $class;
 
-        /** @noinspection SqlDialectInspection */
-        return $db->query("SELECT * FROM $table WHERE $typeAttribute = ? AND $foreignKey = ?", [$type, $id], $class);
+        if ($typeAttribute === null) {
+            $typeAttribute = $prefix . '_type';
+        }
+
+        if ($foreignKey === null) {
+            $foreignKey = $prefix . '_id';
+        }
+
+        return new MorphManyRelation($this, $model->builder(), $typeAttribute, $foreignKey);
     }
 
     /**
-     * Define a polymorphic, inverse one-to-one or many relationship.
-     *
-     * @param string $prefix Prefix for the type attribute and foreign key
-     * @param string $typeAttribute Default: "&lt;prefix&gt;_type"
-     * @param string $foreignKey Default: "&lt;prefix&gt;_id"
-     * @return Model  // todo Contract verwenden
+     * @inheritdoc
      */
     public function morphTo($prefix, $typeAttribute = null, $foreignKey = null)
     {
         $class = $this->attributes[$typeAttribute ?: $prefix . '_type'];
 
         /** @var Model $model */
-        $model    = new $class;
-        $db       = $model->database();
-        $table    = $db->quoteName($model->getTable());
-        $otherKey = $db->quoteName($model->key);
-        $id       = $this->attributes[$foreignKey ?: $prefix . '_id'];
+        $model = new $class;
 
-        /** @noinspection SqlDialectInspection */
-        return $db->single("SELECT * FROM $table WHERE $otherKey = ?", [$id], $class);
+        if ($foreignKey === null) {
+            $foreignKey = $prefix . '_id';
+        }
+
+        $otherKey = $model->getPrimaryKey();
+
+        return new BelongsToRelation($this, $model->builder(), $foreignKey, $otherKey);
     }
 
     ///////////////////////////////////////////////////////////////////

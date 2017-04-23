@@ -5,13 +5,18 @@ namespace Core\Services\PDOs\Builder;
 use Core\Services\Contracts\Database;
 use Core\Services\PDOs\Builder\Contracts\Builder as BuilderContract;
 use Core\Services\PDOs\Builder\Contracts\Builder;
+use InvalidArgumentException;
 
 /**
  * Abstract Query Builder
  *
  * The class based on the Aura's QueryFactory (https://github.com/auraphp/Aura.SqlQuery/blob/3.x/LICENSE BSD 2-clause "Simplified" License)
+ * and the Laravel's QueryBuilder (https://github.com/laravel/laravel MIT License).
+ * The insert, update and delete methods were inspired by the CakePHP's Database Library.
  *
  * @see https://github.com/auraphp/Aura.SqlQuery Aura.SqlQuery
+ * @see https://github.com/illuminate/database/blob/5.3/Query/Builder.php Laravel's Query Builder on GitHub
+ * @see https://github.com/cakephp/database/tree/3.2 CakePHP's Database Library
  */
 abstract class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilder!
 {
@@ -20,7 +25,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      *
      * @var Database
      */
-    protected $db;
+    protected $db; // todo evtl getter anbieten
 
     /**
      * Name of the class where the data are mapped to.
@@ -34,7 +39,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      *
      * @var array
      */
-    protected $flags = []; // todo evtl ditinct als boolean verwednen
+    protected $flags = []; // todo evtl ditinct als boolean verwenden
 
     /**
      * Selected columns
@@ -131,6 +136,8 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         'ASC', 'DESC', // ordering
     ];
 
+    // todo PostgreSQL: ILIKE und CURRENT_DATE hinzufügen
+
 //    /**
 //     * All of the available clause operators.
 //     *
@@ -205,6 +212,14 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         $this->class = $class;
 
         return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getClass()
+    {
+        return $this->class;
     }
 
     /**
@@ -673,6 +688,19 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     /**
      * @inheritdoc
      */
+    public function find($id, $key = 'id')
+    {
+        $columns = !empty($this->columns) ? implode(', ', $this->columns) : '*';
+        $table   = implode(', ', $this->from);
+        $key     = $this->db->quoteName($key);
+
+        /** @noinspection SqlDialectInspection */
+        return $this->db->single("SELECT $columns FROM $table WHERE $key = ?", [$id], $this->class);
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function all()
     {
         $result = $this->db->query($this->toSql(), $this->bindings(), $this->class);
@@ -710,12 +738,86 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         return $result;
     }
 
+    ///////////////////////////////////////////////////////////////////
+    // Aggregate Functions
+
+    /**
+     * @inheritdoc
+     */
+    public function count()
+    {
+        $query = 'SELECT COUNT(' . $this->buildFlags() . $this->buildColumns() . ')'
+            . $this->buildFrom()
+            . $this->buildJoin()
+            . $this->buildWhere()
+            . $this->buildGroupBy()
+            . $this->buildHaving()
+            . $this->buildOrderBy()
+            . $this->buildLimit();
+
+        $result = $this->db->scalar($query, $this->bindings());
+
+        return $result;
+    }
+
+    // todo avg($column), sum($count), etc
+
+    ///////////////////////////////////////////////////////////////////
+    // Modification Methods
+
+    /**
+     * @inheritdoc
+     */
+    public function insert(array $data)
+    {
+        if (empty($data)) {
+            throw new InvalidArgumentException('Cannot insert an empty record.');
+        }
+
+        $table = implode(', ', $this->from);
+
+        if (is_string(key($data))) {
+            // single record will be inserted
+            $columns  = implode(', ', array_map([$this->db, 'quoteName'], array_keys($data)));
+            $params   = implode(', ', array_fill(0, count($data), '?'));
+            $bindings = array_values($data);
+        }
+        else {
+            // Bulk insert...
+            $keys = [];
+            foreach ($data as $row) {
+                $keys = array_merge($keys, $row);
+            }
+            $keys     = array_keys($keys);
+            $columns  = implode(', ', array_map([$this->db, 'quoteName'], $keys));
+            $params   = implode(', ', array_fill(0, count($keys), '?'));
+            $bindings = [];
+            $temp     = [];
+            foreach ($data as $i => $row) {
+                foreach ($keys as $key) {
+                    $bindings[] = isset($row[$key]) ? $row[$key] : null;
+                }
+                $temp[] = $params;
+            }
+            $params = implode('), (', $temp);
+        }
+
+        /** @noinspection SqlDialectInspection */
+        $this->db->exec("INSERT INTO $table ($columns) VALUES ($params)", $bindings);
+
+        return $this->db->lastInsertId();
+    }
+
     /**
      * @inheritdoc
      */
     public function update(array $data)
     {
-        $bindings = array_merge($this->bindings['join'], $this->bindings['where']);
+        if (empty($data)) {
+            throw new InvalidArgumentException('Cannot update an empty record.');
+        }
+
+        $bindings = array_merge($this->bindings['join'], $this->bindings['where'], $this->bindings['order']);
         $settings = [];
         $values   = [];
         if (empty($bindings) || is_int(key($bindings))) { // Prevent PDO-Error: "Invalid parameter number: mixed named and positional parameters"
@@ -741,7 +843,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         }
 
         $from     = ' ' . implode(', ', $this->from);
-        $bindings = array_merge($this->bindings['join'], $values, $this->bindings['where']);
+        $bindings = array_merge($this->bindings['join'], $values, $this->bindings['where'], $this->bindings['order']);
         $settings = ' SET ' . implode(', ', $settings);
 
         $query = 'UPDATE'
@@ -760,7 +862,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      */
     public function delete()
     {
-        $bindings = array_merge($this->bindings['join'], $this->bindings['where']);
+        $bindings = array_merge($this->bindings['join'], $this->bindings['where'], $this->bindings['order']);
 
         $query = 'DELETE'
             . $this->buildFrom()
@@ -770,6 +872,16 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
             . $this->buildLimit();
 
         return $this->db->exec($query, $bindings);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function truncate()
+    {
+        $table = implode(', ', $this->from);
+
+        $this->db->exec("TRUNCATE TABLE $table");
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -882,8 +994,8 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
                                 $c = $ch == '[' ? ']' : $ch;
                                 while (++$i < $n && $expr[$i] != $c);
                             }
-                            else if ($ch == '-' && $i + 1 < $n && $expr[$i + 1] == '-') { // comment
-                                ++$i;
+                            else if ($ch == '-' && $i + 2 < $n && $expr[$i + 1] == '-' && $expr[$i + 2] == ' ') { // comment
+                                $i += 2;
                                 while (++$i < $n && $expr[$i] != PHP_EOL);
                             }
                         }
@@ -928,8 +1040,8 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
                             $c = $ch == '[' ? ']' : $ch;
                             while (++$i < $n && $expr[$i] != $c);
                         }
-                        else if ($ch == '-' && $i + 1 < $n && $expr[$i + 1] == '-') { // comment
-                            ++$i;
+                        else if ($ch == '-' && $i + 2 < $n && $expr[$i + 1] == '-' && $expr[$i + 2] == ' ') { // comment
+                            $i += 2;
                             while (++$i < $n && $expr[$i] != PHP_EOL);
                         }
                     }
@@ -940,8 +1052,8 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
                 while (++$i < $n && $expr[$i] != $c);
                 ++$i;
             }
-            else if ($ch == '-' && $i + 1 < $n && $expr[$i + 1] == '-') { // comment
-                ++$i;
+            else if ($ch == '-' && $i + 2 < $n && $expr[$i + 1] == '-' && $expr[$i + 2] == ' ') { // comment
+                $i += 2;
                 while (++$i < $n && $expr[$i] != PHP_EOL);
                 ++$i;
             }

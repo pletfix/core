@@ -1,100 +1,28 @@
 <?php
 
-namespace Core\Services\PDOs\Tables\Contracts;
+namespace Core\Models\Contracts;
+
 use Core\Services\PDOs\Builder\Contracts\Builder;
 use Countable;
 
 /**
- * Database Table
+ * Entity Relation
  */
-interface Table extends Countable //extends ArrayAccess, Arrayable, Countable, IteratorAggregate, Jsonable, JsonSerializable
+interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable, IteratorAggregate, Jsonable, JsonSerializable
 {
     /**
-     * Execute the query as a "select" statement and returns the result.
+     * Get the results of the relationship.
      *
-     * @param string|null $class Name of the class where the data are mapped to
-     * @return array
-     */
-    public function all($class = null);
-
-    /**
-     * Execute the query as a "SELECT" statement and returns a generator.
-     *
-     * With the cursor you could iterate the rows (via foreach) without fetch all the data at one time.
-     * This method is useful to handle big data.
-     *
-     * @param string|null $class Name of the class where the data are mapped to
      * @return mixed
      */
-    public function cursor($class = null);
+    public function get();
 
     /**
-     * Execute the query as a "SELECT" statement and returns the first record.
+     * Get the QueryBuilder instance.
      *
-     * @param string|null $class Name of the class where the data are mapped to
-     * @return mixed
-     */
-    public function first($class = null);
-
-    /**
-     * Find a single record by the primary key of the table.
-     *
-     * @param int $id Value of the primary Key
-     * @param string $key Name of the primary Key
-     * @param string|null $class Name of the class where the data are mapped to
-     * @return mixed
-     */
-    public function find($id, $key = 'id', $class = null);
-
-    /**
-     * Count the number of records in the table.
-     *
-     * @return int
-     */
-    public function count();
-
-    /**
-     * Insert rows to the table and returns the inserted autoincrement sequence value.
-     *
-     * If you insert multiple rows, the method returns dependency of the driver the first or last inserted row.
-     *
-     * @param array $data Values to be updated
-     * @return int
-     */
-    public function insert(array $data);
-
-    /**
-     * Update the table with th given data and returns the number of affected rows.
-     *
-     * @param array $data Values to be updated
-     * @return int
-     */
-    public function update(array $data);
-
-    /**
-     * Delete rows from the table and returns the number of affected rows.
-     *
-     * @return int
-     */
-    public function delete();
-
-    /**
-     * Truncate the table.
-     */
-    public function truncate();
-
-    ///////////////////////////////////////////////////////////////////
-    // Gets a Query Builder
-
-    /**
-     * Set the name of the class where the data are mapped to.
-     *
-     * if null is passed, the data will be returned as an array (the default).
-     *
-     * @param string|null $class
      * @return Builder
      */
-    public function asClass($class);
+    public function builder();
 
     /**
      * Adds columns to the query.
@@ -430,4 +358,60 @@ interface Table extends Countable //extends ArrayAccess, Arrayable, Countable, I
      * @return Builder
      */
     public function offset($offset);
+
+    /**
+     * Execute the query as a "select" statement and return the result.
+     *
+     * @return array
+     */
+    public function all();
+
+    /**
+     * Execute the query as a "SELECT" statement and return a generator.
+     *
+     * With the cursor you could iterate the rows (via foreach) without fetch all the data at one time.
+     * This method is useful to handle big data.
+     *
+     * @return mixed
+     */
+    public function cursor();
+
+    /**
+     * Execute the query as a "SELECT" statement and return the first record.
+     *
+     * @return mixed
+     */
+    public function first();
+
+    /**
+     * Count the number of records in the table.
+     *
+     * @return int
+     */
+    public function count();
+
+    /**
+     * Insert rows to the table and returns the inserted autoincrement sequence value.
+     *
+     * If you insert multiple rows, the method returns dependency of the driver the first or last inserted row.
+     *
+     * @param array $data Values to be updated
+     * @return int
+     */
+    public function insert(array $data);
+
+    /**
+     * Update all records of the relation with th given data and return the number of affected rows.
+     *
+     * @param array $data Values to be updated
+     * @return int
+     */
+    public function update(array $data);
+
+    /**
+     * Delete all records of the relation and return the number of affected rows.
+     *
+     * @return int
+     */
+    public function delete();
 }

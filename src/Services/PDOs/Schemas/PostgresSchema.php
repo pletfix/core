@@ -607,6 +607,7 @@ class PostgresSchema extends AbstractSchema
                 return 'string';
 
             case 'TEXT':
+            case 'CITEXT': // todo testen, see https://www.postgresql.org/docs/current/static/citext.html
                 return 'text';
 
             case 'UUID':

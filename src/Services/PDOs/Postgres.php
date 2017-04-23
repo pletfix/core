@@ -5,7 +5,6 @@ namespace Core\Services\PDOs;
 use Core\Services\AbstractDatabase;
 use Core\Services\PDOs\Builder\PostgresBuilder;
 use Core\Services\PDOs\Schemas\PostgresSchema;
-use Core\Services\PDOs\Tables\PostgresTable;
 use PDO;
 
 /**
@@ -42,14 +41,6 @@ class Postgres extends AbstractDatabase
     /**
      * @inheritdoc
      */
-    public function createBuilder()
-    {
-        return new PostgresBuilder($this);
-    }
-
-    /**
-     * @inheritdoc
-     */
     protected function createSchema()
     {
         return new PostgresSchema($this);
@@ -58,9 +49,9 @@ class Postgres extends AbstractDatabase
     /**
      * @inheritdoc
      */
-    protected function createTable($name)
+    protected function createBuilder()
     {
-        return new PostgresTable($this, $name);
+        return new PostgresBuilder($this);
     }
 
     /**

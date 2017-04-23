@@ -3,13 +3,10 @@
 namespace Core\Services\Contracts;
 
 use Closure;
-use Core\Models\Contracts\Model;
 use Core\Services\PDOs\Builder\Contracts\Builder;
 use Core\Services\PDOs\Schemas\Contracts\Schema;
-use Core\Services\PDOs\Tables\Contracts\Table;
 use Exception;
 use Generator;
-use PDO;
 
 /**
  * Database Access Layer
@@ -25,13 +22,6 @@ interface Database
     public function config($key = null);
 
     /**
-     * Create a new QueryBuilder instance.
-     *
-     * @return Builder
-     */
-    public function createBuilder();
-
-    /**
      * Gets the database schema.
      *
      * @return Schema
@@ -39,12 +29,20 @@ interface Database
     public function schema();
 
     /**
-     * Gets the database table.
+     * Create a new QueryBuilder instance.
+     *
+     * @return Builder
+     */
+    public function builder();
+
+    /**
+     * Gets the QueryBuilder for the given table.
      *
      * @param string $name Name of the table
-     * @return Table
+     * @param string|null $alias [optional] The alias name for the table.
+     * @return Builder
      */
-    public function table($name);
+    public function table($name, $alias = null);
 
     /**
      * Return server version.

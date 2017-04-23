@@ -5,8 +5,8 @@ namespace Core\Services;
 use Closure;
 use Core\Exceptions\QueryException;
 use Core\Services\Contracts\Database as DatabaseContract;
+use Core\Services\PDOs\Builder\Contracts\Builder;
 use Core\Services\PDOs\Schemas\Contracts\Schema;
-use Core\Services\PDOs\Tables\Contracts\Table;
 use DateTimeInterface;
 use Exception;
 use PDO;
@@ -19,11 +19,9 @@ use Throwable;
  *
  * The basic methods as perform(), exec() and quote() based on Aura.Sql Extended PDO.
  * The Transaction Handling and cursor() based on Laravel's Connection Class 5.3.
- * The insert, update and delete methods were inspired by the CakePHP's Database Library.
  *
  * @see https://github.com/auraphp/Aura.Sql/blob/3.x/src/AbstractExtendedPdo.php Aura.Sql Extended PDO on GitHub
  * @see https://github.com/illuminate/database/blob/5.3/Connection.php Laravel's Connection Class 5.3 on GitHub
- * @see https://github.com/cakephp/database/tree/3.2 CakePHP's Database Library
  * @see http://php.net/manual/en/class.pdo.php The PDO class
  * @see http://php.net/manual/en/class.pdostatement.php The PDOStatement class
  * @see https://phpdelusions.net/pdo#query PDO Tutorial
@@ -51,13 +49,6 @@ abstract class AbstractDatabase implements DatabaseContract
      * @var Schema
      */
     protected $schema;
-
-    /**
-     * Database Tables
-     *
-     * @var Table[]
-     */
-    protected $tables;
 
     /**
      * The number of active transactions.
@@ -108,11 +99,6 @@ abstract class AbstractDatabase implements DatabaseContract
     /**
      * @inheritdoc
      */
-    abstract public function createBuilder();
-
-    /**
-     * @inheritdoc
-     */
     public function schema()
     {
         if ($this->schema === null) {
@@ -132,22 +118,25 @@ abstract class AbstractDatabase implements DatabaseContract
     /**
      * @inheritdoc
      */
-    public function table($name)
+    public function builder()
     {
-        if (!isset($this->tables[$name])) {
-            $this->tables[$name] = $this->createTable($name);
-        }
-
-        return $this->tables[$name];
+        return $this->createBuilder();
     }
 
     /**
-     * Make a new Table instance.
-     *
-     * @param string $name Table name
-     * @return Table
+     * @inheritdoc
      */
-    abstract protected function createTable($name);
+    public function table($name, $alias = null)
+    {
+        return $this->createBuilder()->from($name, $alias);
+    }
+
+    /**
+     * Create a new QueryBuilder instance.
+     *
+     * @return Builder
+     */
+    abstract protected function createBuilder();
 
     /**
      * @inheritdoc

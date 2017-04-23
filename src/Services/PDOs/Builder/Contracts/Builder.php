@@ -2,10 +2,14 @@
 
 namespace Core\Services\PDOs\Builder\Contracts;
 
+use Core\Services\Contracts\Database;
+use Core\Services\PDOs\Tables\Contracts\Table;
+use Countable;
+
 /**
  * Query Builder
  */
-interface Builder
+interface Builder extends Countable
 {
     /**
      * Reset the query.
@@ -30,6 +34,13 @@ interface Builder
      * @return Builder
      */
     public function asClass($class);
+
+    /**
+     * Get the Class;
+     *
+     * @return string
+     */
+    public function getClass();
 
     /**
      * Adds columns to the query.
@@ -570,7 +581,16 @@ interface Builder
     public function dump($return = null);
 
     /**
-     * Execute the query as a "select" statement and returns the result.
+     * Find a single record by the primary key of the table.
+     *
+     * @param int $id Value of the primary Key
+     * @param string $key Name of the primary Key
+     * @return mixed
+     */
+    public function find($id, $key = 'id');
+
+    /**
+     * Execute the query as a "select" statement and return the result.
      *
      * @return array
      */
@@ -587,21 +607,38 @@ interface Builder
     public function cursor();
 
     /**
-     * Execute the query as a "SELECT" statement and returns the first record.
+     * Execute the query as a "SELECT" statement and return the first record.
      *
      * @return mixed
      */
     public function first();
 
     /**
-     * Execute the query as a "SELECT" statement and returns a single column's value from the first record.
+     * Execute the query as a "SELECT" statement and return a single column's value from the first record.
      *
      * @return mixed
      */
     public function value();
 
     /**
-     * Update the table with th given data and returns the number of affected rows.
+     * Count the number of the records.
+     *
+     * @return int
+     */
+    public function count();
+
+    /**
+     * Insert rows to the table and returns the inserted autoincrement sequence value.
+     *
+     * If you insert multiple rows, the method returns dependency of the driver the first or last inserted row.
+     *
+     * @param array $data Values to be updated
+     * @return int
+     */
+    public function insert(array $data);
+
+    /**
+     * Update all records of the query result with th given data and return the number of affected rows.
      *
      * @param array $data Values to be updated
      * @return int
@@ -609,9 +646,14 @@ interface Builder
     public function update(array $data);
 
     /**
-     * Delete rows from the table and returns the number of affected rows.
+     * Delete all records of the query result and return the number of affected rows.
      *
      * @return int
      */
     public function delete();
+
+    /**
+     * Truncate the table.
+     */
+    public function truncate();
 }
