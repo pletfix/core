@@ -2,6 +2,7 @@
 
 namespace Core\Models\Contracts;
 
+use Closure;
 use Core\Services\PDOs\Builder\Contracts\Builder;
 use Countable;
 
@@ -11,11 +12,41 @@ use Countable;
 interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable, IteratorAggregate, Jsonable, JsonSerializable
 {
     /**
-     * Get the results of the relationship.
+     * Run a callback with constraints disabled on the relation.
+     *
+     * @param Closure $callback
+     * @return mixed
+     */
+    public static function noConstraints(Closure $callback);
+
+    /**
+     * Add the constraints for an eager loading of the relation.
+     *
+     * @param Model[] $entities
+     * @return Builder
+     */
+    public function addEagerConstraints(array $entities);
+
+    /**
+     * Get the entities of the relationship.
      *
      * @return mixed
      */
     public function get();
+
+    /**
+     * Eager load the entities of the relationship.
+     *
+     * @return array
+     */
+    public function getEager();
+
+    /**
+     * Get the local model.
+     *
+     * @return Model
+     */
+    public function model();
 
     /**
      * Get the QueryBuilder instance.

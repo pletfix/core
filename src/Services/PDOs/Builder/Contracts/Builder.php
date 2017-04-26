@@ -43,6 +43,16 @@ interface Builder extends Countable
     public function getClass();
 
     /**
+     * Get the entities of given relationship via eager loading.
+     *
+     * Note that a class, that provides the given relationship method, must be specified.
+     *
+     * @param array|string $method
+     * @return $this
+     */
+    public function with($method);
+
+    /**
      * Adds columns to the query.
      *
      * Multiple calls to select() will append to the list of columns, not overwrite the previous columns.
@@ -120,6 +130,13 @@ interface Builder extends Countable
      * @return Builder
      */
     public function from($source, $alias = null, array $bindings = []);
+
+    /**
+     * Get the name of the table if specify.
+     *
+     * @return string|null
+     */
+    public function getTable();
 
     /**
      * Adds a INNER JOIN clause to the query.

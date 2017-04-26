@@ -7,6 +7,7 @@ use Core\Models\Contracts\Model as ModelContract;
 use Core\Services\Contracts\Database;
 use Core\Services\DI;
 use Core\Services\PDOs\Builder\Contracts\Builder;
+use LogicException;
 
 /**
  * The basic functionality (attribute handling) was inspired by Laravel's Active Record called Eloquent.
@@ -132,7 +133,7 @@ class Model implements ModelContract
      *
      * @var array
      */
-    protected $relations;
+    protected $relations = []; // todo Name ist irreführend, da hier die geladenen Entities abgelegt werden, nicht aber Relation Objekte
 
     /**
      * Database Access Layer.
@@ -160,7 +161,7 @@ class Model implements ModelContract
      */
     public function __get($name)
     {
-        return $this->attributes[$name];
+        return $this->getAttribute($name);
     }
 
     /**
@@ -171,7 +172,7 @@ class Model implements ModelContract
      */
     public function __set($name, $value)
     {
-        $this->attributes[$name] = $value;
+        $this->setAttribute($name, $value);
     }
 
     /**
@@ -182,7 +183,7 @@ class Model implements ModelContract
      */
     public function __isset($name)
     {
-        return isset($this->attributes[$name]);
+        return $this->getAttribute($name) !== null;
     }
 
     /**
@@ -192,7 +193,7 @@ class Model implements ModelContract
      */
     public function __unset($name)
     {
-        unset($this->attributes[$name]);
+        unset($this->attributes[$name], $this->relations[$name]);
     }
 
     /**
@@ -206,9 +207,36 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public function getAttribute($name, $default = null)
+    public function getAttribute($name)
     {
-        return isset($this->attributes[$name]) ? $this->attributes[$name] : $default;
+        if (array_key_exists($name, $this->attributes)) { // || $this->hasGetMutator($key)) {
+            return isset($this->attributes[$name]) ? $this->attributes[$name] : null;
+        }
+
+        // Prevent the magic invocation of methods of this base class.
+        if (method_exists(self::class, $name)) {
+            return null;
+        }
+
+        // If the key already exists in the relationships array, it just means the relationship has already been loaded,
+        // so we'll just return it out of here because there is no need to query within the relations twice.
+        if (array_key_exists($name, $this->relations)) {
+            return $this->relations[$name];
+        }
+
+        // If the "attribute" exists as a method on the model, we will just assume it is a relationship and will load
+        // and return results from the query and hydrate the relationship's value on the "relationships" array.
+        if (method_exists($this, $name)) {
+            $relation = $this->$name();
+            if (!$relation instanceof Relation) {
+                throw new LogicException('Relationship method "' . $name . '" must return an object of type Core\Models\Contracts\Relation.');
+            }
+            $result = $results = $relation->get();
+            $this->setRelation($name, $result);
+            return $results;
+        }
+
+        return null;
     }
 
     /**
@@ -231,8 +259,6 @@ class Model implements ModelContract
         }
 
         return $this->original[$name];
-//
-//        return isset($this->original[$name]) ? $this->original[$name] : $default;
     }
 
     /**
@@ -329,6 +355,14 @@ class Model implements ModelContract
         return $this->key;
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function getId()
+    {
+        return isset($this->attributes[$this->key]) ? $this->attributes[$this->key] : null;
+    }
+
     ///////////////////////////////////////////////////////////////////
     // Gets a Query Builder
 
@@ -351,6 +385,14 @@ class Model implements ModelContract
         $model = new static;
 
         return $model->database()->table($model->getTable())->asClass(static::class);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function with($method)
+    {
+        return static::builder()->with($method);
     }
 
     /**
@@ -623,7 +665,6 @@ class Model implements ModelContract
      */
     public function delete()
     {
-        $db = $this->database();
         $id = $this->original[$this->key];
         $this->builder()->whereIs($this->key, $id)->delete();
         unset($this->attributes[$this->key]); // todo oder null setzen?
@@ -693,6 +734,16 @@ class Model implements ModelContract
     // Relationships
 
     /**
+     * @inheritdoc
+     */
+    public function setRelationEntities($name, $entities)
+    {
+        $this->relations[$name] = $entities;
+
+        return $this;
+    }
+
+    /**
      * Get the basename of class.
      *
      * @param string|null $class
@@ -714,12 +765,12 @@ class Model implements ModelContract
     }
 
     /**
-     * Get the joining table name for a many-to-many relation.
+     * Get the join table name for a many-to-many relation.
      *
      * @param string $class
      * @return string
      */
-    private function getJoiningTable($class)
+    private function getJoinTable($class)
     {
         $model1 = snake_case($this->getBaseClass());
         $model2 = snake_case($this->getBaseClass($class));
@@ -789,13 +840,13 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public function belongsToMany($class, $joiningTable = null, $localForeignKey = null, $otherForeignKey = null, $localKey = null, $otherKey = null)
+    public function belongsToMany($class, $joinTable = null, $localForeignKey = null, $otherForeignKey = null, $localKey = null, $otherKey = null)
     {
         /** @var Model $model */
         $model = new $class;
 
-        if ($joiningTable === null) {
-            $joiningTable = $this->getJoiningTable($class);
+        if ($joinTable === null) {
+            $joinTable = $this->getJoinTable($class);
         }
 
         if ($localForeignKey === null) {
@@ -814,7 +865,7 @@ class Model implements ModelContract
             $otherKey = $model->key;
         }
 
-        return new BelongsToManyRelation($this, $model->builder(), $joiningTable, $localForeignKey, $otherForeignKey, $localKey, $otherKey);
+        return new BelongsToManyRelation($this, $model->builder(), $joinTable, $localForeignKey, $otherForeignKey, $localKey, $otherKey);
     }
 
     /**
@@ -889,132 +940,94 @@ class Model implements ModelContract
     // todo
 
     ///////////////////////////////////////////////////////////////////
-    // Arrayable, Countable and Jsonable Implementation
+    // Arrayable, Jsonable and JsonSerializable Implementation
 
-//    /**
-//     * Convert the model to its string representation.
-//     *
-//     * @return string
-//     */
-//    public function __toString()
-//    {
-//        return $this->toJson();
-//    }
-//
-//    /**
-//     * Convert the model instance to an array.
-//     *
-//     * @return array
-//     */
-//    public function toArray()
-//    {
-//        $attributes = $this->attributesToArray();
-//
-//        return array_merge($attributes, $this->relationsToArray());
-//    }
-//
-//    /**
-//     * Count the number of entities.
-//     *
-//     * @return int
-//     */
-//    public function count()
-//    {
-//        return count($this->items); //todo
-//    }
-//
-//    /**
-//     * Convert the model instance to JSON.
-//     *
-//     * @param  int  $options
-//     * @return string
-//     */
-//    public function toJson($options = 0)
-//    {
-//        return json_encode($this->jsonSerialize(), $options);
-//    }
-//
-//    /**
-//     * ----------------------------------------------------------------
-//     * ArrayAccess Implementation
-//     * ----------------------------------------------------------------
-//     */
-//
-//    /**
-//     * Determine if the given attribute exists.
-//     *
-//     * @param  mixed  $offset
-//     * @return bool
-//     */
-//    public function offsetExists($offset)
-//    {
-//        return isset($this->$offset);
-//    }
-//
-//    /**
-//     * Get the value for a given offset.
-//     *
-//     * @param  mixed  $offset
-//     * @return mixed
-//     */
-//    public function offsetGet($offset)
-//    {
-//        return $this->$offset;
-//    }
-//
-//    /**
-//     * Set the value for a given offset.
-//     *
-//     * @param  mixed  $offset
-//     * @param  mixed  $value
-//     * @return void
-//     */
-//    public function offsetSet($offset, $value)
-//    {
-//        $this->$offset = $value;
-//    }
-//
-//    /**
-//     * Unset the value for a given offset.
-//     *
-//     * @param  mixed  $offset
-//     * @return void
-//     */
-//    public function offsetUnset($offset)
-//    {
-//        unset($this->$offset);
-//    }
-//
-//    /**
-//     * ----------------------------------------------------------------
-//     * IteratorAggregate Implementation
-//     * ----------------------------------------------------------------
-//     */
-//
-//    /**
-//     * Get an iterator for the items.
-//     *
-//     * @return \ArrayIterator
-//     */
-//    public function getIterator()
-//    {
-//        return new ArrayIterator([]); // todo
-//    }
-//
-//    /**
-//     * ----------------------------------------------------------------
-//     *  JsonSerializable Implementation
-//     * ----------------------------------------------------------------
-//     */
-//
-//    /**
-//     * Convert the object into something JSON serializable.
-//     *
-//     * @return array
-//     */
-//    public function jsonSerialize()
-//    {
-//        return $this->toArray();
-//    }
+    /**
+     * Convert the model to its string representation.
+     *
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->toJson();
+    }
 
+    /**
+     * Convert the model instance to an array.
+     *
+     * @return array
+     */
+    public function toArray() // todo zu naiv? Vergleiche Eloquent\Model@toArray()
+    {
+        return array_merge($this->attributes, $this->relations);
+    }
+
+    /**
+     * Convert the model instance to JSON.
+     *
+     * @param  int  $options
+     * @return string
+     */
+    public function toJson($options = 0)
+    {
+        return json_encode($this->jsonSerialize(), $options);
+    }
+
+    /**
+     * Convert the object into something JSON serializable.
+     *
+     * @return array
+     */
+    public function jsonSerialize()
+    {
+        return $this->toArray();
+    }
+
+    ///////////////////////////////////////////////////////////////////
+    // ArrayAccess Implementation
+
+    /**
+     * Determine if the given attribute exists.
+     *
+     * @param  mixed  $offset
+     * @return bool
+     */
+    public function offsetExists($offset)
+    {
+        return isset($this->$offset);
+    }
+
+    /**
+     * Get the value for a given offset.
+     *
+     * @param  mixed  $offset
+     * @return mixed
+     */
+    public function offsetGet($offset)
+    {
+        return $this->$offset;
+    }
+
+    /**
+     * Set the value for a given offset.
+     *
+     * @param  mixed  $offset
+     * @param  mixed  $value
+     * @return void
+     */
+    public function offsetSet($offset, $value)
+    {
+        $this->$offset = $value;
+    }
+
+    /**
+     * Unset the value for a given offset.
+     *
+     * @param  mixed  $offset
+     * @return void
+     */
+    public function offsetUnset($offset)
+    {
+        unset($this->$offset);
+    }
 }

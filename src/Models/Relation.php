@@ -2,6 +2,7 @@
 
 namespace Core\Models;
 
+use Closure;
 use Core\Models\Contracts\Relation as RelationContract;
 use Core\Services\PDOs\Builder\Contracts\Builder;
 
@@ -15,11 +16,18 @@ abstract class Relation implements RelationContract
     protected $model;
 
     /**
-     * Query Builder
+     * Query Builder.
      *
      * @var Builder
      */
     protected $builder;
+
+    /**
+     * Indicates if the relation is adding constraints.
+     *
+     * @var bool
+     */
+    private static $constraints = true;
 
     /**
      * Create a new Relation instance.
@@ -32,20 +40,56 @@ abstract class Relation implements RelationContract
         $this->model   = $model;
         $this->builder = $builder;
 
-        $this->addConstraints();
+        if (self::$constraints) {
+            $this->addConstraints();
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function noConstraints(Closure $callback)
+    {
+        $previous = self::$constraints;
+        self::$constraints = false;
+
+        try {
+            $results = $callback();
+        }
+        finally {
+            self::$constraints = $previous;
+        }
+
+        return $results;
     }
 
     /**
      * Set the base constraints on the relation query.
-     *
-     * @return void
      */
     abstract protected function addConstraints();
 
     /**
      * @inheritdoc
      */
+    abstract public function addEagerConstraints(array $entities);
+
+    /**
+     * @inheritdoc
+     */
     abstract public function get();
+
+    /**
+     * @inheritdoc
+     */
+    abstract public function getEager();
+
+    /**
+     * @inheritdoc
+     */
+    public function model()
+    {
+        return $this->model;
+    }
 
     ///////////////////////////////////////////////////////////////////
     // Gets a Query Builder

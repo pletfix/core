@@ -42,8 +42,28 @@ class MorphManyRelation extends Relation
     protected function addConstraints()
     {
         $type = get_class($this->model);
-        $id   = $this->model->getAttribute($this->model->getPrimaryKey());
+        $id   = $this->model->getId();
         $this->builder->whereIs($this->typeAttribute, $type)->whereIs($this->foreignKey, $id);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function addEagerConstraints(array $entities)
+    {
+        $ids = [];
+        foreach ($entities as $i => $entity) {
+            $ids[] = $entity->getId();
+        }
+
+        $hash = [];
+        foreach ($entities as $entity) {
+            $hash[] = $entity->getId();
+        }
+
+        $type = get_class($this->model);
+
+        return $this->builder->whereIs($this->typeAttribute, $type)->whereIn($this->foreignKey, $hash);
     }
 
     /**
@@ -52,5 +72,24 @@ class MorphManyRelation extends Relation
     public function get()
     {
         return $this->builder->all();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getEager()
+    {
+        // get the foreign entities, group by local primary identity
+        $foreignEntities = [];
+        foreach ($this->builder->all() as $foreignEntity) {
+            /** @var Model $foreignEntity */
+            $id = $foreignEntity->getAttribute($this->foreignKey);
+            if (!isset($foreignEntities[$id])) {
+                $foreignEntities[$id] = [];
+            }
+            $foreignEntities[$id][] = $foreignEntity;
+        }
+
+        return $foreignEntities;
     }
 }

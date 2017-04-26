@@ -21,6 +21,13 @@ class BelongsToRelation extends Relation
     protected $otherKey;
 
     /**
+     * Hash with eager loaded IDs.
+     *
+     * @var array
+     */
+    protected $eagerHash = [];
+
+    /**
      * Create a new Relation instance.
      *
      * @param Model $model The local model, e.g. App\Models\Book.
@@ -48,8 +55,45 @@ class BelongsToRelation extends Relation
     /**
      * @inheritdoc
      */
+    public function addEagerConstraints(array $entities)
+    {
+        $this->eagerHash = [];
+        foreach ($entities as $entity) {
+            $this->eagerHash[$entity->getId()] = $entity->getAttribute($this->foreignKey); // eg. eagerHash[$book_id] = $author_id
+        }
+
+        return $this->builder->whereIn($this->otherKey, array_values($this->eagerHash));
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function get()
     {
         return $this->builder->first();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getEager()
+    {
+        // get the foreign entities, group by foreign id
+        $foreignEntities = [];
+        foreach ($this->builder->all() as $foreignEntity) {
+            /** @var Model $foreignEntity */
+            $foreignId = $foreignEntity->getAttribute($this->otherKey); // e.g. id of the author
+            $foreignEntities[$foreignId] = $foreignEntity;
+        }
+
+        // group the foreign entities by local primary identity
+        $result = [];
+        foreach ($this->eagerHash as $id => $foreignId) {
+            if (isset($foreignEntities[$foreignId])) {
+                $result[$id] = $foreignEntities[$foreignId];
+            }
+        }
+
+        return $result;
     }
 }

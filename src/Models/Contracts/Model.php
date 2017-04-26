@@ -2,45 +2,42 @@
 
 namespace Core\Models\Contracts;
 
-//use ArrayAccess;
-//use Core\Services\Contracts\Arrayable;
-//use Core\Services\Contracts\Jsonable;
-//use Countable;
-//use IteratorAggregate;
-//use JsonSerializable;
-
+use ArrayAccess;
 use Core\Models\BelongsToManyRelation;
 use Core\Models\BelongsToRelation;
 use Core\Models\HasManyRelation;
 use Core\Models\HasOneRelation;
 use Core\Models\MorphManyRelation;
-use Core\Models\MorphToRelation;
+use Core\Services\Contracts\Arrayable;
 use Core\Services\Contracts\Database;
+use Core\Services\Contracts\Jsonable;
 use Core\Services\PDOs\Builder\Contracts\Builder;
+use JsonSerializable;
 
-interface Model //extends ArrayAccess, Arrayable, Countable, IteratorAggregate, Jsonable, JsonSerializable
+interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
 {
     ///////////////////////////////////////////////////////////////////
     // Attribute Handling
 
     /**
-     * Get all of the current attributes on the model.
+     * Get the current attributes of the model.
      *
      * @return array
      */
     public function getAttributes();
 
     /**
-     * Get an attribute from the model.
+     * Get the attribute (or relationship!) from the model.
+     *
+     * If neither the attribute nor the relationship exists, null is returned.
      *
      * @param string $name
-     * @param mixed|null $default
-     * @return mixed
+     * @return mixed|null
      */
-    public function getAttribute($name, $default = null);
+    public function getAttribute($name);
 
     /**
-     * Set a given attribute on the model.
+     * Set a given attribute of the model.
      *
      * @param string $name
      * @param mixed $value
@@ -98,6 +95,15 @@ interface Model //extends ArrayAccess, Arrayable, Countable, IteratorAggregate, 
      */
     public function getPrimaryKey();
 
+    /**
+     * Get the identity.
+     *
+     * If the model is just created and not saved yet, the method returns null.
+     *
+     * @return int|null
+     */
+    public function getId();
+
     ///////////////////////////////////////////////////////////////////
     // Gets a Query Builder
 
@@ -107,6 +113,16 @@ interface Model //extends ArrayAccess, Arrayable, Countable, IteratorAggregate, 
      * @return Builder
      */
     public static function builder();
+
+    /**
+     * Get the entities of given relationship via eager loading.
+     *
+     * Note that a class, that provides the given relationship method, must be specified.
+     *
+     * @param array|string $method
+     * @return $this
+     */
+    public static function with($method);
 
     /**
      * Adds columns to the query.
@@ -477,7 +493,7 @@ interface Model //extends ArrayAccess, Arrayable, Countable, IteratorAggregate, 
     public static function first();
 
     /**
-     * Count the number of records in the table.
+     * Count the number of entities.
      *
      * @return int
      */
@@ -553,6 +569,15 @@ interface Model //extends ArrayAccess, Arrayable, Countable, IteratorAggregate, 
     // Relationships
 
     /**
+     * Set the specific relationship in the model.
+     *
+     * @param string $name Name of the relationship method.
+     * @param mixed $entities
+     * @return $this
+     */
+    public function setRelationEntities($name, $entities);
+
+    /**
      * Define a one-to-one relationship.
      *
      * @param string $class Name of the foreign model, e.g. "App\Models\Avatar".
@@ -587,14 +612,14 @@ interface Model //extends ArrayAccess, Arrayable, Countable, IteratorAggregate, 
      * Define a many-to-many relationship.
      *
      * @param string $class Name of the foreign model, e.g. "App\Models\Movie".
-     * @param string|null $joiningTable Name of the joining table. Default: &lt;model1&gt;_&lt;model2&gt; (in alphabetical order of models), e.g. "genre_movie".
+     * @param string|null $joinTable Name of the join table. Default: &lt;model1&gt;_&lt;model2&gt; (in alphabetical order of models), e.g. "genre_movie".
      * @param string|null $localForeignKey Default: "&lt;local_model&gt;_id", e.g. "genre_id".
      * @param string|null $otherForeignKey Default: "&lt;foreign_model&gt;_id", e.g. "movie_id".
      * @param string|null $localKey Default: "id", e.g. the primary key of App\Models\Genre.
      * @param string|null $otherKey Default: "id", e.g. the primary key of App\Models\Movie.
      * @return BelongsToManyRelation
      */
-    public function belongsToMany($class, $joiningTable = null, $localForeignKey = null, $otherForeignKey = null, $localKey = null, $otherKey = null);
+    public function belongsToMany($class, $joinTable = null, $localForeignKey = null, $otherForeignKey = null, $localKey = null, $otherKey = null);
 
     /**
      * Define a polymorphic one-to-many relationship.

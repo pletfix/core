@@ -2,10 +2,13 @@
 
 namespace Core\Services\PDOs\Builder;
 
+use Core\Models\Contracts\Model;
+use Core\Models\Contracts\Relation;
 use Core\Services\Contracts\Database;
 use Core\Services\PDOs\Builder\Contracts\Builder as BuilderContract;
 use Core\Services\PDOs\Builder\Contracts\Builder;
 use InvalidArgumentException;
+use LogicException;
 
 /**
  * Abstract Query Builder
@@ -33,6 +36,13 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      * @var string
      */
     protected $class;
+
+    /**
+     * The relations to eager load on every query.
+     *
+     * @var array
+     */
+    protected $with = [];
 
     /**
      * The list of flags (at time only DISTINCT).
@@ -163,6 +173,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     public function reset()
     {
         $this->class    = null;
+        $this->with    = [];
         $this->flags    = [];
         $this->columns  = [];
         $this->from     = [];
@@ -225,6 +236,21 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     /**
      * @inheritdoc
      */
+    public function with($method)
+    {
+        if (is_array($method)) {
+            $this->with = array_merge($this->with, $method);
+        }
+        else {
+            $this->with[] = $method;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function select($columns, array $bindings = [])
     {
         $this->columns = array_merge($this->columns, $this->compileColumns($columns, 'select'));
@@ -275,6 +301,14 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         $this->putBindings('from', $bindings);
 
         return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getTable()
+    {
+        return !empty($this->from) && strpos($this->from[0], '(') === false ? $this->from[0] : null;
     }
 
     /**
@@ -368,12 +402,27 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     }
 
     /**
+     * Quote a column.
+     *
+     * @param $column
+     * @return string
+     */
+    protected function quoteColumn($column)
+    {
+        if (($pos = strpos($column, '.')) !== false) {
+            return $this->db->quoteName(substr($column, 0, $pos)) . '.' . $this->db->quoteName(substr($column, $pos + 1));
+        }
+
+        return $this->db->quoteName($column);
+    }
+
+    /**
      * @inheritdoc
      */
     public function whereIs($column, $value, $operator = '=', $or = false)
     {
         $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
-        $this->where[] = $op . $this->db->quoteName($column) . ' ' . strtoupper($operator) . ' ?';
+        $this->where[] = $op . $this->quoteColumn($column) . ' ' . strtoupper($operator) . ' ?';
         $this->putBindings('where', [$value]);
 
         return $this;
@@ -402,7 +451,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         }
 
         $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
-        $this->where[] = $op . $this->db->quoteName($column) . ' ' . strtoupper($operator) . ' (' . $query . ')';
+        $this->where[] = $op . $this->quoteColumn($column) . ' ' . strtoupper($operator) . ' (' . $query . ')';
         $this->putBindings('where', $bindings);
 
         return $this;
@@ -468,7 +517,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     {
         $placeholders = implode(', ', array_fill(0, count($values), '?'));
         $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
-        $this->where[] = $op . $this->db->quoteName($column) . ($not ? ' NOT' : '') . ' IN (' . $placeholders . ')';
+        $this->where[] = $op . $this->quoteColumn($column) . ($not ? ' NOT' : '') . ' IN (' . $placeholders . ')';
         $this->putBindings('where', $values);
 
         return $this;
@@ -504,7 +553,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     public function whereBetween($column, $lowest, $highest, $or = false, $not = false)
     {
         $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
-        $this->where[] = $op . $this->db->quoteName($column) . ($not ? ' NOT' : '') . ' BETWEEN ? AND ?';
+        $this->where[] = $op . $this->quoteColumn($column) . ($not ? ' NOT' : '') . ' BETWEEN ? AND ?';
         $this->putBindings('where', [$lowest, $highest]);
 
         return $this;
@@ -540,7 +589,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     public function whereIsNull($column, $or = false, $not = false)
     {
         $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
-        $this->where[] = $op . $this->db->quoteName($column) . ($not ? ' IS NOT NULL' : ' IS NULL');
+        $this->where[] = $op . $this->quoteColumn($column) . ($not ? ' IS NOT NULL' : ' IS NULL');
 
         return $this;
     }
@@ -566,7 +615,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      */
     public function orWhereIsNotNull($column)
     {
-        return $this->whereNotIsNull($column, true);
+        return $this->whereIsNotNull($column, true);
     }
 
     /**
@@ -701,11 +750,68 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     /**
      * @inheritdoc
      */
-    public function all()
+    public function all() // todo evtl umbenennen in get()
     {
         $result = $this->db->query($this->toSql(), $this->bindings(), $this->class);
 
+        if (!empty($this->with)) {
+            $this->eagerLoadRelations($result);
+        }
+
         return $result;
+    }
+
+    /**
+     * Eager load the relationships.
+     *
+     * @param Model[] $entities Local entities
+     */
+    protected function eagerLoadRelations(array $entities)
+    {
+        if (empty($entities)) {
+            return;
+        }
+
+        if ($this->class === null) {
+            throw new LogicException('A class must be specified for Eager Loading using the `asClass` method.');
+        }
+
+        foreach ($this->with as $method) {
+            $relation = $this->getRelation($entities[0], $method);
+            $relation->addEagerConstraints($entities);
+            $relationEntities = $relation->getEager();
+            /** @var Model $entity */
+            foreach ($entities as $entity) {
+                $id = $entity->getId();
+                $entity->setRelationEntities($method, isset($relationEntities[$id]) ? $relationEntities[$id] : null);
+            }
+        }
+    }
+
+    /**
+     * Get the relation instance for the given relationship method.
+     *
+     * @param Model $entity Instance of the local entity.
+     * @param string $method Name of the relationship method.
+     * @return Relation
+     */
+    protected function getRelation($entity, $method)
+    {
+        // We need to check the relationship method only at the first local entity, because all entities must be of the same class.
+        if (!method_exists($entity, $method)) {
+            throw new LogicException('Call to undefined relationship "' . $method . '" on model "' . get_class($entity) . '".');
+        }
+
+        // Create a Relation without any constrains.
+        $relation = \Core\Models\Relation::noConstraints(function() use ($entity, $method) {
+            return $entity->$method();
+        });
+
+        if (!$relation instanceof Relation) {
+            throw new LogicException('Relationship method "' . $method . '" must return an object of type Core\Models\Contracts\Relation.');
+        }
+
+        return $relation;
     }
 
     /**
@@ -770,6 +876,8 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      */
     public function insert(array $data)
     {
+        // todo search conditions by "=" operator in where clause
+
         if (empty($data)) {
             throw new InvalidArgumentException('Cannot insert an empty record.');
         }
@@ -823,7 +931,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         if (empty($bindings) || is_int(key($bindings))) { // Prevent PDO-Error: "Invalid parameter number: mixed named and positional parameters"
             // bindings not used or question mark placeholders used
             foreach ($data as $column => $value) {
-                $settings[] = $this->db->quoteName($column) . ' = ?';
+                $settings[] = $this->quoteColumn($column) . ' = ?';
                 $values[]   = $value;
             }
         }
@@ -837,7 +945,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
                         $key = $column . '_' . (++$i);
                     } while (isset($bindings[$key]) || isset($data[$key]));
                 }
-                $settings[] = $this->db->quoteName($column) . ' = :' . $key;
+                $settings[] = $this->quoteColumn($column) . ' = :' . $key;
                 $values[$key] = $value;
             }
         }
