@@ -91,7 +91,7 @@ interface Schema
     public function renameTable($from, $to);
 
     /**
-     * Add a new column on the table.
+     * Add a new column to the table.
      *
      * Options have following values:
      * - type:      (string) The column data type. Data types are as reported by the database.
@@ -126,7 +126,7 @@ interface Schema
     public function renameColumn($table, $from, $to);
 
     /**
-     * Create an index on the table.
+     * Create an index for a given table.
      *
      * Options have following values:
      * - columns    (string[])  List of column names.
@@ -137,7 +137,7 @@ interface Schema
      * @param string|null $name The name of the index. It will be generated automatically if not set and will be ignored by a primary key.
      * @param array $options
      */
-    public function addIndex($table, $name, array $options = []);
+    public function addIndex($table, $name, array $options);
 
     /**
      * Drop a index from the table.

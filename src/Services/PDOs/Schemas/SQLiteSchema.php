@@ -357,7 +357,7 @@ class SQLiteSchema extends AbstractSchema
     /**
      * @inheritdoc
      */
-    public function addIndex($table, $name, array $options = [])
+    public function addIndex($table, $name, array $options)
     {
         $columns = $options['columns'];
         if (empty($columns)) {

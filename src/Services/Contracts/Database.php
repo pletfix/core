@@ -13,13 +13,13 @@ use Generator;
  */
 interface Database
 {
-    /**
-     * Gets the database configuration.
-     *
-     * @param string|null $key
-     * @return array|mixed
-     */
-    public function config($key = null);
+//    /**
+//     * Gets the database configuration.
+//     *
+//     * @param string|null $key
+//     * @return array|mixed
+//     */
+//    public function config($key = null);
 
     /**
      * Gets the database schema.
@@ -104,7 +104,7 @@ interface Database
     /**
      * Dump SQL
      *
-     * The function binds the given values to a SQL statement and print it out without executing.
+     * The method binds the given values to a SQL statement and print it out without executing.
      *
      * @param string $statement The SQL statement..
      * @param array $bindings [optional] Values to bind to the statement

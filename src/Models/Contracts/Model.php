@@ -8,6 +8,7 @@ use Core\Models\BelongsToRelation;
 use Core\Models\HasManyRelation;
 use Core\Models\HasOneRelation;
 use Core\Models\MorphManyRelation;
+use Core\Models\MorphOneRelation;
 use Core\Services\Contracts\Arrayable;
 use Core\Services\Contracts\Database;
 use Core\Services\Contracts\Jsonable;
@@ -75,14 +76,14 @@ interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
     // Database Table Access
 
     /**
-     * Get the database.
+     * Get the database instance.
      *
      * @return Database
      */
     public function database();
 
     /**
-     * Get the table associated with the model.
+     * Get the table name associated with the model.
      *
      * @return string
      */
@@ -493,11 +494,43 @@ interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
     public static function first();
 
     /**
-     * Count the number of entities.
+     * Calculates the number of entities.
      *
      * @return int
      */
     public static function count();
+
+    /**
+     * Calculates the maximum value of a given attribute.
+     *
+     * @param string|null $attribute
+     * @return int
+     */
+    public static function max($attribute = null);
+
+    /**
+     * Calculates the minimum value of a given attribute.
+     *
+     * @param string|null $attribute
+     * @return int
+     */
+    public static function min($attribute = null);
+
+    /**
+     * Calculates the average value of a given attribute.
+     *
+     * @param string|null $attribute
+     * @return float
+     */
+    public static function avg($attribute = null);
+
+    /**
+     * Calculates the total value of a given attribute.
+     *
+     * @param string|null $attribute
+     * @return int
+     */
+    public static function sum($attribute = null);
 
     ///////////////////////////////////////////////////////////////////
     // Modification Methods
@@ -534,6 +567,9 @@ interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
 
     /**
      * Clone the model into a new, non-existing instance.
+     *
+     * Note, the `replicate` method does not save the new model into the database. Therefore, the new model does not
+     * have a primary key yet.
      *
      * @param array $except Attributes that will be not copied.
      * @return $this
@@ -584,7 +620,6 @@ interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
      * @param string|null $foreignKey Default: "&lt;local_model&gt;_id", e.g. "user_id".
      * @param string|null $localKey Default: "id", e.g. the primary key of App\Models\User.
      * @return HasOneRelation
-     * // $this
      */
     public function hasOne($class, $foreignKey = null, $localKey = null);
 
@@ -620,6 +655,17 @@ interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
      * @return BelongsToManyRelation
      */
     public function belongsToMany($class, $joinTable = null, $localForeignKey = null, $otherForeignKey = null, $localKey = null, $otherKey = null);
+
+    /**
+     * Define a polymorphic one-to-one relationship.
+     *
+     * @param string $class Name of the foreign model, e.g. "App\Models\Picture".
+     * @param string $prefix Prefix for the type attribute and foreign key, e.g. "imageable".
+     * @param string|null $typeAttribute Default: "&lt;prefix&gt;_type", e.g. "imageable_type".
+     * @param string|null $foreignKey Default: "&lt;prefix&gt;_id", e.g. "imageable_id".
+     * @return MorphOneRelation
+     */
+    public function morphOne($class, $prefix, $typeAttribute = null, $foreignKey = null);
 
     /**
      * Define a polymorphic one-to-many relationship.

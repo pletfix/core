@@ -17,8 +17,8 @@ use Throwable;
 /**
  * Abstract Database Access Layer
  *
- * The basic methods as perform(), exec() and quote() based on Aura.Sql Extended PDO.
- * The Transaction Handling and cursor() based on Laravel's Connection Class 5.3.
+ * The basic methods as perform(), exec() and quote() based on Aura.Sql Extended PDO ([MIT License](https://github.com/auraphp/Aura.Sql/blob/3.x/LICENSE)).
+ * The Transaction Handling and cursor() based on Laravel's Connection Class 5.3 ([MIT License](https://github.com/laravel/laravel/tree/5.3)).
  *
  * @see https://github.com/auraphp/Aura.Sql/blob/3.x/src/AbstractExtendedPdo.php Aura.Sql Extended PDO on GitHub
  * @see https://github.com/illuminate/database/blob/5.3/Connection.php Laravel's Connection Class 5.3 on GitHub
@@ -84,17 +84,17 @@ abstract class AbstractDatabase implements DatabaseContract
         }
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function config($key = null)
-    {
-        if ($key === null) {
-            return $this->config;
-        }
-
-        return isset($this->config[$key]) ? $this->config[$key] : null;
-    }
+//    /**
+//     * @inheritdoc
+//     */
+//    public function config($key = null)
+//    {
+//        if ($key === null) {
+//            return $this->config;
+//        }
+//
+//        return isset($this->config[$key]) ? $this->config[$key] : null;
+//    }
 
     /**
      * @inheritdoc

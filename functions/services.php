@@ -187,19 +187,6 @@ if (!function_exists('plugin_manager')) {
     }
 }
 
-if (!function_exists('query_builder')) {
-    /**
-     * Get a SQL Query Builder.
-     *
-     * @param string|null $store Name of Database store which the sql statement is for
-     * @return \Core\Services\Contracts\QueryBuilder
-     */
-    function query_builder($store = null)
-    {
-        return DI::getInstance()->get('query-builder-factory')->store($store);
-    }
-}
-
 if (!function_exists('request')) {
     /**
      * Get the Request Object

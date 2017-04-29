@@ -2,8 +2,6 @@
 
 namespace Core\Services\PDOs\Builder\Contracts;
 
-use Core\Services\Contracts\Database;
-use Core\Services\PDOs\Tables\Contracts\Table;
 use Countable;
 
 /**
@@ -19,7 +17,7 @@ interface Builder extends Countable
     public function reset();
 
     /**
-     * Get a copy of the instance
+     * Get a copy of the instance.
      *
      * @return static
      */
@@ -28,7 +26,7 @@ interface Builder extends Countable
     /**
      * Set the name of the class where the data are mapped to.
      *
-     * if null is passed, the data will be returned as an array (the default).
+     * If null is passed, the data will be returned as an array (the default).
      *
      * @param string|null $class
      * @return Builder
@@ -36,7 +34,7 @@ interface Builder extends Countable
     public function asClass($class);
 
     /**
-     * Get the Class;
+     * Get the Class.
      *
      * @return string
      */
@@ -518,7 +516,17 @@ interface Builder extends Countable
     /**
      * Adds a HAVING condition to the query.
      *
-     * See the <pre>where</pre> method for details and examples.
+     * You should only use standard SQL operators and functions, so that the database drivers can translate the
+     * expression correctly.
+     *
+     * Note, that subqueries are not quoted, because the Builder of the subquery should do this work.
+     *
+     * Examples:
+     * <pre>
+     * having('column1 = ? OR t1.column2 LIKE "%?%"', [$foo, $bar])
+     * having('column1 = (SELECT MAX(i) FROM table2 WHERE c1 = ?)', [$foo])
+     * having(function(Builder $builder) { return $builder->having('c1 = ?')->orHaving('c2 = ?'); }, [$foo, $bar])
+     * </pre>
      *
      * @param string|\Closure $condition
      * @param array $bindings
@@ -614,10 +622,12 @@ interface Builder extends Countable
     public function all();
 
     /**
-     * Execute the query as a "SELECT" statement and returns a generator.
+     * Execute the query as a "SELECT" statement and return a generator.
      *
      * With the cursor you could iterate the rows (via foreach) without fetch all the data at one time.
      * This method is useful to handle big data.
+     *
+     * Note, this method ignores the "with" clause, because the data could not be eager loaded.
      *
      * @return mixed
      */
@@ -633,21 +643,55 @@ interface Builder extends Countable
     /**
      * Execute the query as a "SELECT" statement and return a single column's value from the first record.
      *
+     * Note, this method ignores the "with" clause, eager load is deactivate.
+     *
      * @return mixed
      */
     public function value();
 
     /**
-     * Count the number of the records.
+     * Calculates the number of records.
      *
      * @return int
      */
     public function count();
 
     /**
-     * Insert rows to the table and returns the inserted autoincrement sequence value.
+     * Calculates the maximum value of a given column.
      *
-     * If you insert multiple rows, the method returns dependency of the driver the first or last inserted row.
+     * @param string|null $column
+     * @return int
+     */
+    public function max($column = null);
+
+    /**
+     * Calculates the minimum value of a given column.
+     *
+     * @param string|null $column
+     * @return int
+     */
+    public function min($column = null);
+
+    /**
+     * Calculates the average value of a given column.
+     *
+     * @param string|null $column
+     * @return float
+     */
+    public function avg($column = null);
+
+    /**
+     * Calculates the total value of a given column.
+     *
+     * @param string|null $column
+     * @return int
+     */
+    public function sum($column = null);
+
+    /**
+     * Insert rows to the table and return the inserted autoincrement sequence value.
+     *
+     * If you insert multiple rows, the method returns dependency of the driver the first or last inserted id!.
      *
      * @param array $data Values to be updated
      * @return int

@@ -353,7 +353,7 @@ class SqlServerSchema extends AbstractSchema
     /**
      * @inheritdoc
      */
-    public function addIndex($table, $name, array $options = [])
+    public function addIndex($table, $name, array $options)
     {
         // mit Postgres identisch
 

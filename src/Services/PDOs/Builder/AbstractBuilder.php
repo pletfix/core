@@ -13,9 +13,9 @@ use LogicException;
 /**
  * Abstract Query Builder
  *
- * The class based on the Aura's QueryFactory (https://github.com/auraphp/Aura.SqlQuery/blob/3.x/LICENSE BSD 2-clause "Simplified" License)
- * and the Laravel's QueryBuilder (https://github.com/laravel/laravel MIT License).
- * The insert, update and delete methods were inspired by the CakePHP's Database Library.
+ * The class based on the Aura's QueryFactory ([BSD 2-clause "Simplified" License](https://github.com/auraphp/Aura.SqlQuery/blob/3.x/LICENSE))
+ * and the Laravel's QueryBuilder ([MIT License](https://github.com/laravel/laravel/tree/5.3)).
+ * The insert, update and delete methods were inspired by the CakePHP's Database Library ([MIT License](https://cakephp.org/)).
  *
  * @see https://github.com/auraphp/Aura.SqlQuery Aura.SqlQuery
  * @see https://github.com/illuminate/database/blob/5.3/Query/Builder.php Laravel's Query Builder on GitHub
@@ -49,7 +49,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      *
      * @var array
      */
-    protected $flags = []; // todo evtl ditinct als boolean verwenden
+    protected $flags = []; // todo evtl distinct als boolean verwenden
 
     /**
      * Selected columns
@@ -744,7 +744,13 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         $key     = $this->db->quoteName($key);
 
         /** @noinspection SqlDialectInspection */
-        return $this->db->single("SELECT $columns FROM $table WHERE $key = ?", [$id], $this->class);
+        $entity = $this->db->single("SELECT $columns FROM $table WHERE $key = ?", [$id], $this->class);
+
+        if (!empty($this->with)) {
+            $this->eagerLoadRelations([$entity]);
+        }
+
+        return $entity;
     }
 
     /**
@@ -757,6 +763,40 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         if (!empty($this->with)) {
             $this->eagerLoadRelations($result);
         }
+
+        return $result;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function cursor()
+    {
+        $result = $this->db->cursor($this->toSql(), $this->bindings(), $this->class);
+
+        return $result;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function first()
+    {
+        $entity = $this->db->single($this->toSql(), $this->bindings(), $this->class);
+
+        if (!empty($this->with)) {
+            $this->eagerLoadRelations([$entity]);
+        }
+
+        return $entity;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function value()
+    {
+        $result = $this->db->scalar($this->toSql(), $this->bindings());
 
         return $result;
     }
@@ -814,45 +854,28 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         return $relation;
     }
 
-    /**
-     * @inheritdoc
-     */
-    public function cursor()
-    {
-        $result = $this->db->cursor($this->toSql(), $this->bindings(), $this->class);
-
-        return $result;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function first()
-    {
-        $result = $this->db->single($this->toSql(), $this->bindings(), $this->class);
-
-        return $result;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function value()
-    {
-        $result = $this->db->scalar($this->toSql(), $this->bindings());
-
-        return $result;
-    }
-
     ///////////////////////////////////////////////////////////////////
     // Aggregate Functions
 
     /**
-     * @inheritdoc
+     * Execute an aggregate function.
+     *
+     * @param string $function
+     * @param string|null $column
+     * @return int|float
      */
-    public function count()
+    protected function aggregate($function, $column = null)
     {
-        $query = 'SELECT COUNT(' . $this->buildFlags() . $this->buildColumns() . ')'
+        if ($column === null) {
+            $column = !empty($this->columns) ? implode(', ', $this->columns) : '*';
+        }
+        else {
+            $column = $this->db->quoteName($column);
+        }
+
+        $flags = !empty($this->flags) ? implode(' ', $this->flags) . ' ' : '';
+
+        $query = 'SELECT ' . $function . '(' . $flags . $column . ')'
             . $this->buildFrom()
             . $this->buildJoin()
             . $this->buildWhere()
@@ -863,10 +886,48 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
 
         $result = $this->db->scalar($query, $this->bindings());
 
-        return $result;
+        return $result ?: 0;
     }
 
-    // todo avg($column), sum($count), etc
+    /**
+     * @inheritdoc
+     */
+    public function count()
+    {
+        return $this->aggregate('COUNT');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function max($column = null)
+    {
+        return $this->aggregate('MAX', $column);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function min($column = null)
+    {
+        return $this->aggregate('MIN', $column);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function avg($column = null)
+    {
+        return $this->aggregate('AVG', $column);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function sum($column = null)
+    {
+        return $this->aggregate('SUM', $column);
+    }
 
     ///////////////////////////////////////////////////////////////////
     // Modification Methods

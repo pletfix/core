@@ -9,9 +9,9 @@ use InvalidArgumentException;
 /**
  * Abstract Database Schema Management
  *
- * The column attribute definition (e.g. for columns()) based on Aura.Sql Column Factory.
- * Function compileFieldType() based on Dontrine's Mapping Matrix.
- * Function extractTypeHintFromComment() based on Doctrine's Schema Manager
+ * The column attribute definition (e.g. for columns()) based on Aura.Sql Column Factory ([BSD 2-clause "Simplified" License](https://github.com/auraphp/Aura.SqlSchema/blob/2.x/LICENSE)).
+ * Function compileFieldType() based on Dontrine's Mapping Matrix ([MIT License](https://github.com/doctrine/dbal/blob/2.5/LICENSE)).
+ * Function extractTypeHintFromComment() based on Doctrine's Schema Manager ([MIT License](https://github.com/doctrine/dbal/blob/2.5/LICENSE)).
  *
  * @see https://github.com/auraphp/Aura.SqlSchema/blob/2.x/src/ColumnFactory.php Aura.Sql Column Factory on GitHub
  * @see http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html#mapping-matrix Doctrine's Mapping Matrix
@@ -168,7 +168,7 @@ abstract class AbstractSchema implements SchemaContract
     /**
      * @inheritdoc
      */
-    public function addIndex($table, $name, array $options = [])
+    public function addIndex($table, $name, array $options)
     {
         $columns = $options['columns'];
         if (empty($columns)) {
@@ -329,7 +329,7 @@ abstract class AbstractSchema implements SchemaContract
             return 0;
         }
         if (in_array($type, ['string', 'text', 'binary', 'blob'])) {
-            return 0;
+            return '';
         }
         if (in_array($type, ['array'])) {
             return '[]';

@@ -433,10 +433,10 @@ class Mailer implements MailerContract
     public function send($to = null, $subject = null, $body = null)
     {
         if ($to === null) {
-            $to = $this->to;
+            $to = implode(', ', $this->to);
         }
-        else if (is_string($to)) {
-            $to = [$to];
+        else if (is_array($to)) {
+            $to = implode(', ', $to);
         }
 
         if (empty($to)) {

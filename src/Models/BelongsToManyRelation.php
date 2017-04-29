@@ -83,10 +83,18 @@ class BelongsToManyRelation extends Relation
         //   WHERE $localForeignKey = ?
         // )
 
-        $this->builder->whereSubQuery($this->otherKey, function(Builder $builder) {
-            $id = $this->model->getAttribute($this->localKey);
-            return $builder->select($this->otherForeignKey)->from($this->joinTable)->whereIs($this->localForeignKey, $id);
-        }, 'IN');  // todo prüfen, ob es performanter geht (per join)
+        $id = $this->model->getAttribute($this->localKey);
+        $otherTable = $this->builder()->getTable();
+
+        return $this->builder
+            ->select([$otherTable . '.*'])
+            ->join($this->joinTable, $otherTable . '.' . $this->otherKey . ' = ' . $this->joinTable . '.' .$this->otherForeignKey)
+            ->whereIs($this->joinTable . '.' . $this->localForeignKey, $id);
+
+//        $this->builder->whereSubQuery($this->otherKey, function(Builder $builder) {
+//            $id = $this->model->getAttribute($this->localKey);
+//            return $builder->select($this->otherForeignKey)->from($this->joinTable)->whereIs($this->localForeignKey, $id);
+//        }, 'IN');  // todo prüfen, ob es performanter geht (per join)
     }
 
     /**

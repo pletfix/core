@@ -10,9 +10,9 @@ use Core\Services\PDOs\Builder\Contracts\Builder;
 use LogicException;
 
 /**
- * The basic functionality (attribute handling) was inspired by Laravel's Active Record called Eloquent.
+ * The basic functionality (attribute handling) was inspired by Laravel's Model class called Eloquent ([MIT License](https://github.com/laravel/laravel/tree/5.3)).
  * The methods originalIsNumericallyEquivalent(), replicate(), getDirty() and isDirty() are adapted from Laravel's Model class.
- * The relationship methods based on CakePHP's ORM.
+ * The relationship methods based on CakePHP's ORM ([MIT License](https://cakephp.org/)).
  *
  * @see https://github.com/illuminate/database/blob/5.3/Eloquent/Model.php Laravel's Model Class 5.3 on GitHub
  * @see https://github.com/cakephp/orm/blob/3.2/Table.php CakePHP's Table Class 3.2 on GitHub
@@ -37,7 +37,7 @@ class Model implements ModelContract
     protected $store;
 
     /**
-     * The table associated with the model.
+     * The table name associated with the model.
      *
      * @var string
      */
@@ -231,9 +231,9 @@ class Model implements ModelContract
             if (!$relation instanceof Relation) {
                 throw new LogicException('Relationship method "' . $name . '" must return an object of type Core\Models\Contracts\Relation.');
             }
-            $result = $results = $relation->get();
-            $this->setRelation($name, $result);
-            return $results;
+            $result = $relation->get();
+            $this->setRelationEntities($name, $result);
+            return $result;
         }
 
         return null;
@@ -398,7 +398,7 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public static function select($columns, array $bindings = [])
+    public static function select($columns, array $bindings = []) // todo bindings generell auch als einzelnen Wert zulassen
     {
         return static::builder()->select($columns, $bindings);
     }
@@ -446,7 +446,7 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public static function where($condition, array $bindings = [])
+    public static function where($condition, array $bindings = []) // todo umbenennen in whereCondition, und whereIs() in where()
     {
         return static::builder()->where($condition, $bindings);
     }
@@ -454,7 +454,7 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public static function whereIs($column, $value, $operator = '=')
+    public static function whereIs($column, $value, $operator = '=') // todo beim Model ist column ein attribute
     {
         return static::builder()->whereIs($column, $value, $operator);
     }
@@ -593,6 +593,38 @@ class Model implements ModelContract
     public static function count()
     {
         return static::builder()->count();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function max($attribute = null)
+    {
+        return static::builder()->max($attribute);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function min($attribute = null)
+    {
+        return static::builder()->min($attribute);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function avg($attribute = null)
+    {
+        return static::builder()->avg($attribute);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public static function sum($attribute = null)
+    {
+        return static::builder()->sum($attribute);
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -866,6 +898,25 @@ class Model implements ModelContract
         }
 
         return new BelongsToManyRelation($this, $model->builder(), $joinTable, $localForeignKey, $otherForeignKey, $localKey, $otherKey);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function morphOne($class, $prefix, $typeAttribute = null, $foreignKey = null)
+    {
+        /** @var Model $model */
+        $model = new $class;
+
+        if ($typeAttribute === null) {
+            $typeAttribute = $prefix . '_type';
+        }
+
+        if ($foreignKey === null) {
+            $foreignKey = $prefix . '_id';
+        }
+
+        return new MorphOneRelation($this, $model->builder(), $typeAttribute, $foreignKey);
     }
 
     /**

@@ -324,7 +324,7 @@ class PostgresSchema extends AbstractSchema
     /**
      * @inheritdoc
      */
-    public function addIndex($table, $name, array $options = [])
+    public function addIndex($table, $name, array $options)
     {
         // todo bei NOT NULL ohne default neuen Tabele anlegen
 
