@@ -28,6 +28,9 @@ interface Builder extends Countable
      *
      * If null is passed, the data will be returned as an array (the default).
      *
+     * If the class implements the Hookable contract, the QueryBuilder bind the hooks that are provided by this
+     * class. You may disable this behavior via the `disableHooks` method.
+     *
      * @param string|null $class
      * @return Builder
      */
@@ -39,6 +42,25 @@ interface Builder extends Countable
      * @return string
      */
     public function getClass();
+
+    /**
+     * Enable hooks.
+     *
+     * The hooks of the class you specified using method `asClass` will be invoke, presupposed that the class
+     * implements the Hookable contract.
+     *
+     * Note, that hooks are enabled by default.
+     */
+    public function enableHooks();
+
+    /**
+     * Disable hooks.
+     *
+     * You may use this method if you have a class with hooks, but the hooks should be ignored.
+     *
+     * @return $this
+     */
+    public function disableHooks();
 
     /**
      * Get the entities of given relationship via eager loading.
@@ -128,6 +150,14 @@ interface Builder extends Countable
      * @return Builder
      */
     public function from($source, $alias = null, array $bindings = []);
+
+    /**
+     * Set a table name.
+     *
+     * @param string $table
+     * @return Builder
+     */
+    public function table($table);
 
     /**
      * Get the name of the table if specify.
@@ -691,30 +721,42 @@ interface Builder extends Countable
     /**
      * Insert rows to the table and return the inserted autoincrement sequence value.
      *
-     * If you insert multiple rows, the method returns dependency of the driver the first or last inserted id!.
+     * If you insert multiple rows, the method returns dependent to the driver the first or last inserted id!.
+     * It returns FALSE if the operation was canceled by a hook.
      *
      * @param array $data Values to be updated
-     * @return int
+     * @return int|false
      */
-    public function insert(array $data);
+    public function insert(array $data = []);
 
     /**
      * Update all records of the query result with th given data and return the number of affected rows.
      *
+     * It returns FALSE if the operation was canceled by a hook.
+     *
      * @param array $data Values to be updated
-     * @return int
+     * @return int|false
      */
     public function update(array $data);
 
     /**
      * Delete all records of the query result and return the number of affected rows.
      *
-     * @return int
+     * It returns FALSE if the operation was canceled by a hook.
+     *
+     * @return int|false
      */
     public function delete();
 
     /**
      * Truncate the table.
+     *
+     * Note, that TRUNCATE TABLE is DDL and not DML like DELETE. This means that TRUNCATE TABLE will cause an implicit
+     * COMMIT in a transaction block, see also https://dev.mysql.com/doc/refman/5.7/en/truncate-table.html!
+     *
+     * It returns FALSE if the operation was canceled by a `beforeDelete` hook.
+     *
+     * @return int|false
      */
     public function truncate();
 }

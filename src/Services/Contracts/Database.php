@@ -168,6 +168,7 @@ interface Database
      * Run a select statement and return a single object.
      *
      * If the class name is not set, an associative array is returned.
+     * If no record is exists, FALSE is returned.
      *
      * @param string $query The SQL statement to prepare and execute.
      * @param array $bindings Values to bind to the query

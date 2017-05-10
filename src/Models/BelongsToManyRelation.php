@@ -2,6 +2,8 @@
 
 namespace Core\Models;
 
+use Core\Models\Contracts\Model as ModelContract;
+use Core\Services\Contracts\Database;
 use Core\Services\PDOs\Builder\Contracts\Builder;
 
 class BelongsToManyRelation extends Relation
@@ -51,7 +53,7 @@ class BelongsToManyRelation extends Relation
     /**
      * Create a new Relation instance.
      *
-     * @param Model $model The local model, e.g. App\Models\Genre.
+     * @param ModelContract $model The local model, e.g. App\Models\Genre.
      * @param Builder $builder A Builder to get the foreign entities, e.g. movies.
      * @param string $joinTable Name of the join table. Typical &lt;model1&gt;_&lt;model2&gt; (in alphabetical order of models), e.g. "genre_movie".
      * @param string $localForeignKey Typical "&lt;local_model&gt;_id", e.g. "genre_id".
@@ -59,7 +61,7 @@ class BelongsToManyRelation extends Relation
      * @param string $localKey Typical "id", e.g. the primary key of App\Models\Genre.
      * @param string $otherKey Typical "id", e.g. the primary key of App\Models\Movie.
      */
-    public function __construct(Model $model, Builder $builder, $joinTable, $localForeignKey, $otherForeignKey, $localKey, $otherKey)
+    public function __construct(ModelContract $model, Builder $builder, $joinTable, $localForeignKey, $otherForeignKey, $localKey, $otherKey)
     {
         $this->joinTable       = $joinTable;
         $this->localForeignKey = $localForeignKey;
@@ -75,26 +77,13 @@ class BelongsToManyRelation extends Relation
      */
     protected function addConstraints()
     {
-        // SELECT *
-        // FROM $table
-        // WHERE $otherKey IN (
-        //   SELECT $otherForeignKey
-        //   FROM $joinTable
-        //   WHERE $localForeignKey = ?
-        // )
-
         $id = $this->model->getAttribute($this->localKey);
         $otherTable = $this->builder()->getTable();
 
-        return $this->builder
+        $this->builder
             ->select([$otherTable . '.*'])
             ->join($this->joinTable, $otherTable . '.' . $this->otherKey . ' = ' . $this->joinTable . '.' .$this->otherForeignKey)
             ->whereIs($this->joinTable . '.' . $this->localForeignKey, $id);
-
-//        $this->builder->whereSubQuery($this->otherKey, function(Builder $builder) {
-//            $id = $this->model->getAttribute($this->localKey);
-//            return $builder->select($this->otherForeignKey)->from($this->joinTable)->whereIs($this->localForeignKey, $id);
-//        }, 'IN');  // todo prüfen, ob es performanter geht (per join)
     }
 
     /**
@@ -136,8 +125,8 @@ class BelongsToManyRelation extends Relation
     {
         // get the foreign entities, group by "local key"
         $foreignEntities = [];
-        foreach ($this->builder->all() as $foreignEntity) {
-            /** @var Model $foreignEntity */
+        foreach ($this->builder->all() as $foreignEntity) { // todo testen, ob cursor schneller ist
+            /** @var ModelContract $foreignEntity */
             $localId = $foreignEntity->getAttribute('___id');
             unset($foreignEntity->___id);
             if (!isset($foreignEntities[$localId])) {
@@ -155,5 +144,74 @@ class BelongsToManyRelation extends Relation
         }
 
         return $result;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function associate(ModelContract $model)
+    {
+        $localId = $this->model->getAttribute($this->localKey);
+        $foreignId = $model->getAttribute($this->otherKey);
+        $this->model->database()->table($this->joinTable)->insert([
+            $this->localForeignKey => $localId,
+            $this->otherForeignKey => $foreignId,
+        ]);
+        $this->model->clearRelationCache();
+        $model->clearRelationCache();
+    }
+
+        /**
+     * @inheritdoc
+     */
+    public function disassociate(ModelContract $model = null)
+    {
+        $localId = $this->model->getAttribute($this->localKey);
+        if ($model === null) {
+            $this->model->database()->table($this->joinTable)
+                ->whereIs($this->localForeignKey, $localId)
+                ->delete();
+            $this->model->clearRelationCache();
+        }
+        else {
+            $foreignId = $model->getAttribute($this->otherKey);
+            $this->model->database()->table($this->joinTable)
+                ->whereIs($this->localForeignKey, $localId)
+                ->whereIs($this->otherForeignKey, $foreignId)
+                ->delete();
+            $this->model->clearRelationCache();
+            $model->clearRelationCache();
+        }
+    }
+
+
+    /**
+     * @inheritdoc
+     */
+    public function create(array $attributes = [])
+    {
+        return $this->model->database()->transaction(function() use($attributes) {
+            /** @var ModelContract $class */
+            $class = $this->builder->getClass();
+            $model = $class::create($attributes);
+            $this->associate($model);
+
+            return $model;
+        });
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function delete(ModelContract $model)
+    {
+        $this->model->database()->transaction(function(Database $db) use($model) {
+            $foreignId = $model->getAttribute($this->otherKey);
+            $model->delete()->clearRelationCache();
+            $db->table($this->joinTable)
+                ->whereIs($this->otherForeignKey, $foreignId)
+                ->delete();
+            $this->model->clearRelationCache();
+        });
     }
 }

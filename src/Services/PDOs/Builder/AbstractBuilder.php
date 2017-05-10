@@ -2,11 +2,13 @@
 
 namespace Core\Services\PDOs\Builder;
 
+use Closure;
 use Core\Models\Contracts\Model;
 use Core\Models\Contracts\Relation;
 use Core\Services\Contracts\Database;
 use Core\Services\PDOs\Builder\Contracts\Builder as BuilderContract;
 use Core\Services\PDOs\Builder\Contracts\Builder;
+use Core\Services\PDOs\Builder\Contracts\Hookable;
 use InvalidArgumentException;
 use LogicException;
 
@@ -36,6 +38,13 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      * @var string
      */
     protected $class;
+
+    /**
+     * Determines if the hooks should be invoked.
+     *
+     * @var bool
+     */
+    protected $enableHooks = true;
 
     /**
      * The relations to eager load on every query.
@@ -236,6 +245,29 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     /**
      * @inheritdoc
      */
+    public function enableHooks()
+    {
+        $this->enableHooks = true;
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function disableHooks()
+    {
+        $this->enableHooks = false;
+
+        return $this;
+    }
+
+    ///////////////////////////////////////////////////////////////////
+    // Clauses
+
+    /**
+     * @inheritdoc
+     */
     public function with($method)
     {
         if (is_array($method)) {
@@ -306,6 +338,16 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     /**
      * @inheritdoc
      */
+    public function table($table)
+    {
+        $this->from[0] = $this->db->quoteName($table);
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function getTable()
     {
         return !empty($this->from) && strpos($this->from[0], '(') === false ? $this->from[0] : null;
@@ -341,7 +383,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      * See the <pre>join</pre> method for details and examples.
      *
      * @param string $type The join type ("INNER", "LEFT" or "RIGHT")).
-     * @param string|Builder|\Closure $source A table name or a subquery.
+     * @param string|Builder|Closure $source A table name or a subquery.
      * @param string $on Join on this condition, e.g.: "foo.id = d.foo_id"
      * @param string|null $alias The alias name for the source.
      * @param array $bindings
@@ -935,18 +977,119 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     /**
      * @inheritdoc
      */
-    public function insert(array $data)
+    public function insert(array $data = [])
     {
-        // todo search conditions by "=" operator in where clause
+        if ($this->hasHooks('Insert')) {
+            if (!is_int(key($data))) {
+                // Single record!
 
-        if (empty($data)) {
-            throw new InvalidArgumentException('Cannot insert an empty record.');
+                /** @var Hookable $instance */
+                $instance = new $this->class;
+
+                // Invoke the "before" hook for each instance if exist.
+                // If a hook returns FALSE, return FALSE immediately.
+                $hook = 'beforeInsert';
+                if (method_exists($this->class, $hook)) {
+                    $instance->setAttributes($data);
+                    if ($instance->$hook() === false) {
+                        return false;
+                    }
+                    $data = $instance->getAttributes();
+                }
+
+                // Execute the database operation and invoke the "after" hook for each instance if exist.
+                $hook = 'afterInsert';
+                if (method_exists($this->class, $hook)) {
+                    // A "after" hook exist. We will open a transaction, so we are able to rollback the database operation if
+                    // the hook returns FALSE or the hook throw an exception.
+                    return $this->db->transaction(function(Database $db) use($data, $instance, $hook) {
+
+                        $result = $this->doInsert($data); // new id
+                        $instance->setAttributes(array_merge($data, [$instance->getPrimaryKey() => $result]));
+
+                        if ($instance->$hook() === false) {
+                            $db->rollBack();
+                            return false;
+                        }
+
+                        return $result;
+                    });
+                }
+                else {
+                    // A "after" hook does not exist, so we don't need a transaction.
+                    return $this->doInsert($data);
+                }
+            }
+            else {
+                // Bulk insert!
+
+                /** @var Hookable[] $instances */
+                $instances = array_fill(0, count($data), new $this->class);
+
+                // Invoke the "before" hook for each instance if exist.
+                // If a hook returns FALSE, return FALSE immediately.
+                $hook = 'beforeInsert';
+                if (method_exists($this->class, $hook)) {
+                    foreach ($instances as $i => $instance) {
+                        $instance->setAttributes($data[$i]);
+                        if ($instance->$hook() === false) {
+                            return false;
+                        }
+                        $data[$i] = $instance->getAttributes();
+                    }
+                }
+
+                // Execute the database operation and invoke the "after" hook for each instance if exist.
+                $hook = 'afterInsert';
+                if (method_exists($this->class, $hook)) {
+                    // A "after" hook exist. We will open a transaction, so we are able to rollback the database operation if
+                    // the hook returns FALSE or the hook throw an exception.
+                    return $this->db->transaction(function(Database $db) use($data, $instances, $hook) {
+
+                        $result = null;
+                        foreach ($instances as $i => $instance) {
+                            $result = $this->doInsert($data[$i]); // new id
+                            $instance->setAttributes(array_merge($data[$i], [$instance->getPrimaryKey() => $result]));
+                        }
+
+                        // Invoke the "after" hook for each instance if exists.
+                        // If a hook returns FALSE, roll back the transaction and return FALSE immediately.
+                        foreach ($instances as $i => $instance) {
+                            if ($instance->$hook() === false) {
+                                $db->rollBack();
+                                return false;
+                            }
+                        }
+
+                        return $result;
+                    });
+                }
+                else {
+                    // A "after" hook does not exist, so we don't need a transaction.
+                    return $this->doInsert($data);
+                }
+            }
         }
+        else {
+            // Execute the operation without hooks.
+            return $this->doInsert($data);
+        }
+    }
 
+    /**
+     * Insert rows to the table and return the inserted autoincrement sequence value.
+     *
+     * If you insert multiple rows, the method returns dependent to the driver the first or last inserted id!.
+     *
+     * @param array $data Values to be updated
+     * @return int|false
+     */
+    public function doInsert(array $data = [])
+    {
         $table = implode(', ', $this->from);
 
-        if (is_string(key($data))) {
-            // single record will be inserted
+        if (!is_int(key($data))) {
+            // single record is inserted
             $columns  = implode(', ', array_map([$this->db, 'quoteName'], array_keys($data)));
             $params   = implode(', ', array_fill(0, count($data), '?'));
             $bindings = array_values($data);
@@ -972,7 +1115,9 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         }
 
         /** @noinspection SqlDialectInspection */
-        $this->db->exec("INSERT INTO $table ($columns) VALUES ($params)", $bindings);
+        $query = "INSERT INTO $table ($columns) VALUES ($params)";
+
+        $this->db->exec($query, $bindings);
 
         return $this->db->lastInsertId();
     }
@@ -981,6 +1126,68 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      * @inheritdoc
      */
     public function update(array $data)
+    {
+        if ($this->hasHooks('Update')) {
+
+            /** @var Hookable[] $instances */
+            $instances = $this->all();
+
+            // Invoke the "before" hook for each instance if exist.
+            // If a hook returns FALSE, return FALSE immediately.
+            $hook = 'beforeUpdate';
+            if (method_exists($this->class, $hook)) {
+                foreach ($instances as $i => $instance) {
+                    $instance->setAttributes(array_merge($instance->getAttributes(), $data));
+                    if ($instance->$hook() === false) {
+                        return false;
+                    }
+                    $attributes = $instance->getAttributes();
+                    foreach ($data as $name => $value) {
+                        $data[$name] = $attributes[$name];
+                    }
+                }
+            }
+
+            // Execute the database operation and invoke the "after" hook for each instance if exist.
+            $hook = 'afterUpdate';
+            if (method_exists($this->class, $hook)) {
+                // A "after" hook exist. We will open a transaction, so we are able to rollback the database operation if
+                // the hook returns FALSE or the hook throw an exception.
+                return $this->db->transaction(function(Database $db) use($data, $instances, $hook) {
+
+                    $result = $this->doUpdate($data);
+
+                    // Invoke the "after" hook for each instance if exists.
+                    // If a hook returns FALSE, roll back the transaction and return FALSE immediately.
+                    foreach ($instances as $i => $instance) {
+                        $instance->setAttributes(array_merge($instance->getAttributes(), $data));
+                        if ($instance->$hook() === false) {
+                            $db->rollBack();
+                            return false;
+                        }
+                    }
+
+                    return $result;
+                });
+            }
+            else {
+                // A "after" hook does not exist, so we don't need a transaction.
+                return $this->doUpdate($data);
+            }
+        }
+        else {
+            // Execute the operation without hooks.
+            return $this->doUpdate($data);
+        }
+    }
+
+    /**
+     * Update all records of the query result with th given data and return the number of affected rows.
+     *
+     * @param array $data Values to be updated
+     * @return int
+     */
+    protected function doUpdate(array $data)
     {
         if (empty($data)) {
             throw new InvalidArgumentException('Cannot update an empty record.');
@@ -1031,6 +1238,65 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      */
     public function delete()
     {
+        if ($this->hasHooks('Delete')) {
+
+            /** @var Hookable[] $instances */
+            $instances = $this->all();
+
+            // Invoke the "before" hook for each instance if exist.
+            // If a hook returns FALSE, return FALSE immediately.
+            $hook = 'beforeDelete';
+            if (method_exists($this->class, $hook)) {
+                foreach ($instances as $i => $instance) {
+                    if ($instance->$hook() === false) {
+                        return false;
+                    }
+                }
+            }
+
+            // Execute the database operation and invoke the "after" hook for each instance if exist.
+            $hook = 'afterDelete';
+            if (method_exists($this->class, $hook)) {
+                // A "after" hook exist. We will open a transaction, so we are able to rollback the database operation if
+                // the hook returns FALSE or the hook throw an exception.
+                return $this->db->transaction(function(Database $db) use($instances, $hook) {
+
+                    $result = $this->doDelete();
+
+                    // Invoke the "after" hook for each instance if exists.
+                    // If a hook returns FALSE, roll back the transaction and return FALSE immediately.
+                    foreach ($instances as $i => $instance) {
+                        $attributes = $instance->getAttributes();
+                        unset($attributes[$instance->getPrimaryKey()]);
+                        $instance->setAttributes($attributes);
+                        if ($instance->$hook() === false) {
+                            $db->rollBack();
+                            return false;
+                        }
+                    }
+
+                    return $result;
+                });
+            }
+            else {
+                // A "after" hook does not exist, so we don't need a transaction.
+                return $this->doDelete();
+            }
+
+        }
+        else {
+            // Execute the operation without hooks.
+            return $this->doDelete();
+        }
+    }
+
+    /**
+     * Delete all records of the query result and return the number of affected rows.
+     *
+     * @return int
+     */
+    protected function doDelete()
+    {
         $bindings = array_merge($this->bindings['join'], $this->bindings['where'], $this->bindings['order']);
 
         $query = 'DELETE'
@@ -1048,9 +1314,83 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      */
     public function truncate()
     {
+        if ($this->hasHooks('Delete')) {
+
+            /** @var Hookable[] $instances */
+            $instances = $this->db->table($this->getTable())->asClass($this->class)->all();
+
+            // Invoke the "before" hook for each instance if exist.
+            // If a hook returns FALSE, return FALSE immediately.
+            $hook = 'beforeDelete';
+            if (method_exists($this->class, $hook)) {
+                foreach ($instances as $i => $instance) {
+                    if ($instance->$hook() === false) {
+                        return false;
+                    }
+                }
+            }
+
+            // Execute the database operation and invoke the "after" hook for each instance if exist.
+            $hook = 'afterDelete';
+            if (method_exists($this->class, $hook)) {
+                // A "after" hook exist. We will open a transaction, so we are able to rollback the database operation if
+                // the hook returns FALSE or the hook throw an exception.
+                return $this->db->transaction(function(Database $db) use($instances, $hook) {
+
+                    // todo zumindest by MySQL kann bei Truncate keine Transaktion verwendet werden!
+
+                    $result = $this->doTruncate();
+
+                    // Invoke the "after" hook for each instance if exists.
+                    // If a hook returns FALSE, roll back the transaction and return FALSE immediately.
+                    foreach ($instances as $i => $instance) {
+                        $attributes = $instance->getAttributes();
+                        unset($attributes[$instance->getPrimaryKey()]);
+                        $instance->setAttributes($attributes);
+                        if ($instance->$hook() === false) {
+                            $db->rollBack();
+                            return false;
+                        }
+                    }
+
+                    return $result;
+                });
+            }
+            else {
+                // A "after" hook does not exist, so we don't need a transaction.
+                return $this->doTruncate();
+            }
+        }
+        else {
+            // Execute the operation without hooks.
+            return $this->doTruncate();
+        }
+    }
+
+    /**
+     * Truncate the table.
+     *
+     * @return int
+     */
+    protected function doTruncate()
+    {
         $table = implode(', ', $this->from);
 
-        $this->db->exec("TRUNCATE TABLE $table");
+        return $this->db->exec("TRUNCATE TABLE $table");
+    }
+
+    /**
+     * Determine whether the class you specified by asClass() implements the Hookable contract and provides hooks for
+     * the given operation.
+     *
+     * @param string $operation "Insert", "Update" or "Delete"
+     * @return bool
+     */
+    protected function hasHooks($operation)
+    {
+        return $this->enableHooks &&
+            is_subclass_of($this->class, Hookable::class) &&
+            (method_exists($this->class, "before$operation") || method_exists($this->class, "after$operation"));
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -1072,7 +1412,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     /**
      * Render the column list.
      *
-     * @param string|array|Builder|\Closure $columns One or more columns or subquery.
+     * @param string|array|Builder|Closure $columns One or more columns or subquery.
      * @param string $clause Key for the binding list: "select", "group" or "order"
      * @return array
      */

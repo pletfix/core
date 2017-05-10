@@ -2,6 +2,7 @@
 
 namespace Core\Models;
 
+use Core\Models\Contracts\Model as ModelContract;
 use Core\Services\PDOs\Builder\Contracts\Builder;
 
 class HasManyRelation extends Relation
@@ -30,12 +31,12 @@ class HasManyRelation extends Relation
     /**
      * Create a new Relation instance.
      *
-     * @param Model $model The local model, e.g. App\Models\Author.
+     * @param ModelContract $model The local model, e.g. App\Models\Author.
      * @param Builder $builder A Builder to get the foreign entities, e.g. books.
      * @param string $foreignKey Typical "&lt;local_model&gt;_id", e.g. "author_id"
      * @param string $localKey Typical "id", e.g. the primary key of App\Models\Author.
      */
-    public function __construct(Model $model, Builder $builder, $foreignKey, $localKey)
+    public function __construct(ModelContract $model, Builder $builder, $foreignKey, $localKey)
     {
         $this->foreignKey = $foreignKey;
         $this->localKey   = $localKey;
@@ -80,8 +81,8 @@ class HasManyRelation extends Relation
     {
         // get the foreign entities, group by local id
         $foreignEntities = [];
-        foreach ($this->builder->all() as $foreignEntity) {
-            /** @var Model $foreignEntity */
+        foreach ($this->builder->all() as $foreignEntity) { // todo testen, ob cursor schneller ist
+            /** @var ModelContract $foreignEntity */
             $localId = $foreignEntity->getAttribute($this->foreignKey);
             if (!isset($foreignEntities[$localId])) {
                 $foreignEntities[$localId] = [];
@@ -98,5 +99,69 @@ class HasManyRelation extends Relation
         }
 
         return $result;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function associate(ModelContract $model)
+    {
+        $localId = $this->model->getAttribute($this->localKey);
+        $model->setAttribute($this->foreignKey, $localId)->save();
+        $this->model->clearRelationCache();
+        $model->clearRelationCache();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function disassociate(ModelContract $model = null)
+    {
+        if ($model === null) {
+            $this->builder->update([$this->foreignKey => null]);
+            $this->model->clearRelationCache();
+            return;
+        }
+
+        $localId   = $this->model->getAttribute($this->localKey);
+        $foreignId = $model->getAttribute($this->foreignKey);
+
+        if ($localId == $foreignId) {
+            $model->setAttribute($this->foreignKey, null)->save();
+            $this->model->clearRelationCache();
+            $model->clearRelationCache();
+        }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function create(array $attributes = [])
+    {
+        $class = $this->builder->getClass();
+        /** @var ModelContract $model */
+        $model = new $class;
+        $model->checkMassAssignment($attributes);
+        $model->setAttributes($attributes);
+        $this->associate($model); // the model is saved here
+
+        return $model;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function delete(ModelContract $model)
+    {
+        $localId = $this->model->getAttribute($this->localKey);
+        $foreignId = $model->getAttribute($this->foreignKey);
+
+        $model->delete();
+        $model->setAttribute($this->foreignKey, null)->sync();
+        $model->clearRelationCache();
+
+        if ($localId == $foreignId) {
+            $this->model->clearRelationCache();
+        }
     }
 }

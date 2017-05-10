@@ -40,14 +40,15 @@ If you want to develop at the Pletfix Core, you can create a workbench as follow
     ~~~    
     "require": {
         "php": ">=5.6.4",
-        "aura/sqlquery": "^2.7",
         "doctrine/cache": "^1.6",
-        "fightbulc/moment": "^1.25",
+        "doctrine/inflector": "^1.1",
         "jdorn/sql-formatter": "^1.2",
         "leafo/scssphp": "^0.6.6",
         "monolog/monolog": "~1.11",
         "natxet/cssmin": "^3.0",
         "oyejorge/less.php": "v1.7.0.10",
+        "paragonie/random_compat": "^2.0",
+        "psr/http-message": "~1.0",
         "tedivm/jshrink": "^1.1",
         "vlucas/phpdotenv": "~2.2"
     },

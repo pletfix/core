@@ -21,8 +21,6 @@ class Model implements ModelContract
 {
     // todo
     // attribute cast
-    // events
-    // relationship
     // timestamps
     // setXYZAttribute, getXYZAttribute
     // Validation Rules
@@ -105,7 +103,7 @@ class Model implements ModelContract
      *
      * @var array
      */
-    protected $guarded = ['id', 'created_by', 'created_at', 'updated_by', 'updated_at'];
+    protected static $guarded = ['id', 'created_by', 'created_at', 'updated_by', 'updated_at'];
 
     /**
      * Searchable fields.
@@ -202,6 +200,16 @@ class Model implements ModelContract
     public function getAttributes()
     {
         return $this->attributes;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function setAttributes(array $attributes)
+    {
+        $this->attributes = $attributes;
+
+        return $this;
     }
 
     /**
@@ -307,6 +315,32 @@ class Model implements ModelContract
 //    }
 
     /**
+     * @inheritdoc
+     */
+    public function reload()
+    {
+        $id = $this->original[$this->key];
+        $this->attributes = $this->database()->table($this->getTable())->find($id, $this->key) ;
+        $this->original = $this->attributes;
+        $this->relations = [];
+
+        // todo testen, wenn datensatz nicht vorhandne ist
+
+        return $this;
+    }
+
+
+    /**
+     * @inheritdoc
+     */
+    public function sync()
+    {
+        $this->original = $this->attributes;
+
+        return $this;
+    }
+
+    /**
      * Determine if the new and old attribute values are numerically equivalent.
      *
      * @param string $name Name of the attribute
@@ -360,7 +394,7 @@ class Model implements ModelContract
      */
     public function getId()
     {
-        return isset($this->attributes[$this->key]) ? $this->attributes[$this->key] : null;
+        return isset($this->original[$this->key]) ? $this->original[$this->key] : null;
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -379,12 +413,9 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public static function builder() // todo evtl umbenennen in query()
+    public static function builder()
     {
-        /** @var Model $model */
-        $model = new static;
-
-        return $model->database()->table($model->getTable())->asClass(static::class);
+        return (new static)->createBuilder();
     }
 
     /**
@@ -635,24 +666,102 @@ class Model implements ModelContract
      */
     public function save()
     {
-        $dirty = $this->getDirty();
-
-        $db = $this->database();
         if (isset($this->original[$this->key])) {
+
+            // Update...
+
+            $dirty = $this->getDirty();
             if (empty($dirty)) {
-                return $this;
+                return true;
             }
+
             $id = $this->original[$this->key];
-            $this->builder()->whereIs($this->key, $id)->update($dirty);
+            $builder = $this->builder()->disableHooks()->whereIs($this->key, $id);
+
+            // Invoke the "before" hook if exists.
+            $hook = 'beforeUpdate';
+            if (method_exists($this, $hook)) {
+                if ($this->$hook() === false) {
+                    return false;
+                }
+                $dirty = $this->getDirty();
+                if (empty($dirty)) {
+                    return true;
+                }
+            }
+
+            // Execute the database operation and invoke the "after" hook if exist.
+            $hook = 'afterUpdate';
+            if (method_exists($this, $hook)) {
+                // A "after" hook exist. We will open a transaction, so we are able to rollback the database operation if
+                // the hook returns FALSE or the hook throw an exception.
+                return $this->database()->transaction(function (Database $db) use ($dirty, $builder, $hook) {
+
+                    // Execute the database operation.
+                    $builder->update($dirty);
+
+                    // Invoke the "after" hook.
+                    if ($this->$hook() === false) {
+                        $db->rollBack();
+                        return false;
+                    }
+
+                    $this->original = $this->attributes;
+
+                    return true;
+                });
+            }
+            else {
+                // A "after" hook does not exist, so we don't need a transaction.
+                $builder->update($dirty);
+                $this->original = $this->attributes;
+
+                return true;
+            }
         }
         else {
-            $this->builder()->insert($dirty);
-            $this->attributes[$this->key] = $db->lastInsertId();
+            // Insert...
+
+            $builder = $this->builder()->disableHooks();
+
+            // Invoke the "before" hook if exists.
+            $hook = 'beforeInsert';
+            if (method_exists($this, $hook)) {
+                if ($this->$hook() === false) {
+                    return false;
+                }
+            }
+
+            // Execute the database operation and invoke the "after" hook if exist.
+            $hook = 'afterInsert';
+            if (method_exists($this, $hook)) {
+                // A "after" hook exist. We will open a transaction, so we are able to rollback the database operation if
+                // the hook returns FALSE or the hook throw an exception.
+                return $this->database()->transaction(function (Database $db) use ($builder, $hook) {
+
+                    // Execute the database operation.
+                    $this->attributes[$this->key] = $builder->insert($this->attributes);
+
+                    // Invoke the "after" hook.
+                    if ($this->$hook() === false) {
+                        $db->rollBack();
+                        unset($this->attributes[$this->key]);
+                        return false;
+                    }
+
+                    $this->original = $this->attributes;
+
+                    return true;
+                });
+            }
+            else {
+                // A "after" hook does not exist, so we don't need a transaction.
+                $this->attributes[$this->key] = $builder->insert($this->attributes);
+                $this->original = $this->attributes;
+
+                return true;
+            }
         }
-
-        $this->original = $this->attributes;
-
-        return $this;
     }
 
     /**
@@ -662,31 +771,16 @@ class Model implements ModelContract
     {
         /** @var Model $model */
         $model = new static;
-
-        // is fillable? // todo wenn property guarded static wäre, könnte dass als allererstes erfolgen
-        foreach ($attributes as $name => $value) {
-            if (in_array($name, $model->guarded)) {
-                throw new MassAssignmentException($name);
-            }
-        }
-
         $model->attributes = $attributes;
 
-        return $model->save(); // todo performace testen, getDirty() wird in save aufgerufen, ist nicht notwendig.
+        return $model->save() !== false ? $model : false;
     }
 
     /**
      * @inheritdoc
      */
-    public function update(array $attributes = [])
+    public function update(array $attributes)
     {
-        // is fillable?
-        foreach ($attributes as $name => $value) {
-            if (in_array($name, $this->guarded)) {
-                throw new MassAssignmentException($name);
-            }
-        }
-
         $this->attributes = array_merge($this->attributes, $attributes);
 
         return $this->save();
@@ -698,11 +792,47 @@ class Model implements ModelContract
     public function delete()
     {
         $id = $this->original[$this->key];
-        $this->builder()->whereIs($this->key, $id)->delete();
-        unset($this->attributes[$this->key]); // todo oder null setzen?
-        $this->original = [];
+        $builder = $this->builder()->disableHooks()->whereIs($this->key, $id);
 
-        return $this;
+        // Invoke the "before" hook if exists.
+        $hook = 'beforeDelete';
+        if (method_exists($this, $hook)) {
+            if ($this->$hook() === false) {
+                return false;
+            }
+        }
+
+        // Execute the database operation and invoke the "after" hook if exist.
+        $hook = 'afterDelete';
+        if (method_exists($this, $hook)) {
+            // A "after" hook exist. We will open a transaction, so we are able to rollback the database operation if
+            // the hook returns FALSE or the hook throw an exception.
+            return $this->database()->transaction(function (Database $db) use ($builder, $hook) {
+
+                // Execute the database operation.
+                $builder->delete();
+                unset($this->attributes[$this->key]);
+
+                // Invoke the "after" hook.
+                if ($this->$hook() === false) {
+                    $db->rollBack();
+                    $this->attributes[$this->key] = $this->original[$this->key];
+                    return false;
+                }
+
+                $this->original = [];
+
+                return true;
+            });
+        }
+        else {
+            // A "after" hook does not exist, so we don't need a transaction.
+            $builder->delete();
+            unset($this->attributes[$this->key]);
+            $this->original = [];
+
+            return true;
+        }
     }
 
     /**
@@ -745,21 +875,19 @@ class Model implements ModelContract
      */
     public function getGuarded()
     {
-        return $this->guarded;
+        return static::$guarded;
     }
 
     /**
      * @inheritdoc
      */
-    public function isFillable($attribute)
+    public static function checkMassAssignment(array $attributes)
     {
-        foreach ((array)$attribute as $name) {
-            if (in_array($name, $this->guarded)) {
-                false;
+        foreach ($attributes as $name => $value) {
+            if (in_array($name, static::$guarded)) {
+                throw new MassAssignmentException($name);
             }
         }
-
-        return true;
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -771,6 +899,16 @@ class Model implements ModelContract
     public function setRelationEntities($name, $entities)
     {
         $this->relations[$name] = $entities;
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function clearRelationCache()
+    {
+        $this->relations = [];
 
         return $this;
     }
@@ -943,18 +1081,21 @@ class Model implements ModelContract
      */
     public function morphTo($prefix, $typeAttribute = null, $foreignKey = null)
     {
-        $class = $this->attributes[$typeAttribute ?: $prefix . '_type'];
-
-        /** @var Model $model */
-        $model = new $class;
+        if ($typeAttribute === null) {
+            $typeAttribute = $prefix . '_type';
+        }
 
         if ($foreignKey === null) {
             $foreignKey = $prefix . '_id';
         }
 
+        $class = $this->attributes[$typeAttribute] ?: static::class;
+        /** @var Model $model */
+        $model = new $class;
+
         $otherKey = $model->getPrimaryKey();
 
-        return new BelongsToRelation($this, $model->builder(), $foreignKey, $otherKey);
+        return new MorphToRelation($this, $model->builder(), $typeAttribute, $foreignKey, $otherKey);
     }
 
     ///////////////////////////////////////////////////////////////////

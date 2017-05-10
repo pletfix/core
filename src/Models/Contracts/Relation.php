@@ -390,6 +390,8 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
      */
     public function offset($offset);
 
+    // todo find() einfügen
+
     /**
      * Execute the query as a "select" statement and return the result.
      *
@@ -415,34 +417,78 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
     public function first();
 
     /**
-     * Count the number of records in the table.
+     * Calculates the number of entities.
      *
      * @return int
      */
     public function count();
 
     /**
-     * Insert rows to the table and returns the inserted autoincrement sequence value.
+     * Calculates the maximum value of a given attribute.
      *
-     * If you insert multiple rows, the method returns dependency of the driver the first or last inserted row.
-     *
-     * @param array $data Values to be updated
+     * @param string|null $attribute
      * @return int
      */
-    public function insert(array $data);
+    public function max($attribute = null);
 
     /**
-     * Update all records of the relation with th given data and return the number of affected rows.
+     * Calculates the minimum value of a given attribute.
      *
-     * @param array $data Values to be updated
+     * @param string|null $attribute
      * @return int
      */
-    public function update(array $data);
+    public function min($attribute = null);
 
     /**
-     * Delete all records of the relation and return the number of affected rows.
+     * Calculates the average value of a given attribute.
      *
+     * @param string|null $attribute
+     * @return float
+     */
+    public function avg($attribute = null);
+
+    /**
+     * Calculates the total value of a given attribute.
+     *
+     * @param string|null $attribute
      * @return int
      */
-    public function delete();
+    public function sum($attribute = null);
+
+    /**
+     * Add the relation to the given model.
+     *
+     * @param Model $model
+     */
+    public function associate(Model $model);
+
+    /**
+     * Remove the relation to the given model.
+     *
+     * @param Model|null $model
+     */
+    public function disassociate(Model $model = null);
+
+    /**
+     * Create a new model, set the relation and save it in the database.
+     *
+     * @param array $attributes
+     * @return Model
+     */
+    public function create(array $attributes = []);
+
+    /**
+     * Update all records of the relation with th given attributes and return the number of affected rows.
+     *
+     * @param array $attributes Values to be updated
+     * @return int
+     */
+    public function update(array $attributes);
+
+    /**
+     * Delete the given model from the database and remove the relation.
+     *
+     * @param Model $model
+     */
+    public function delete(Model $model); // todo evtl umbenennen in remove(), um Verwechlung mit QueryBuilder auszuschließen
 }

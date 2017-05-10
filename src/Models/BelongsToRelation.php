@@ -2,6 +2,8 @@
 
 namespace Core\Models;
 
+use Core\Models\Contracts\Model as ModelContract;
+use Core\Services\Contracts\Database;
 use Core\Services\PDOs\Builder\Contracts\Builder;
 
 class BelongsToRelation extends Relation
@@ -30,12 +32,12 @@ class BelongsToRelation extends Relation
     /**
      * Create a new Relation instance.
      *
-     * @param Model $model The local model, e.g. App\Models\Book.
+     * @param ModelContract $model The local model, e.g. App\Models\Book.
      * @param Builder $builder A Builder to get the foreign entity, e.g. author.
-     * @param string $foreignKey Typical "&lt;foreign_model&gt;_id", e.g. "author_id"
+     * @param string $foreignKey Typical "&lt;foreign_model&gt;_id", e.g. "author_id".
      * @param string $otherKey Typical "id", e.g. the primary key of App\Models\Author.
      */
-    public function __construct(Model $model, Builder $builder, $foreignKey, $otherKey)
+    public function __construct(ModelContract $model, Builder $builder, $foreignKey, $otherKey)
     {
         $this->foreignKey = $foreignKey;
         $this->otherKey   = $otherKey;
@@ -80,8 +82,8 @@ class BelongsToRelation extends Relation
     {
         // get the foreign entities, group by foreign id
         $foreignEntities = [];
-        foreach ($this->builder->all() as $foreignEntity) {
-            /** @var Model $foreignEntity */
+        foreach ($this->builder->all() as $foreignEntity) { // todo testen, ob cursor schneller ist
+            /** @var ModelContract $foreignEntity */
             $foreignId = $foreignEntity->getAttribute($this->otherKey); // e.g. id of the author
             $foreignEntities[$foreignId] = $foreignEntity;
         }
@@ -95,5 +97,73 @@ class BelongsToRelation extends Relation
         }
 
         return $result;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function associate(ModelContract $model)
+    {
+        $otherId = $model->getAttribute($this->otherKey);
+        $this->model->setAttribute($this->foreignKey, $otherId)->save();
+        $this->model->clearRelationCache();
+        $model->clearRelationCache();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function disassociate(ModelContract $model = null)
+    {
+        if ($model === null) {
+            $this->model->setAttribute($this->foreignKey, null)->save();
+            $this->model->clearRelationCache();
+            return;
+        }
+
+        $foreignId = $this->model->getAttribute($this->foreignKey);
+        $otherId   = $model->getAttribute($this->otherKey);
+        if ($foreignId == $otherId) {
+            $this->model->setAttribute($this->foreignKey, null)->save();
+        }
+        $this->model->clearRelationCache();
+        $model->clearRelationCache();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function create(array $attributes = [])
+    {
+        return $this->model->database()->transaction(function() use($attributes) {
+            /** @var ModelContract $class */
+            $class = $this->builder->getClass();
+            $model = $class::create($attributes);
+            $this->associate($model);
+
+            return $model;
+        });
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function delete(ModelContract $model)
+    {
+        $this->model->database()->transaction(function(Database $db) use($model) {
+            $foreignId = $this->model->getAttribute($this->foreignKey);
+            $otherId = $model->getAttribute($this->otherKey);
+
+            $model->delete()->clearRelationCache();
+
+            $db->table($this->model->getTable())
+                ->whereIs($this->foreignKey, $otherId)
+                ->update([$this->foreignKey => null]);
+
+            if ($foreignId == $otherId) {
+                $this->model->setAttribute($this->foreignKey, null)->sync();
+                $this->model->clearRelationCache();
+            }
+        });
     }
 }

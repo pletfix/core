@@ -19,8 +19,8 @@ class HasOneRelation extends HasManyRelation
     {
         // get the foreign entities, group by local id
         $foreignEntities = [];
-        foreach ($this->builder->all() as $foreignEntity) {
-            /** @var Model $foreignEntity */
+        foreach ($this->builder->all() as $foreignEntity) { // todo testen, ob cursor schneller ist
+            /** @var Contracts\Model $foreignEntity */
             $localId = $foreignEntity->getAttribute($this->foreignKey);
             $foreignEntities[$localId] = $foreignEntity;
         }

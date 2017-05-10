@@ -19,6 +19,7 @@
         "natxet/cssmin": "^3.0",
         "oyejorge/less.php": "v1.7.0.10",
         "paragonie/random_compat": "^2.0",
+        "psr/http-message": "~1.0",
         "tedivm/jshrink": "^1.1",
         "vlucas/phpdotenv": "~2.2"
     },

@@ -3,6 +3,7 @@
 namespace Core\Models\Contracts;
 
 use ArrayAccess;
+use Core\Exceptions\MassAssignmentException;
 use Core\Models\BelongsToManyRelation;
 use Core\Models\BelongsToRelation;
 use Core\Models\HasManyRelation;
@@ -13,9 +14,10 @@ use Core\Services\Contracts\Arrayable;
 use Core\Services\Contracts\Database;
 use Core\Services\Contracts\Jsonable;
 use Core\Services\PDOs\Builder\Contracts\Builder;
+use Core\Services\PDOs\Builder\Contracts\Hookable;
 use JsonSerializable;
 
-interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
+interface Model extends Arrayable, ArrayAccess, Hookable, Jsonable, JsonSerializable
 {
     ///////////////////////////////////////////////////////////////////
     // Attribute Handling
@@ -26,6 +28,14 @@ interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
      * @return array
      */
     public function getAttributes();
+
+    /**
+     * Set the given attributes to the model.
+     *
+     * @param array $attributes
+     * @return $this
+     */
+    public function setAttributes(array $attributes);
 
     /**
      * Get the attribute (or relationship!) from the model.
@@ -50,7 +60,6 @@ interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
      * Get the model's original attribute values.
      *
      * @param string|null $name
-     * @_param mixed $default
      * @return mixed|array
      */
     public function getOriginal($name = null);
@@ -67,10 +76,22 @@ interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
      *
      * If you omit the argument, all attributes are checked.
      *
-     * @param  array|string|null $attributes
+     * @param array|string|null $attributes
      * @return bool
      */
     public function isDirty($attributes = null);
+
+    /**
+     * Reload the attributes from the database.
+     */
+    public function reload();
+
+    /**
+     * Sync the original attributes with the current without reading the database.
+     *
+     * @return $this
+     */
+    public function sync();
 
     ///////////////////////////////////////////////////////////////////
     // Database Table Access
@@ -107,6 +128,13 @@ interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
 
     ///////////////////////////////////////////////////////////////////
     // Gets a Query Builder
+
+//    /**
+//     * Create a new QueryBuilder instance.
+//     *
+//     * @return Builder
+//     */
+//    public function createBuilder();
 
     /**
      * Create a new QueryBuilder instance.
@@ -538,30 +566,38 @@ interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
     /**
      * Save the model to the database.
      *
-     * @return $this
+     * It returns FALSE if the operation was canceled by a hook.
+     *
+     * @return bool
      */
     public function save();
 
     /**
-     * Save a new model and return the instance.
+     * Create a new model, save it in the database and return the instance.
+     *
+     * It returns FALSE if the operation was canceled by a hook.
      *
      * @param array $attributes
-     * @return static
+     * @return static|false
      */
     public static function create(array $attributes = []);
 
     /**
      * Update the model in the database.
      *
+     * It returns FALSE if the operation was canceled by a hook, otherwise TRUE.
+     *
      * @param array $attributes
-     * @return $this
+     * @return bool
      */
-    public function update(array $attributes = []);
+    public function update(array $attributes);
 
     /**
      * Delete the model from the database.
      *
-     * @return $this
+     * It returns FALSE if the operation was canceled by a hook, otherwise TRUE.
+     *
+     * @return bool
      */
     public function delete();
 
@@ -572,7 +608,7 @@ interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
      * have a primary key yet.
      *
      * @param array $except Attributes that will be not copied.
-     * @return $this
+     * @return static
      */
     public function replicate(array $except = []);
 
@@ -594,24 +630,31 @@ interface Model extends Arrayable, ArrayAccess, Jsonable, JsonSerializable
     public function getGuarded();
 
     /**
-     * Determine if the given attribute may be mass assigned.
+     * Throw a MassAssignmentException if one or more of the given attributes are protected for mass assignment.
      *
-     * @param string|array $attribute Name of the attribute/attributes
-     * @return bool
+     * @param array $attributes Attributes (key/vlaue pairs).
+     * @throws MassAssignmentException
      */
-    public function isFillable($attribute);
+    public static function checkMassAssignment(array $attributes);
 
     ///////////////////////////////////////////////////////////////////
     // Relationships
 
     /**
-     * Set the specific relationship in the model.
+     * Set the given entities into the relationship cache.
      *
      * @param string $name Name of the relationship method.
      * @param mixed $entities
      * @return $this
      */
     public function setRelationEntities($name, $entities);
+
+    /**
+     * Clear the relationship cache.
+     *
+     * @return $this
+     */
+    public function clearRelationCache();
 
     /**
      * Define a one-to-one relationship.

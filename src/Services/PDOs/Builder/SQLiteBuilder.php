@@ -10,13 +10,15 @@ class SQLiteBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function truncate()
+    public function doTruncate()
     {
-        $this->db->transaction(function() {
+        return $this->db->transaction(function() {
             $table = implode(', ', $this->from);
-            $this->db->exec("DELETE FROM $table");
+            $result = $this->db->exec("DELETE FROM $table");
             /** @noinspection SqlDialectInspection */
             $this->db->exec('DELETE FROM sqlite_sequence WHERE name = ?', [trim($table, '"')]);
+
+            return $result;
         });
     }
 }

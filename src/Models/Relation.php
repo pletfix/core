@@ -3,6 +3,7 @@
 namespace Core\Models;
 
 use Closure;
+use Core\Models\Contracts\Model as ModelContract;
 use Core\Models\Contracts\Relation as RelationContract;
 use Core\Services\PDOs\Builder\Contracts\Builder;
 
@@ -11,7 +12,7 @@ abstract class Relation implements RelationContract
     /**
      * Local model.
      *
-     * @var Model
+     * @var ModelContract
      */
     protected $model;
 
@@ -32,10 +33,10 @@ abstract class Relation implements RelationContract
     /**
      * Create a new Relation instance.
      *
-     * @param Model $model The local model.
+     * @param ModelContract $model The local model.
      * @param Builder $builder A Builder to get the foreign entities.
      */
-    public function __construct(Model $model, Builder $builder)
+    public function __construct(ModelContract $model, Builder $builder)
     {
         $this->model   = $model;
         $this->builder = $builder;
@@ -299,24 +300,60 @@ abstract class Relation implements RelationContract
     /**
      * @inheritdoc
      */
-    public function insert(array $data)
+    public function max($attribute = null)
     {
-        return $this->builder->insert($data);
-    }
-    
-    /**
-     * @inheritdoc
-     */
-    public function update(array $data)
-    {
-        return $this->builder->update($data);
+        return $this->builder->max($attribute);
     }
 
     /**
      * @inheritdoc
      */
-    public function delete()
+    public function min($attribute = null)
     {
-        return $this->builder->delete();
+        return $this->builder->min($attribute);
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function avg($attribute = null)
+    {
+        return $this->builder->avg($attribute);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function sum($attribute = null)
+    {
+        return $this->builder->sum($attribute);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    abstract public function associate(ModelContract $model);
+
+    /**
+     * @inheritdoc
+     */
+    abstract public function disassociate(ModelContract $model = null);
+
+    /**
+     * @inheritdoc
+     */
+    abstract public function create(array $attributes = []);
+
+    /**
+     * @inheritdoc
+     */
+    public function update(array $attributes)
+    {
+        return $this->builder->update($attributes);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    abstract public function delete(ModelContract $model);
 }
