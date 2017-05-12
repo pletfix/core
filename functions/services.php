@@ -227,12 +227,13 @@ if (!function_exists('session')) {
     /**
      * Get the Session.
      *
-     * @param string|Closure|null $keyOrCallback Key using "dot" notation or callback function to writing data
+     * @param string|Closure|null $keyOrCallback Key using "dot" notation or callback function to writing data.
      * @param mixed $default
      * @return \Core\Services\Contracts\Session|mixed
      */
     function session($keyOrCallback = null, $default = null)
     {
+        /** @var \Core\Services\Contracts\Session $session */
         $session = DI::getInstance()->get('session');
         if ($keyOrCallback === null) {
             return $session;

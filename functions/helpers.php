@@ -785,6 +785,18 @@ if (!function_exists('random_string')) {
     }
 }
 
+if (! function_exists('csrf_token')) {
+    /**
+     * Get a CSRF token value.
+     *
+     * @return string
+     */
+    function csrf_token()
+    {
+       return DI::getInstance()->get('session')->csrf();
+    }
+}
+
 if (!function_exists('snake_case')) {
     /**
      * Convert the given word to snake case (snake_case).
