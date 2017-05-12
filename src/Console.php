@@ -14,7 +14,7 @@ class Console
      *
      * @var string
      */
-    const VERSION = '0.0.2';
+    const VERSION = '0.6.1';
 
     /**
      * Get the version number of the framework.

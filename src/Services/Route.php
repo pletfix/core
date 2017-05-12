@@ -2,6 +2,7 @@
 
 namespace Core\Services;
 
+use Closure;
 use Core\Exceptions\HttpException;
 use Core\Services\Contracts\Request;
 use Core\Services\Contracts\Response;
@@ -22,6 +23,13 @@ class Route implements RouteContract
     private $routes = [];
 
     /**
+     * List of Middleware classes.
+     *
+     * @var array
+     */
+    private $middleware = [];
+
+    /**
      * Dispatch the request to the application.
      *
      * @param Request $request
@@ -34,33 +42,28 @@ class Route implements RouteContract
             throw new HttpException(404, 'No matching route found!');
         }
 
+        /** @var \Core\Services\Delegate $delegate */
+        $delegate = DI::getInstance()->get('delegate');
+        $delegate->setMiddleware($route->middleware);
+
         $action = $route->action;
         $params = $this->getParameters($request, $route);
-
         if (is_string($action)) {
             list($class, $method) = explode('@', $action);
             if ($class[0] != '\\') {
                 $class = '\\App\\Controllers\\' . $class;
             }
             $controller = new $class;
-            $result = $controller->$method(...$params);
+            $delegate->setAction([$controller, $method], $params);
         }
         else if (is_callable($action)) {
-            $result = $action(...$params);
+            $delegate->setAction($action, $params);
         }
         else {
             throw new \RuntimeException('Malformed route definition!!');
         }
 
-        if ($result instanceof Response) {
-            return $result;
-        }
-
-        /** @var Response $response */
-        $response = DI::getInstance()->get('response');
-        $response->output($result);
-
-        return $response;
+        return $delegate->process($request);
     }
 
     /**
@@ -120,96 +123,128 @@ class Route implements RouteContract
     /**
      * @inheritdoc
      */
-    public function get($path, $action)
+    public function middleware($middleware, Closure $nested)
     {
-        $this->add('GET',  $path, $action);
-        $this->add('HEAD', $path, $action);
+        $previous = $this->middleware;
+        $this->middleware = $this->addMiddleware((array)$middleware);
+        try {
+            $nested($this);
+        }
+        finally {
+            $this->middleware = $previous;
+        }
+    }
+
+    /**
+     * Merge one or more Middleware classes with the current middleware list.
+     *
+     * @param array $middleware
+     * @return array
+     */
+    private function addMiddleware(array $middleware)
+    {
+        foreach ($middleware as $i => $class) {
+            if ($class[0] != '\\') {
+                $middleware[$i] = '\\App\\Middleware\\' . $class;
+            }
+        }
+
+        return array_merge($this->middleware, $middleware);
     }
 
     /**
      * @inheritdoc
      */
-    public function head($path, $action)
+    public function get($path, $action, $middleware = null)
     {
-        $this->add('HEAD', $path, $action);
+        $this->add('GET',  $path, $action, $middleware);
+        $this->add('HEAD', $path, $action, $middleware);
     }
 
     /**
      * @inheritdoc
      */
-    public function post($path, $action)
+    public function head($path, $action, $middleware = null)
     {
-        $this->add('POST', $path, $action);
+        $this->add('HEAD', $path, $action, $middleware);
     }
 
     /**
      * @inheritdoc
      */
-    public function put($path, $action)
+    public function post($path, $action, $middleware = null)
     {
-        $this->add('PUT', $path, $action);
+        $this->add('POST', $path, $action, $middleware);
     }
 
     /**
      * @inheritdoc
      */
-    public function patch($path, $action)
+    public function put($path, $action, $middleware = null)
     {
-        $this->add('PATCH', $path, $action);
+        $this->add('PUT', $path, $action, $middleware);
     }
 
     /**
      * @inheritdoc
      */
-    public function delete($path, $action)
+    public function patch($path, $action, $middleware = null)
     {
-        $this->add('DELETE', $path, $action);
+        $this->add('PATCH', $path, $action, $middleware);
     }
 
     /**
      * @inheritdoc
      */
-    public function options($path, $action)
+    public function delete($path, $action, $middleware = null)
     {
-        $this->add('OPTIONS', $path, $action);
+        $this->add('DELETE', $path, $action, $middleware);
     }
 
     /**
      * @inheritdoc
      */
-    public function multi($methods, $path, $action = null)
+    public function options($path, $action, $middleware = null)
+    {
+        $this->add('OPTIONS', $path, $action, $middleware);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function multi($methods, $path, $action, $middleware = null)
     {
         foreach ($methods as $method) {
             if (!in_array($method, ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'])) {
                 throw new \InvalidArgumentException('Invalid HTTP method: ' . $method);
             }
-            $this->add($method, $path, $action);
+            $this->add($method, $path, $action, $middleware);
         }
     }
 
     /**
      * @inheritdoc
      */
-    public function any($path, $action = null)
+    public function any($path, $action = null, $middleware = null)
     {
         foreach (['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'] as $method) {
-            $this->add($method, $path, $action);
+            $this->add($method, $path, $action, $middleware);
         }
     }
     
     /**
      * @inheritdoc
      */
-    public function resource($path, $controller /*, array $options = [] */)
+    public function resource($path, $controller, $middleware = null /*, array $options = [] */)
     {
         $var = 'id';
-        $this->add('GET',    $path,                          $controller . '@index');
-        $this->add('GET',    $path . '/create',              $controller . '@create');
-        $this->add('POST',   $path,                          $controller . '@store');
-        $this->add('DELETE', $path . '/{' . $var . '}',      $controller . '@destroy');
-        $this->add('GET',    $path . '/{' . $var . '}/edit', $controller . '@edit');
-        $this->add('PUT',    $path . '/{' . $var . '}',      $controller . '@update');
-        $this->add('GET',    $path . '/{' . $var . '}',      $controller . '@show');
+        $this->add('GET',    $path,                          $controller . '@index',   $middleware);
+        $this->add('GET',    $path . '/create',              $controller . '@create',  $middleware);
+        $this->add('POST',   $path,                          $controller . '@store',   $middleware);
+        $this->add('DELETE', $path . '/{' . $var . '}',      $controller . '@destroy', $middleware);
+        $this->add('GET',    $path . '/{' . $var . '}/edit', $controller . '@edit',    $middleware);
+        $this->add('PUT',    $path . '/{' . $var . '}',      $controller . '@update',  $middleware);
+        $this->add('GET',    $path . '/{' . $var . '}',      $controller . '@show',    $middleware);
     }
 
     /**
@@ -217,14 +252,16 @@ class Route implements RouteContract
      *
      * @param string $method HTTP method (either 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE' or 'OPTIONS')
      * @param string $path Path of the route, e.g. "/photos/{id}/edit"
-     * @param \Closure|string $action, e.g. "PhotoController@edit"
+     * @param Closure|string $action , e.g. "PhotoController@edit"
+     * @param string|array|null $middleware
      */
-    private function add($method, $path, $action)
+    private function add($method, $path, $action, $middleware = null)
     {
         $this->routes[] = (object)[
-            'method' => $method,
-            'path'   => $path,
-            'action' => $action
+            'method'     => $method,
+            'path'       => $path,
+            'action'     => $action,
+            'middleware' => $middleware !== null ? $this->addMiddleware((array)$middleware) : $this->middleware
         ];
     }
 }

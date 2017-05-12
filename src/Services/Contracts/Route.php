@@ -2,6 +2,8 @@
 
 namespace Core\Services\Contracts;
 
+use Closure;
+
 interface Route
 {
     /**
@@ -13,60 +15,82 @@ interface Route
     public function dispatch(Request $request);
 
     /**
+     * Define a group of routes embedded in middleware.
+     *
+     * @param string|array $middleware
+     * @param Closure $nested
+     */
+    public function middleware($middleware, Closure $nested);
+
+    /**
      * Adds a GET route.
      *
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
+     * @param string|array|null $middleware
+     * @return
      */
-    public function get($path, $action);
+    public function get($path, $action, $middleware = null);
 
     /**
      * Adds a HEAD route.
      *
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
+     * @param string|array|null $middleware
+     * @return
      */
-    public function head($path, $action);
+    public function head($path, $action, $middleware = null);
 
     /**
      * Adds a POST route.
      *
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
+     * @param string|array|null $middleware
+     * @return
      */
-    public function post($path, $action);
+    public function post($path, $action, $middleware = null);
 
     /**
      * Adds a PUT route.
      *
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
+     * @param string|array|null $middleware
+     * @return
      */
-    public function put($path, $action);
+    public function put($path, $action, $middleware = null);
 
     /**
      * Adds a PATCH route.
      *
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
+     * @param string|array|null $middleware
+     * @return
      */
-    public function patch($path, $action);
+    public function patch($path, $action, $middleware = null);
 
     /**
      * Adds a DELETE route.
      *
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
+     * @param string|array|null $middleware
+     * @return
      */
-    public function delete($path, $action);
+    public function delete($path, $action, $middleware = null);
 
     /**
      * Adds a OPTIONS route.
      *
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
+     * @param string|array|null $middleware
+     * @return
      */
-    public function options($path, $action);
+    public function options($path, $action, $middleware = null);
 
     /**
      * Adds routes for the method 'GET', 'HEAD', 'POST', 'PUT', 'PATCH' and 'DELETE'.
@@ -74,23 +98,27 @@ interface Route
      * @param string[] $methods Array of HTTP methods ('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE' and 'OPTIONS')
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
+     * @param string|array|null $middleware
+     * @return
      */
-    public function multi($methods, $path, $action = null);
+    public function multi($methods, $path, $action, $middleware = null);
 
     /**
      * Adds routes for the method 'GET', 'HEAD', 'POST', 'PUT', 'PATCH' and 'DELETE'.
      *
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
+     * @param string|array|null $middleware
+     * @return
      */
-    public function any($path, $action = null);
+    public function any($path, $action, $middleware = null);
 
     /**
      * Route a resource to a CRUD controller.
      *
      * Example : $route->resource('articles', 'ArticleController');
      *
-     * Method	 | Path	               | Name             | Action                    | Used for
+     * Method     | Path                   | Name             | Action                    | Used for
      * -----------------------------------------------------------------------------------------------------------------------
      * GET|HEAD  | articles            | articles.index   | ArticleController@index   | Display a list of all articles.
      * GET|HEAD  | articles/create     | articles.create  | ArticleController@create  | Show the form to create a new article.
@@ -102,6 +130,8 @@ interface Route
      *
      * @param string $path
      * @param string $controller
+     * @param string|array|null $middleware
+     * @return
      */
-    public function resource($path, $controller);
+    public function resource($path, $controller, $middleware = null);
 }

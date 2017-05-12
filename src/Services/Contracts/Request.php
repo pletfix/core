@@ -2,10 +2,12 @@
 
 namespace Core\Services\Contracts;
 
+//use Psr\Http\Message\ServerRequestInterface;
+
 /**
  * The Request class represents an HTTP request.
  */
-interface Request
+interface Request //extends ServerRequestInterface
 {
     /**
      * Get the full URL for the request.
