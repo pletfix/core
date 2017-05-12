@@ -385,6 +385,22 @@ if (!function_exists('locale')) {
     }
 }
 
+if (! function_exists('old')) {
+    /**
+     * Retrieve an old input item.
+     *
+     * @param  string  $key
+     * @param  mixed   $default
+     * @return mixed
+     */
+    function old(/** @noinspection PhpUnusedParameterInspection */ $key = null, /** @noinspection PhpUnusedParameterInspection */ $default = null)
+    {
+        // todo implementate old function
+
+        return '';
+    }
+}
+
 if (!function_exists('remove_dir')) {
     /**
      * Delete a folder (or file).
