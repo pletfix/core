@@ -26,6 +26,13 @@ class Session implements SessionContract
     private $readable = false;
 
     /**
+     * Determines if the flash data are aged.
+     *
+     * @var bool
+     */
+    private $flashed = false;
+
+    /**
      * Lifetime of the session cookie, defined in seconds.
      *
      * The value 0 means "until the browser is closed."
@@ -170,7 +177,7 @@ class Session implements SessionContract
             throw new SessionException('Regeneration of session failed!');
         };
 
-        $this->delete('_csrf');
+        $this->delete('_csrf_token');
 
         return $this;
     }
@@ -330,30 +337,13 @@ class Session implements SessionContract
     }
 
     /**
-     * Store a value only be available during the subsequent HTTP request.
-     *
-     * @param $key
-     * @param string $value
-     * @return $this
+     * @inheritdoc
      */
     public function flash($key, $value)
     {
-        // todo
-
-        return $this;
-    }
-
-    /**
-     * Keep the flash data for an additional request.
-     *
-     * Omit the keys to keep all flash data.
-     *
-     * @param array $keys
-     * @return $this
-     */
-    public function reflash(array $keys = null)
-    {
-        // todo
+        $this->set($key, $value);
+        $this->addToNewFlashHash($key);
+        $this->removeFromOldFlashHash([$key]);
 
         return $this;
     }
@@ -361,12 +351,137 @@ class Session implements SessionContract
     /**
      * @inheritdoc
      */
+    public function flashNow($key, $value)
+    {
+        $this->set($key, $value);
+        $this->addToOldFlashHash($key);
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function reflash(array $keys = null)
+    {
+        if ($keys === null) {
+            $this->mergeNewFlashes($this->get('_flash.old', []));
+            $this->set('_flash.old', []);
+        }
+        else {
+            $this->mergeNewFlashes($keys);
+            $this->removeFromOldFlashHash($keys);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function ageFlash()
+    {
+        foreach ($this->get('_flash.old', []) as $key) {
+            $this->delete($key);
+        }
+
+        $this->set('_flash.old', $this->get('_flash.new'));
+        $this->delete('_flash.new');
+
+        return $this;
+    }
+
+    /**
+     * Add a key to the new-flash hash if not exist.
+     *
+     * @param string $key
+     */
+    private function addToNewFlashHash($key)
+    {
+        $array = $this->get('_flash.new', []);
+        if (!in_array($key, $array)) {
+            $array[] = $key;
+            $this->set('_flash.new', $array);
+        }
+    }
+
+    /**
+     * Add a key to the old-flash hash if not exist.
+     *
+     * @param string $key
+     */
+    private function addToOldFlashHash($key)
+    {
+        $array = $this->get('_flash.old', []);
+        if (!in_array($key, $array)) {
+            $array[] = $key;
+            $this->set('_flash.old', $array);
+        }
+    }
+
+    /**
+     * Merge new flash keys into the new-flash hash.
+     *
+     * @param array $keys
+     */
+    private function mergeNewFlashes(array $keys)
+    {
+        $this->set('_flash.new', array_unique(array_merge($this->get('_flash.new', []), $keys)));
+    }
+
+    /**
+     * Remove the given keys from the old-flash hash.
+     *
+     * @param array $keys
+     */
+    private function removeFromOldFlashHash(array $keys)
+    {
+        $this->set('_flash.old', array_diff($this->get('_flash.old', []), $keys));
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function flashInput(array $value)
+    {
+        $this->flash('_old_input', $value);
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function hasOldInput($key = null)
+    {
+        if ($key === null) {
+            return $this->has('_old_input');
+        }
+
+        return $this->has('_old_input.' . $key);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function old($key = null, $default = null)
+    {
+        if ($key === null) {
+            return $this->get('_old_input');
+        }
+
+        return $this->get('_old_input.' . $key, $default);
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function csrf()
     {
-        $csrf = $this->get('_csrf');
+        $csrf = $this->get('_csrf_token');
         if ($csrf === null) {
             $csrf = random_string(40);
-            $this->set('_csrf', $csrf);
+            $this->set('_csrf_token', $csrf);
         }
 
         return $csrf;

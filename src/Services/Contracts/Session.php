@@ -115,11 +115,20 @@ interface Session
     /**
      * Store a value only be available during the subsequent HTTP request.
      *
-     * @param $key
-     * @param string $value
+     * @param string $key
+     * @param mixed $value
      * @return $this
      */
     public function flash($key, $value);
+
+    /**
+     * Flash a key/value pair to the session for immediate use.
+     *
+     * @param string $key
+     * @param mixed $value
+     * @return $this
+     */
+    public function flashNow($key, $value);
 
     /**
      * Keep the flash data for an additional request.
@@ -130,6 +139,40 @@ interface Session
      * @return $this
      */
     public function reflash(array $keys = null);
+
+    /**
+     * Age the flash data for the session.
+     *
+     * @return $this
+     */
+    public function ageFlash();
+
+    /**
+     * Flash an input array to the session.
+     *
+     * The values will be available in the next session via the `old` method.
+     *
+     * @param array $value
+     * @return $this
+     */
+    public function flashInput(array $value);
+
+    /**
+     * Determine if the session contains old input.
+     *
+     * @param string $key
+     * @return bool
+     */
+    public function hasOldInput($key = null);
+
+    /**
+     * Get the requested item from the flashed old input array.
+     *
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    public function old($key = null, $default = null);
 
     /**
      * Get a CSRF token value.

@@ -137,6 +137,18 @@ if (!function_exists('config')) {
     }
 }
 
+if (! function_exists('csrf_token')) {
+    /**
+     * Get a CSRF token value.
+     *
+     * @return string
+     */
+    function csrf_token()
+    {
+        return DI::getInstance()->get('session')->csrf();
+    }
+}
+
 if (!function_exists('dump')) {
     /**
      * Dump a value.
@@ -389,15 +401,13 @@ if (! function_exists('old')) {
     /**
      * Retrieve an old input item.
      *
-     * @param  string  $key
-     * @param  mixed   $default
+     * @param string $key
+     * @param mixed  $default
      * @return mixed
      */
-    function old(/** @noinspection PhpUnusedParameterInspection */ $key = null, /** @noinspection PhpUnusedParameterInspection */ $default = null)
+    function old($key = null, $default = null)
     {
-        // todo implementate old function
-
-        return '';
+        return DI::getInstance()->get('session')->old($key, $default);
     }
 }
 
@@ -798,18 +808,6 @@ if (!function_exists('random_string')) {
         }
 
         return $string;
-    }
-}
-
-if (! function_exists('csrf_token')) {
-    /**
-     * Get a CSRF token value.
-     *
-     * @return string
-     */
-    function csrf_token()
-    {
-       return DI::getInstance()->get('session')->csrf();
     }
 }
 
