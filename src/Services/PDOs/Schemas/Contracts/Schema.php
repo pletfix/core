@@ -59,7 +59,7 @@ interface Schema
      * - type:      (string) The column data type. Data types are as reported by the database.
      * - size:      (int)    The column size (the maximum number of digits).
      * - scale:     (int)    The number of digits to the right of the numeric point. It must be no larger than size.
-     * - nullable:  (bool)   Is the column is not marked as NOT NULL.
+     * - nullable:  (bool)   Is the column not marked as NOT NULL?
      * - default:   (mixed)  The default value for the column.
      * - collation: (string) The collation of the column.
      * - comment:   (string) A hidden comment.
@@ -73,7 +73,7 @@ interface Schema
      * @param array $columns
      * @param array $options
      */
-    public function createTable($table, array $columns, array $options = []);
+    public function createTable($table, array $columns, array $options = []); // todo $this zurückgeben
 
     /**
      * Drop a table from the schema.
@@ -97,7 +97,7 @@ interface Schema
      * - type:      (string) The column data type. Data types are as reported by the database.
      * - size:      (int)    The column size (the maximum number of digits).
      * - scale:     (int)    The number of digits to the right of the numeric point. It must be no larger than size.
-     * - nullable:  (bool)   The column is not marked as NOT NULL.
+     * - nullable:  (bool)   Is the column not marked as NOT NULL?
      * - default:   (mixed)  The default value for the column.
      * - collation: (string) The collation of the column.
      * - comment:   (string) A hidden comment.
@@ -137,7 +137,7 @@ interface Schema
      * @param string|null $name The name of the index. It will be generated automatically if not set and will be ignored by a primary key.
      * @param array $options
      */
-    public function addIndex($table, $name, array $options);
+    public function addIndex($table, $name, array $options); // todo name in options aufnehmen oder als letzten Parameter
 
     /**
      * Drop a index from the table.

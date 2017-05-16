@@ -84,17 +84,17 @@ abstract class AbstractDatabase implements DatabaseContract
         }
     }
 
-//    /**
-//     * @inheritdoc
-//     */
-//    public function config($key = null)
-//    {
-//        if ($key === null) {
-//            return $this->config;
-//        }
-//
-//        return isset($this->config[$key]) ? $this->config[$key] : null;
-//    }
+    /**
+     * @inheritdoc
+     */
+    public function config($key = null)
+    {
+        if ($key === null) {
+            return $this->config;
+        }
+
+        return isset($this->config[$key]) ? $this->config[$key] : null;
+    }
 
     /**
      * @inheritdoc
@@ -417,8 +417,9 @@ abstract class AbstractDatabase implements DatabaseContract
     public function single($query, array $bindings = [], $class = null)
     {
         $sth = $this->perform($query, $bindings, $class);
+        $result = $sth->fetch();
 
-        return $sth->fetch();
+        return $result !== false ? $result : null;
     }
 
     /**

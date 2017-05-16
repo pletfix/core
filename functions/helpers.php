@@ -62,6 +62,25 @@ if (! function_exists('asset')) {
     }
 }
 
+if (! function_exists('bcrypt')) {
+    /**
+     * Creates a password hash using the <b>CRYPT_BLOWFISH</b> algorithm.
+     *
+     * @param string $password The plain password.
+     * @param int $cost The crypt cost factor. Examples of these values can be found on the {@link "http://www.php.net/manual/en/function.crypt.php crypt()"} page.
+     * @return string Returns the hashed password.
+     */
+    function bcrypt($password, $cost = 10)
+    {
+        $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => $cost]);
+        if ($hash === false) {
+            throw new RuntimeException('Bcrypt hashing not supported.');
+        }
+
+        return $hash;
+    }
+}
+
 if (!function_exists('benchmark')) {
     /**
      * Print the elapsed time in milliseconds and the memory usage in bytes since the last call.
@@ -394,6 +413,28 @@ if (!function_exists('locale')) {
         }
 
         return config('app.locale');
+    }
+}
+
+if (!function_exists('mail_address')) {
+    /**
+     * Get the email address without the name.
+     *
+     * @param string $address e.g. "User <user@example.com>"
+     * @return string e.g. "user@example.com"
+     */
+    function mail_address($address)
+    {
+        if (($pos = strpos($address, '<')) === false) {
+            return $address;
+        }
+
+        $n = strlen($address);
+        if ($address[$n - 1] != '>') {
+            $address = substr($address, $pos + 1, -1);
+        }
+
+        return $address;
     }
 }
 

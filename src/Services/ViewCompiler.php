@@ -449,7 +449,7 @@ class ViewCompiler implements ViewCompilerContract
      */
     protected function compileCan($expr)
     {
-        return "<?php if (app('Illuminate\\Contracts\\Auth\\Access\\Gate')->check{$expr}): ?>";
+        return "<?php if (auth()->can{$expr}): ?>";
     }
 
     /**
@@ -464,7 +464,7 @@ class ViewCompiler implements ViewCompilerContract
             return '<?php else: ?>';
         }
 
-        return "<?php elseif (app('Illuminate\\Contracts\\Auth\\Access\\Gate')->check{$expr}): ?>";
+        return "<?php elseif (auth()->can{$expr}): ?>";
     }
 
     /**
@@ -486,7 +486,7 @@ class ViewCompiler implements ViewCompilerContract
      */
     protected function compileCannot($expr)
     {
-        return "<?php if (app('Illuminate\\Contracts\\Auth\\Access\\Gate')->denies{$expr}): ?>";
+        return "<?php if (!auth()->can{$expr}): ?>";
     }
 
     /**
@@ -501,7 +501,7 @@ class ViewCompiler implements ViewCompilerContract
             return '<?php else: ?>';
         }
 
-        return "<?php elseif (app('Illuminate\\Contracts\\Auth\\Access\\Gate')->denies{$expr}): ?>";
+        return "<?php elseif (!auth()->can{$expr}): ?>";
     }
 
     /**

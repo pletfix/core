@@ -51,13 +51,13 @@ class Migrator implements MigratorContract
     {
         $batch      = $this->getLastBatchNumber() + 1;
         $migrations = $this->loadMigrations();
-        sort($migrations);
+        ksort($migrations);
 
-        foreach ($migrations as $migration) {
-            $this->db->transaction(function (Database $db) use ($migration, $batch) {
-                $this->makeMigrationClass($migration)->up($db);
-                $db->insert('_migrations', [
-                    'name'  => $migration,
+        foreach ($migrations as $name => $file) {
+            $this->db->transaction(function (Database $db) use ($name, $file, $batch) {
+                $this->makeMigrationClass($name, $file)->up($db);
+                $db->table('_migrations')->insert([
+                    'name'  => $name,
                     'batch' => $batch,
                 ]);
             });
@@ -71,15 +71,12 @@ class Migrator implements MigratorContract
     {
         $batch      = $this->getLastBatchNumber();
         $migrations = $this->loadPerformedMigrations($batch);
-        rsort($migrations);
+        krsort($migrations);
 
-        foreach ($migrations as $migration) {
-            $this->db->transaction(function (Database $db) use ($migration, $batch) {
-                $this->makeMigrationClass($migration)->down($db);
-                $db->delete('_migrations', 'name=?', [$migration]);
-//                $db->delete('_migrations', [
-//                    'name' => $migration
-//                ]);
+        foreach ($migrations as $name => $file) {
+            $this->db->transaction(function (Database $db) use ($name, $file, $batch) {
+                $this->makeMigrationClass($name, $file)->down($db);
+                $db->table('_migrations')->where('name=?', [$name])->delete();
             });
         }
     }
@@ -90,7 +87,7 @@ class Migrator implements MigratorContract
     public function reset()
     {
         /** @noinspection SqlDialectInspection */
-        while ($this->db->scalar('SELECT COUNT(*) FROM _migrations') > 0) {
+        while ($this->db->table('_migrations')->count() > 0) {
             $this->rollback();
         }
     }
@@ -103,9 +100,9 @@ class Migrator implements MigratorContract
     private function getLastBatchNumber()
     {
         /** @noinspection SqlDialectInspection */
-        $batch = $this->db->scalar('SELECT MAX(batch) FROM _migrations');
+        $batch = $this->db->table('_migrations')->max('batch');
 
-        return (int)$batch;
+        return $batch;
     }
 
     /**
@@ -118,7 +115,7 @@ class Migrator implements MigratorContract
         // Load the migrations already performed
 
         $migrated = [];
-        $rows = $this->db->query('SELECT name FROM _migrations');
+        $rows = $this->db->table('_migrations')->select('name')->all();
         foreach ($rows as $row) {
             $migrated[] = $row['name'];
         }
@@ -130,22 +127,18 @@ class Migrator implements MigratorContract
         // read migrations from folder
         $files = [];
         list_files($files, $this->migrationPath, ['php']);
-
-        // read migrations included by plugins
-        $pluginManifest = manifest_path('plugins/migrations.php');
-        if (file_exists($pluginManifest)) {
-            $basePath = base_path();
-            /** @noinspection PhpIncludeInspection */
-            $pluginMigrations = include $pluginManifest;
-            foreach ($pluginMigrations as $pluginMigration) {
-                $files[] = $basePath . DIRECTORY_SEPARATOR . $pluginMigration;
-            }
-        }
-
         foreach ($files as $file) {
             $name = basename($file, '.php');
-            if (!in_array($name, $migrated)) {
-                $migrations[] = $name;
+            $migrations[$name] = $file;
+        }
+
+        // read migrations included by plugins
+        $migrations = array_merge($migrations, $this->pluginMigrations());
+
+        // remove migrations already performed
+        foreach ($migrations as $name => $file) {
+            if (in_array($name, $migrated)) {
+                unset($migrations[$name]);
             }
         }
 
@@ -162,23 +155,49 @@ class Migrator implements MigratorContract
     {
         $migrations = [];
 
+        $pluginMigrations = $this->pluginMigrations();
+
         /** @noinspection SqlDialectInspection */
-        $rows = $this->db->query('SELECT name FROM _migrations WHERE batch = ?', [$batch]);
+        $rows = $this->db->table('_migrations')->select('name')->where('batch = ?', [$batch])->all();
         foreach ($rows as $row) {
-            $migrations[] = $row['name'];
+            $name = $row['name'];
+            $migrations[$name] = isset($pluginMigrations[$name]) ? $pluginMigrations[$name] : $this->migrationPath . DIRECTORY_SEPARATOR . $name . '.php';
         }
 
         return $migrations;
     }
 
     /**
+     * Read migrations included by plugins.
+     *
+     * @return array
+     */
+    private function pluginMigrations()
+    {
+        $files = [];
+
+        $pluginManifest = manifest_path('plugins/migrations.php');
+        if (file_exists($pluginManifest)) {
+            $basePath = base_path();
+            /** @noinspection PhpIncludeInspection */
+            $migrations = include $pluginManifest;
+            foreach ($migrations as $name => $file) {
+                $files[$name] = $basePath . DIRECTORY_SEPARATOR . $file;
+            }
+        }
+
+        return $files;
+    }
+
+    /**
      * Create a new migration class.
      *
      * @param string $name
+     * @param string $file
      * @return Migration
      * @throws \Exception
      */
-    private function makeMigrationClass($name)
+    private function makeMigrationClass($name, $file)
     {
         if (($pos = strpos($name, '_')) === false) {
             throw new MigrationException('Migration file "' . $name . '.php" is invalid. Format "<timestamp>_<classname>.php" expected.');
@@ -186,7 +205,7 @@ class Migrator implements MigratorContract
         $class = substr($name, $pos + 1);
 
         /** @noinspection PhpIncludeInspection */
-        require $this->migrationPath . DIRECTORY_SEPARATOR . $name . '.php';
+        require $file;
 
         if (!class_exists($class, false)) {
             throw new MigrationException('Migration class "' . $class . '" is not defined in file "' . $name . '.php".');

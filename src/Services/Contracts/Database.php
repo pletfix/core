@@ -13,13 +13,13 @@ use Generator;
  */
 interface Database
 {
-//    /**
-//     * Gets the database configuration.
-//     *
-//     * @param string|null $key
-//     * @return array|mixed
-//     */
-//    public function config($key = null);
+    /**
+     * Gets the database configuration.
+     *
+     * @param string|null $key
+     * @return array|mixed
+     */
+    public function config($key = null);
 
     /**
      * Gets the database schema.
@@ -168,7 +168,7 @@ interface Database
      * Run a select statement and return a single object.
      *
      * If the class name is not set, an associative array is returned.
-     * If no record is exists, FALSE is returned.
+     * If the record is not exist, NULL is returned.
      *
      * @param string $query The SQL statement to prepare and execute.
      * @param array $bindings Values to bind to the query

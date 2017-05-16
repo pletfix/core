@@ -267,10 +267,10 @@ interface Mailer
      *
      * The formatting of the receiver must comply with RFC 2822.
      *
-     * @param string|array $to Receiver, or receivers of the mail, e.g. "user@example.com" or "User <user@example.com>".
+     * @param string|array|null $to Receiver, or receivers of the mail, e.g. "user@example.com" or "User <user@example.com>".
      * @param string|null $subject Subject of the email to be sent.
      * @param string|null $body Message to be sent.
      * @throws MailException
      */
-    public function send($to, $subject = null, $body = null);
+    public function send($to = null, $subject = null, $body = null);
 }

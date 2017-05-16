@@ -14,6 +14,18 @@ if (!function_exists('asset_manager')) {
     }
 }
 
+if (!function_exists('auth')) {
+    /**
+     * Get the authentication object.
+     *
+     * @return \Core\Services\Contracts\Auth
+     */
+    function auth()
+    {
+        return DI::getInstance()->get('auth');
+    }
+}
+
 if (!function_exists('cache')) {
     /**
      * Get the cache by given store name.
@@ -277,6 +289,6 @@ if (!function_exists('view')) {
             return $view;
         }
 
-        return $view->render($name, $variables);
+        return $view->render($name, $variables); // todo ein Request zurück geben
     }
 }

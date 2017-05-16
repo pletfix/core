@@ -1471,7 +1471,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         $i = 0;
         while ($i < $n) {
             $ch = $expr[$i];
-            if (stripos('abcdefghijklmnopqrstuvwxyz', $ch) !== false) {
+            if (stripos('abcdefghijklmnopqrstuvwxyz_', $ch) !== false) {
                 // Is it a table/field/alias or a function?
                 $k = $i; // first index of this part
                 while (++$i < $n && stripos('abcdefghijklmnopqrstuvwxyz0123456789$_', $expr[$i]) !== false);

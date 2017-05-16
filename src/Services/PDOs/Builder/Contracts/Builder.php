@@ -638,6 +638,8 @@ interface Builder extends Countable
     /**
      * Find a single record by the primary key of the table.
      *
+     * If the record is not exist, NULL is returned.
+     *
      * @param int $id Value of the primary Key
      * @param string $key Name of the primary Key
      * @return mixed
@@ -665,6 +667,8 @@ interface Builder extends Countable
 
     /**
      * Execute the query as a "SELECT" statement and return the first record.
+     *
+     * If the record is not exist, NULL is returned.
      *
      * @return mixed
      */
