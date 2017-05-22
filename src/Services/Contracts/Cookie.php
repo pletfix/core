@@ -32,24 +32,31 @@ interface Cookie
      * @param string $value The value of the cookie.
      * @param float|int $minutes Number of minutes the cookie expires.
      *      If set to 0, the cookie will expire when the browser closes.
-     * @param string $path The path on the server in which the cookie will be available on.
+     * @param string|null $path The path on the server in which the cookie will be available on.
      *      If set to '/', the cookie will be available within the entire domain.
      *      If set to '/foo/', the cookie will only be available within the /foo/ directory and all sub-directories such as /foo/bar/ of domain.
      *      The default value is the current directory that the cookie is being set in.
-     * @param string $domain The (sub)domain that the cookie is available to.
+     * @param string|null $domain The (sub)domain that the cookie is available to.
      *      Setting this to a domain (such as 'example.com') will make the cookie available to that
-     *      domain and all other sub-domains of it (i.e. www.example.com).
+     *      domain and all other sub-domains of it (i.e. www.example.com). The default is 'localhost'.
      * @param bool $secure When set to TRUE, the cookie will only be set if a secure connection exists.
      * @param bool $httpOnly When TRUE the cookie will be made accessible only through the HTTP protocol.
      * @return $this
      */
-    public function set($name, $value, $minutes = 0, $path = '', $domain = '', $secure = false, $httpOnly = false);
+    public function set($name, $value, $minutes = 0, $path = null, $domain = null, $secure = false, $httpOnly = false);
 
     /**
      * Remove a cookie.
      *
      * @param string $name The name of the cookie.
+     * @param string|null $path The path on the server in which the cookie will be available on.
+     *      If set to '/', the cookie will be available within the entire domain.
+     *      If set to '/foo/', the cookie will only be available within the /foo/ directory and all sub-directories such as /foo/bar/ of domain.
+     *      The default value is the current directory that the cookie is being set in.
+     * @param string|null $domain The (sub)domain that the cookie is available to.
+     *      Setting this to a domain (such as 'example.com') will make the cookie available to that
+     *      domain and all other sub-domains of it (i.e. www.example.com). The default is 'localhost'.
      * @return $this
      */
-    public function delete($name);
+    public function delete($name, $path = null, $domain = null);
 }

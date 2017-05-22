@@ -4,6 +4,7 @@ namespace Core\Services;
 
 use App\Models\User;
 use Core\Services\Contracts\Auth as AuthContract;
+use Exception;
 
 class Auth implements AuthContract
 {
@@ -47,16 +48,88 @@ class Auth implements AuthContract
 
         $this->setPrincipal($user->id, $user->name, $user->role);
 
+        // If the user should be permanently "remembered" by the application we will queue a permanent cookie that
+        // contains the encrypted copy of the user identifier. We will then decrypt this later to retrieve the users.
+        if (!empty($credentials['remember'])) {
+            $this->createRememberTokenIfDoesntExist($user);
+            $this->saveCookie($user);
+        }
+        else {
+            $this->deleteCookie();
+        }
+
         return true;
     }
+
 
     /**
      * @inheritdoc
      */
     public function logout()
     {
-        session()->delete('_auth')->regenerate();
+        session()
+            ->delete('_auth')
+            ->delete('_csrf_token')
+            ->regenerate();
+        $this->deleteCookie();
         $this->attributes = [];
+    }
+
+    /**
+     * Create a new "remember me" token for the user if one doesn't already exist.
+     *
+     * @param User $user
+     */
+    protected function createRememberTokenIfDoesntExist($user)
+    {
+        if (empty($user->remember_token)) {
+            $user->remember_token = random_string(60);
+            $user->save();
+        }
+    }
+
+    /**
+     * Create a "remember me" cookie for a given ID.
+     *
+     * @param User $user
+     */
+    protected function saveCookie($user)
+    {
+        // Create a cookie that lasts "forever" (five years).
+        cookie()->set('remember_me', base64_encode($user->id . '|' . $user->remember_token), 2628000, '/');
+    }
+
+    /**
+     * Delete the "remember me" cookie for a given ID.
+     */
+    protected function deleteCookie()
+    {
+        cookie()->delete('remember_me', '/');
+    }
+
+    /**
+     * Read the "remember me" cookie if exist and store the principal into the session.
+     */
+    protected function laodFromCookie()
+    {
+        $hash = cookie('remember_me');
+        if ($hash === null) {
+            return;
+        }
+
+        try {
+            list($id, $token) = explode('|', base64_decode($hash));
+        }
+        catch (Exception $e) {
+            $this->deleteCookie();
+            return;
+        }
+
+        /** @var User $user */
+        $user = User::find($id);
+        if ($user !== null && !empty($token) && $token === $user->remember_token) {
+            $this->setPrincipal($user->id, $user->name, $user->role);
+        }
     }
 
     /**
@@ -106,6 +179,9 @@ class Auth implements AuthContract
     {
         if ($this->attributes === null) {
             $this->attributes = session('_auth', []);
+            if (empty($this->attributes)) {
+                $this->laodFromCookie();
+            }
         }
 
         return isset($this->attributes[$key]) ? $this->attributes[$key] : null;
@@ -188,7 +264,9 @@ class Auth implements AuthContract
     {
         if ($this->isVerified() && $this->role() !== $role) {
             $this->setPrincipal($this->id(), $this->name(), $role);
-            session()->regenerate();
+            session()
+                ->delete('_csrf_token')
+                ->regenerate();
         }
     }
 

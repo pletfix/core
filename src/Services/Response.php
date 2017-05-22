@@ -60,7 +60,9 @@ class Response implements ResponseContract
     {
         $this->content = $content;
         $this->status  = $status;
-        $this->headers = $headers;
+        if (!empty($headers)) {
+            $this->header($headers);
+        }
 
         return $this;
     }
@@ -71,6 +73,18 @@ class Response implements ResponseContract
     public function view($name, array $variables = [], $status = 200, $headers = [])
     {
         return $this->output(DI::getInstance()->get('view')->render($name, $variables), $status, $headers);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function redirect($url, $status = 302, $headers = [])
+    {
+        if (!empty($headers)) {
+            $this->header($headers);
+        }
+
+        return $this->header('location', $url)->status($status);
     }
 
     /**
@@ -258,61 +272,6 @@ class Response implements ResponseContract
         ];
 
 
-    # todo Redirects
-
-    Redirect responses are instances of the `Illuminate\Http\RedirectResponse` class, and contain the proper headers needed to redirect the user to another URL. There are several ways to generate a `RedirectResponse` instance. The simplest method is to use the global `redirect` helper:
-
-        Route::get('dashboard', function () {
-            return redirect('home/dashboard');
-        });
-
-    Sometimes you may wish to redirect the user to their previous location, such as when a submitted form is invalid. You may do so by using the global `back` helper function. Since this feature utilizes the [session](/docs/{{version}}/session), make sure the route calling the `back` function is using the `web` middleware group or has all of the session middleware applied:
-
-        Route::post('user/profile', function () {
-            // Validate the request...
-
-            return back()->withInput();
-        });
-
-    When you call the `redirect` helper with no parameters, an instance of `Illuminate\Routing\Redirector` is returned, allowing you to call any method on the `Redirector` instance. For example, to generate a `RedirectResponse` to a named route, you may use the `route` method:
-
-        return redirect()->route('login');
-
-    If your route has parameters, you may pass them as the second argument to the `route` method:
-
-        // For a route with the following URI: profile/{id}
-
-        return redirect()->route('profile', ['id' => 1]);
-
-    You may also generate redirects to [controller actions](/docs/{{version}}/controllers). To do so, pass the controller and action name to the `action` method. Remember, you do not need to specify the full namespace to the controller since Laravel's `RouteServiceProvider` will automatically set the base controller namespace:
-
-        return redirect()->action('HomeController@index');
-
-    If your controller route requires parameters, you may pass them as the second argument to the `action` method:
-
-        return redirect()->action(
-            'UserController@profile', ['id' => 1]
-        );
-
-    <a name="redirecting-with-flashed-session-data"></a>
-    ### Redirecting With Flashed Session Data
-
-    Redirecting to a new URL and [flashing data to the session](/docs/{{version}}/session#flash-data) are usually done at the same time. Typically, this is done after successfully performing an action when you flash a success message to the session. For convenience, you may create a `RedirectResponse` instance and flash data to the session in a single, fluent method chain:
-
-        Route::post('user/profile', function () {
-            // Update the user's profile...
-
-            return redirect('dashboard')->with('status', 'Profile updated!');
-        });
-
-    After the user is redirected, you may display the flashed message from the [session](/docs/{{version}}/session). For example, using [Blade syntax](/docs/{{version}}/blade):
-
-        @if (session('status'))
-            <div class="alert alert-success">
-                {{ session('status') }}
-            </div>
-        @endif
-
     # todo Response JSON
 
     The `json` method will automatically set the `Content-Type` header to `application/json`, as well as convert the given array to JSON using the `json_encode` PHP function:
@@ -354,15 +313,6 @@ class Response implements ResponseContract
     The `back()` function generates a redirect response to the user's previous location:
 
         return back();
-
-
-    # todo redirect()
-
-    The `redirect` function returns a redirect HTTP response, or returns the redirector instance if called with no arguments:
-
-        return redirect('/home');
-
-        return redirect()->route('route.name');
 
     */
 

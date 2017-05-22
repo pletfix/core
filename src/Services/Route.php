@@ -239,12 +239,17 @@ class Route implements RouteContract
     {
         $var = 'id';
         $this->add('GET',    $path,                          $controller . '@index',   $middleware);
+        $this->add('HEAD',   $path,                          $controller . '@index',   $middleware);
         $this->add('GET',    $path . '/create',              $controller . '@create',  $middleware);
+        $this->add('HEAD',   $path . '/create',              $controller . '@create',  $middleware);
         $this->add('POST',   $path,                          $controller . '@store',   $middleware);
         $this->add('DELETE', $path . '/{' . $var . '}',      $controller . '@destroy', $middleware);
         $this->add('GET',    $path . '/{' . $var . '}/edit', $controller . '@edit',    $middleware);
+        $this->add('HEAD',   $path . '/{' . $var . '}/edit', $controller . '@edit',    $middleware);
         $this->add('PUT',    $path . '/{' . $var . '}',      $controller . '@update',  $middleware);
+        $this->add('PATCH',  $path . '/{' . $var . '}',      $controller . '@update',  $middleware);
         $this->add('GET',    $path . '/{' . $var . '}',      $controller . '@show',    $middleware);
+        $this->add('HEAD',   $path . '/{' . $var . '}',      $controller . '@show',    $middleware);
     }
 
     /**

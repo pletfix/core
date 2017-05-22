@@ -37,6 +37,16 @@ interface Response
     public function view($name, array $variables = [], $status = 200, $headers = []);
 
     /**
+     * Get a redirect response to the given URL.
+     *
+     * @param string $url
+     * @param int $status 301: permanently, 302: non permanently (default), 303: other TODO
+     * @param array $headers An array of response headers
+     * @return Response
+     */
+    public function redirect($url, $status = 302, $headers = []);
+
+    /**
      * Sets the HTTP status code.
      *
      * @param int $code HTTP status code.

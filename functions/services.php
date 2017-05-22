@@ -148,6 +148,25 @@ if (!function_exists('di')) {
     }
 }
 
+if (!function_exists('flash')) {
+    /**
+     * Get the Flash object.
+     *
+     * @param string|null $key Key using "dot" notation.
+     * @param mixed $default
+     * @return \Core\Services\Contracts\Flash|mixed
+     */
+    function flash($key = null, $default = null)
+    {
+        $flash = DI::getInstance()->get('flash');
+        if ($key === null) {
+            return $flash;
+        }
+
+        return $flash->get($key, $default);
+    }
+}
+
 if (!function_exists('logger')) {
     /**
      * Get the Logger.
@@ -196,6 +215,29 @@ if (!function_exists('plugin_manager')) {
     function plugin_manager($package)
     {
         return DI::getInstance()->get('plugin-manager', [$package]);
+    }
+}
+
+if (! function_exists('redirect')) {
+    /**
+     * Get a redirect response to the given path.
+     *
+     * @param string $path
+     * @param array $parameters
+     * @param array $flash
+     * @param int $status
+     * @param array $headers
+     * @return \Core\Services\Contracts\Response
+     */
+    function redirect($path = '', $parameters = [], $flash = [], $status = 302, $headers = [])
+    {
+        if (!empty($flash)) {
+            DI::getInstance()->get('flash')->merge(null, $flash);
+        }
+
+        $url = DI::getInstance()->get('request')->baseUrl() . (!empty($path) ? '/' . $path : '') . (!empty($parameters) ? '?' . http_build_query($parameters) : '');
+
+        return DI::getInstance()->get('response')->redirect($url, $status, $headers);
     }
 }
 
@@ -289,6 +331,6 @@ if (!function_exists('view')) {
             return $view;
         }
 
-        return $view->render($name, $variables); // todo ein Request zurück geben
+        return $view->render($name, $variables); // todo ein Response zurück geben
     }
 }

@@ -28,11 +28,10 @@ class Cookie implements CookieContract
     /**
      * @inheritdoc
      */
-    public function set($name, $value, $minutes = 0, $path = '', $domain = '', $secure = false, $httpOnly = false)
+    public function set($name, $value, $minutes = 0, $path = null, $domain = null, $secure = false, $httpOnly = false)
     {
         $expire = $minutes > 0 ? time() + $minutes * 60 : 0;
         setcookie($name, $value, $expire, $path, $domain, $secure, $httpOnly);
-
         $_COOKIE[$name] = $value;
 
         return $this;
@@ -41,10 +40,9 @@ class Cookie implements CookieContract
     /**
      * @inheritdoc
      */
-    public function delete($name)
+    public function delete($name, $path = null, $domain = null)
     {
-        setcookie($name, '', time() - 3600);
-
+        setcookie($name, '', time() - 3600, $path, $domain);
         unset($_COOKIE[$name]);
 
         return $this;

@@ -55,7 +55,6 @@ interface Session
      * Regenerate the session id.
      *
      * Any time a user has a change in privilege be sure to regenerate the session id!
-     * This method also regenerates the CSRF token value.
      *
      * @return $this
      */
@@ -111,73 +110,4 @@ interface Session
      * @return $this
      */
     public function clear();
-
-    /**
-     * Store a value only be available during the subsequent HTTP request.
-     *
-     * @param string $key
-     * @param mixed $value
-     * @return $this
-     */
-    public function flash($key, $value);
-
-    /**
-     * Flash a key/value pair to the session for immediate use.
-     *
-     * @param string $key
-     * @param mixed $value
-     * @return $this
-     */
-    public function flashNow($key, $value);
-
-    /**
-     * Keep the flash data for an additional request.
-     *
-     * Omit the keys to keep all flash data.
-     *
-     * @param array $keys
-     * @return $this
-     */
-    public function reflash(array $keys = null);
-
-    /**
-     * Age the flash data for the session.
-     *
-     * @return $this
-     */
-    public function ageFlash();
-
-    /**
-     * Flash an input array to the session.
-     *
-     * The values will be available in the next session via the `old` method.
-     *
-     * @param array $value
-     * @return $this
-     */
-    public function flashInput(array $value);
-
-    /**
-     * Determine if the session contains old input.
-     *
-     * @param string $key
-     * @return bool
-     */
-    public function hasOldInput($key = null);
-
-    /**
-     * Get the requested item from the flashed old input array.
-     *
-     * @param string $key
-     * @param mixed $default
-     * @return mixed
-     */
-    public function old($key = null, $default = null);
-
-    /**
-     * Get a CSRF token value.
-     *
-     * @return string
-     */
-    public function csrf();
 }

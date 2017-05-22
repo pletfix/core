@@ -164,7 +164,15 @@ if (! function_exists('csrf_token')) {
      */
     function csrf_token()
     {
-        return DI::getInstance()->get('session')->csrf();
+        $session = DI::getInstance()->get('session');
+
+        $csrf = $session->get('_csrf_token');
+        if ($csrf === null) {
+            $csrf = random_string(40);
+            $session->set('_csrf_token', $csrf);
+        }
+
+        return $csrf;
     }
 }
 
@@ -259,6 +267,24 @@ if (!function_exists('env')) {
         }
 
         return $value;
+    }
+}
+
+if (! function_exists('error')) {
+    /**
+     * Retrieve an error message from the flash.
+     *
+     * @param string $key
+     * @param string $default
+     * @return string|array
+     */
+    function error($key = null, $default = null)
+    {
+        if ($key === null) {
+            return flash('errors', []);
+        }
+
+        return flash('errors.' . $key, $default);
     }
 }
 
@@ -438,17 +464,34 @@ if (!function_exists('mail_address')) {
     }
 }
 
+if (! function_exists('message')) {
+    /**
+     * Retrieve a message from the flash.
+     *
+     * @param string $default
+     * @return string
+     */
+    function message($default = null)
+    {
+        return flash('message', $default);
+    }
+}
+
 if (! function_exists('old')) {
     /**
-     * Retrieve an old input item.
+     * Retrieve an input item from the flash.
      *
      * @param string $key
-     * @param mixed  $default
+     * @param mixed $default
      * @return mixed
      */
     function old($key = null, $default = null)
     {
-        return DI::getInstance()->get('session')->old($key, $default);
+        if ($key === null) {
+            return flash('input', []);
+        }
+
+        return flash('input.' . $key, $default);
     }
 }
 

@@ -664,7 +664,7 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public function save()
+    public function save() // todo sollte besser Exception schmeißen, wenn es nicht klappt
     {
         if (isset($this->original[$this->key])) {
 
@@ -789,7 +789,7 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public function delete()
+    public function delete() // todo sollte besser Exception schmeißen, wenn es nicht klappt
     {
         $id = $this->original[$this->key];
         $builder = $this->builder()->disableHooks()->whereIs($this->key, $id);

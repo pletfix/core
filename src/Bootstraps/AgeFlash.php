@@ -12,6 +12,6 @@ class AgeFlash implements Bootable
      */
     public function boot()
     {
-        DI::getInstance()->get('session')->ageFlash();
+        DI::getInstance()->get('flash')->age();
     }
 }

@@ -93,7 +93,7 @@ interface Route
     public function options($path, $action, $middleware = null);
 
     /**
-     * Adds routes for the method 'GET', 'HEAD', 'POST', 'PUT', 'PATCH' and 'DELETE'.
+     * Adds routes for the method 'GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE' or 'OPTIONS.
      *
      * @param string[] $methods Array of HTTP methods ('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE' and 'OPTIONS')
      * @param string $path
