@@ -141,6 +141,8 @@ class PluginManager implements PluginManagerContract
         $this->publishLanguages($register);
         $this->publishViews($register);
         $this->publishRoutes($register);
+        $this->publishMiddleware($register);
+        $this->publishControllers($register);
         $this->publishServices($register);
         $this->publishBootstraps($register);
         $this->enablePackage($register);
@@ -472,6 +474,74 @@ class PluginManager implements PluginManagerContract
         }
 
         $this->saveContent(manifest_path('plugins/routes.php'), $dest);
+    }
+
+    /**
+     * Update manifest "middleware.php"
+     *
+     * @param bool $register
+     */
+    private function publishMiddleware($register)
+    {
+        // read middleware from folder
+        $middlewarePath = $this->path . '/src/Middleware';
+        if (!@file_exists($middlewarePath)) {
+            return;
+        }
+
+        $classes = [];
+        list_classes($classes, $middlewarePath, $this->namespace . 'Middleware');
+
+        // update manifest
+        $manifest = manifest_path('plugins/middleware.php');
+        /** @noinspection PhpIncludeInspection */
+        $list = @file_exists($manifest) ? include $manifest : [];
+        foreach ($classes as $class) {
+            $name = basename(str_replace('\\', '/', $class));
+            if ($register) {
+                $list[$name] = $class;
+            }
+            else {
+                unset($list[$name]);
+            }
+        }
+
+        //ksort($list);
+        $this->saveArray($manifest, $list);
+    }
+
+    /**
+     * Update manifest "controllers.php"
+     *
+     * @param bool $register
+     */
+    private function publishControllers($register)
+    {
+        // read controllers from folder
+        $controllerPath = $this->path . '/src';
+        if (!@file_exists($controllerPath)) {
+            return;
+        }
+
+        $classes = [];
+        list_classes($classes, $controllerPath, rtrim($this->namespace, '\\'), 'Controller');
+
+        // update manifest
+        $manifest = manifest_path('plugins/controllers.php');
+        /** @noinspection PhpIncludeInspection */
+        $list = @file_exists($manifest) ? include $manifest : [];
+        foreach ($classes as $class) {
+            $name = basename(str_replace('\\', '/', $class));
+            if ($register) {
+                $list[$name] = $class;
+            }
+            else {
+                unset($list[$name]);
+            }
+        }
+
+        //ksort($list);
+        $this->saveArray($manifest, $list);
     }
 
     /**

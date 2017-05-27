@@ -12,28 +12,36 @@ class Delegate implements DelegateContract
      *
      * @var array
      */
-    protected $middleware = [];
+    private $middleware = [];
 
     /**
      * The index of the next middleware to invoke.
      *
      * @var int
      */
-    protected $index = 0;
+    private $index = 0;
 
     /**
      * The target action which is at the end of the delegation list.
      *
      * @var callable
      */
-    protected $action;
+    private $action;
 
     /**
      * The parameters of the target action.
      *
      * @var array
      */
-    protected $parameters = [];
+    private $parameters = [];
+
+
+    /**
+     * PLugin's middleware.
+     *
+     * @var array|null
+     */
+    private $pluginMiddleware;
 
 //    /**
 //     * Create a new delegate instance.
@@ -73,9 +81,33 @@ class Delegate implements DelegateContract
     public function process(Contracts\Request $request)
     {
         if (isset($this->middleware[$this->index])) {
+            $class = $this->middleware[$this->index++];
+
+            if (($pos = strpos($class, ':')) !== false) {
+                $arguments = array_map(function($arg) { return trim($arg); }, explode(',', substr($class, $pos + 1)));
+                $class = substr($class, 0, $pos);
+            }
+            else {
+                $arguments = [];
+            }
+
+            if ($class[0] != '\\') {
+                if (file_exists(app_path('Middleware/' .  str_replace('\\', '/', $class) . '.php'))) {
+                    $class = '\\App\\Middleware\\' . $class;
+                }
+                else if (($pluginMiddleware = $this->getPluginMiddleware($class)) !== null) {
+                    $class = $pluginMiddleware;
+                }
+                else {
+                    $class = '\\Core\\Middleware\\' . $class;
+                }
+            }
+
             /** @var Middleware $middleware */
-            $middleware = new $this->middleware[$this->index++];
-            return $middleware->process($request, $this);
+            $middleware = new $class;
+
+            /** @noinspection PhpMethodParametersCountMismatchInspection */
+            return $middleware->process($request, $this, ...$arguments);
         }
 
         $result = call_user_func_array($this->action, $this->parameters);
@@ -89,5 +121,22 @@ class Delegate implements DelegateContract
         $response->output($result);
 
         return $response;
+    }
+
+    /**
+     * Get the full qualified class name of the plugin's middleware.
+     *
+     * @param string $class
+     * @return null|string
+     */
+    private function getPluginMiddleware($class)
+    {
+        if ($this->pluginMiddleware === null) {
+            $manifest = manifest_path('plugins/middleware.php');
+            /** @noinspection PhpIncludeInspection */
+            $this->pluginMiddleware = file_exists($manifest) ? include $manifest : [];
+        }
+
+        return isset($this->pluginMiddleware[$class]) ? $this->pluginMiddleware[$class] : null;
     }
 }

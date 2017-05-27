@@ -95,8 +95,10 @@ class Auth implements AuthContract
      */
     protected function saveCookie($user)
     {
+        $path = rtrim(dirname($_SERVER['PHP_SELF']), '/.');
+
         // Create a cookie that lasts "forever" (five years).
-        cookie()->set('remember_me', base64_encode($user->id . '|' . $user->remember_token), 2628000, '/');
+        cookie()->set('remember_me', base64_encode($user->id . '|' . $user->remember_token), 2628000, $path); // todo Path anpassen
     }
 
     /**
@@ -104,7 +106,10 @@ class Auth implements AuthContract
      */
     protected function deleteCookie()
     {
-        cookie()->delete('remember_me', '/');
+        //$host =strtolower(isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']);
+        $path = rtrim(dirname($_SERVER['PHP_SELF']), '/.');
+
+        cookie()->delete('remember_me', $path); // Path anpassen
     }
 
     /**

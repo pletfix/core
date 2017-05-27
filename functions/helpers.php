@@ -372,7 +372,7 @@ if (!function_exists('list_files')) {
      * @param array|null $filter List of extensions which should be listed, e.g. ['css', 'less', 'scss']
      * @param bool $recursive
      */
-    function list_files(&$result, $path, $filter = null, $recursive = true)
+    function list_files(array &$result, $path, array $filter = null, $recursive = true)
     {
         foreach (scandir($path) as $file) {
             if ($file[0] == '.') {
@@ -404,17 +404,21 @@ if (!function_exists('list_classes')) {
      * @param array &$result Receives the classes
      * @param string $path
      * @param string $namespace
+     * @param string|null $suffix
      */
-    function list_classes(&$result, $path, $namespace)
+    function list_classes(array &$result, $path, $namespace, $suffix = '')
     {
+        $ext = $suffix . '.php';
+        $len = strlen($ext);
+
         foreach (scandir($path) as $file) {
             if ($file[0] == '.') {
                 continue;
             }
             if (@is_dir($path . DIRECTORY_SEPARATOR . $file)) {
-                list_classes($result, $path . DIRECTORY_SEPARATOR . $file, $namespace . '\\' . $file);
+                list_classes($result, $path . DIRECTORY_SEPARATOR . $file, $namespace . '\\' . $file, $suffix);
             }
-            else if (substr($file, -4) == '.php') {
+            else if (substr($file, -$len) == $ext) {
                 $result[] = $namespace . '\\' . basename($file, '.php');
             }
         }

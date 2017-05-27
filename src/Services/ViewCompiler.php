@@ -437,8 +437,8 @@ class ViewCompiler implements ViewCompilerContract
     }
 
     /*
-     * Check authorization and permissions
-     * -----------------------------------
+     * Check authorization and abilities
+     * ---------------------------------
      */
 
     /**
@@ -490,7 +490,7 @@ class ViewCompiler implements ViewCompilerContract
     }
 
     /**
-     * Compile the else-can statements into valid PHP.
+     * Compile the else-cannot statements into valid PHP.
      *
      * @param string|null $expr
      * @return string
@@ -511,6 +511,80 @@ class ViewCompiler implements ViewCompilerContract
      * @return string
      */
     protected function compileEndcannot(/** @noinspection PhpUnusedParameterInspection */ $expr)
+    {
+        return '<?php endif; ?>';
+    }
+
+    /**
+     * Compile the is statements into valid PHP.
+     *
+     * @param string $expr
+     * @return string
+     */
+    protected function compileIs($expr)
+    {
+        return "<?php if (auth()->is{$expr}): ?>";
+    }
+
+    /**
+     * Compile the else-is statements into valid PHP.
+     *
+     * @param string|null $expr
+     * @return string
+     */
+    protected function compileElseis($expr)
+    {
+        if (is_null($expr)) {
+            return '<?php else: ?>';
+        }
+
+        return "<?php elseif (auth()->is{$expr}): ?>";
+    }
+
+    /**
+     * Compile the end-is statements into valid PHP.
+     *
+     * @param null $expr
+     * @return string
+     */
+    protected function compileEndis(/** @noinspection PhpUnusedParameterInspection */ $expr)
+    {
+        return '<?php endif; ?>';
+    }
+
+    /**
+     * Compile the is-not statements into valid PHP.
+     *
+     * @param string $expr
+     * @return string
+     */
+    protected function compileIsnot($expr)
+    {
+        return "<?php if (!auth()->is{$expr}): ?>";
+    }
+
+    /**
+     * Compile the else-is-not statements into valid PHP.
+     *
+     * @param string|null $expr
+     * @return string
+     */
+    protected function compileElseisnot($expr)
+    {
+        if (is_null($expr)) {
+            return '<?php else: ?>';
+        }
+
+        return "<?php elseif (!auth()->is{$expr}): ?>";
+    }
+
+    /**
+     * Compile the end-is-not statements into valid PHP.
+     *
+     * @param null $expr
+     * @return string
+     */
+    protected function compileEndisnot(/** @noinspection PhpUnusedParameterInspection */ $expr)
     {
         return '<?php endif; ?>';
     }

@@ -88,7 +88,7 @@ class HandleExceptions implements Bootable
     public function handleShutdown()
     {
         $error = error_get_last();
-        if (!is_null($error) && $this->isFatal($error['type'])) {
+        if ($error !== null && $this->isFatal($error['type'])) {
             $this->handleException(new FatalErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']));
         }
     }

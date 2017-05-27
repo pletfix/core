@@ -103,7 +103,7 @@ class Translator implements TranslatorContract
     }
 
     /**
-     * Get the full filename of the dictionary
+     * Get the full filename of the dictionary.
      *
      * @param string $dictionary
      * @param string $locale

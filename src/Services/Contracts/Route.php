@@ -17,10 +17,12 @@ interface Route
     /**
      * Define a group of routes embedded in middleware.
      *
+     * If the closure is omit, the middleware is used by all the routes defined below.
+     *
      * @param string|array $middleware
-     * @param Closure $nested
+     * @param Closure|null $nested
      */
-    public function middleware($middleware, Closure $nested);
+    public function middleware($middleware, Closure $nested = null);
 
     /**
      * Adds a GET route.

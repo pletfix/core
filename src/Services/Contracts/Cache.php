@@ -16,9 +16,9 @@ interface Cache
     /**
      * Puts data into the cache.
      *
-     * If a cache entry with the given id already exists, its data will be replaced.
+     * If a cache entry with the given key is already exist, its data will be replaced.
      *
-     * If the lifetime equal zero (the default), the entry never expires (although it may be deleted from the cache
+     * If the lifetime is equal zero (the default), the entry never expires (although it may be deleted from the cache
      * to make place for other entries).
      *
      * @param string $key

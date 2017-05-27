@@ -30,6 +30,13 @@ class Route implements RouteContract
     private $middleware = [];
 
     /**
+     * PLugin's controllers.
+     *
+     * @var array|null
+     */
+    private $pluginControllers;
+
+    /**
      * Dispatch the request to the application.
      *
      * @param Request $request
@@ -51,7 +58,15 @@ class Route implements RouteContract
         if (is_string($action)) {
             list($class, $method) = explode('@', $action);
             if ($class[0] != '\\') {
-                $class = '\\App\\Controllers\\' . $class;
+                if (file_exists(app_path('Controllers/' .  str_replace('\\', '/', $class) . '.php'))) {
+                    $class = '\\App\\Controllers\\' . $class;
+                }
+                else if (($pluginMiddleware = $this->getPluginController($class)) !== null) {
+                    $class = $pluginMiddleware;
+                }
+                else {
+                    $class = '\\Core\\Controllers\\' . $class;
+                }
             }
             $controller = new $class;
             $delegate->setAction([$controller, $method], $params);
@@ -64,6 +79,23 @@ class Route implements RouteContract
         }
 
         return $delegate->process($request);
+    }
+
+    /**
+     * Get the full qualified class name of the plugin's controller.
+     *
+     * @param string $class
+     * @return null|string
+     */
+    private function getPluginController($class)
+    {
+        if ($this->pluginControllers === null) {
+            $manifest = manifest_path('plugins/controllers.php');
+            /** @noinspection PhpIncludeInspection */
+            $this->pluginControllers = file_exists($manifest) ? include $manifest : [];
+        }
+
+        return isset($this->pluginControllers[$class]) ? $this->pluginControllers[$class] : null;
     }
 
     /**
@@ -123,15 +155,17 @@ class Route implements RouteContract
     /**
      * @inheritdoc
      */
-    public function middleware($middleware, Closure $nested)
+    public function middleware($middleware, Closure $nested = null)
     {
         $previous = $this->middleware;
-        $this->middleware = $this->addMiddleware((array)$middleware);
-        try {
-            $nested($this);
-        }
-        finally {
-            $this->middleware = $previous;
+        $this->middleware = $this->mergeMiddleware((array)$middleware);
+        if ($nested !== null) {
+            try {
+                $nested($this);
+            }
+            finally {
+                $this->middleware = $previous;
+            }
         }
     }
 
@@ -141,15 +175,24 @@ class Route implements RouteContract
      * @param array $middleware
      * @return array
      */
-    private function addMiddleware(array $middleware)
+    private function mergeMiddleware(array $middleware)
     {
-        foreach ($middleware as $i => $class) {
-            if ($class[0] != '\\') {
-                $middleware[$i] = '\\App\\Middleware\\' . $class;
-            }
-        }
+//        foreach ($middleware as $i => $class) {
+//            if ($class[0] != '\\') {
+//                if (($pos = strpos($class, ':')) !== false) {
+//                    $class = substr($class, 0, $pos);
+//                }
+//                if (file_exists(app_path('Middleware/' .  $class . '.php'))) {
+//                    $middleware[$i] = '\\App\\Middleware\\' . $middleware[$i];
+//                }
+//                // todo plugin berücksichtigen
+//                else {
+//                    $middleware[$i] = '\\Core\\Middleware\\' . $middleware[$i];
+//                }
+//            }
+//        }
 
-        return array_merge($this->middleware, $middleware);
+        return array_unique(array_merge($this->middleware, $middleware));
     }
 
     /**
@@ -266,7 +309,7 @@ class Route implements RouteContract
             'method'     => $method,
             'path'       => $path,
             'action'     => $action,
-            'middleware' => $middleware !== null ? $this->addMiddleware((array)$middleware) : $this->middleware
+            'middleware' => $middleware !== null ? $this->mergeMiddleware((array)$middleware) : $this->middleware
         ];
     }
 }

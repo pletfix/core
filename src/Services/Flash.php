@@ -3,7 +3,6 @@
 namespace Core\Services;
 
 use Core\Services\Contracts\Flash as FlashContract;
-use Core\Services\Contracts\Session;
 
 /**
  * The Session Object is an adapter of the [PHP Session](http://php.net/manual/en/session.examples.basic.php).
