@@ -28,14 +28,14 @@ class DatabaseFactory implements DatabaseFactoryContract
     private $databases = [];
 
     /**
-     * Name of the default Store.
+     * Name of the default store.
      *
      * @var string
      */
     private $defaultStore;
 
     /**
-     * Create a new Factory instance.
+     * Create a new factory instance.
      */
     public function __construct()
     {
@@ -61,10 +61,11 @@ class DatabaseFactory implements DatabaseFactoryContract
         }
 
         if (!isset($config['driver'])) {
-            throw new InvalidArgumentException('Database Driver for store "' . $name . '" is not specified.');
+            throw new InvalidArgumentException('Database driver for store "' . $name . '" is not specified.');
         }
 
-        switch ($config['driver']) {
+        // todo dynamisch gestalten, driver evtl auch im Plugins suchen
+        switch ($config['driver']) { // todo use class name such like "MySQL"
             case 'mysql':
                 $db = new MySql($config);
                 break;
@@ -78,7 +79,7 @@ class DatabaseFactory implements DatabaseFactoryContract
                 $db = new SqlServer($config);
                 break;
             default:
-                throw new InvalidArgumentException('Database Driver "' . $config['driver'] . '" is not supported.');
+                throw new InvalidArgumentException('Database driver "' . $config['driver'] . '" is not supported.');
         }
 
         return $this->databases[$name] = $db;

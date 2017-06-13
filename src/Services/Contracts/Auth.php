@@ -18,11 +18,20 @@ interface Auth
     public function logout();
 
     /**
+     * Set the attributes of the principal and store it in the session.
+     *
+     * @param int $id
+     * @param string $name
+     * @param string $role
+     */
+    public function setPrincipal($id, $name, $role);
+
+    /**
      * Determine if the current user is authenticated.
      *
      * @return bool
      */
-    public function isVerified(); // or check? or isValid? or ...?
+    public function isLoggedIn();
 
     /**
      * Get the id of the current user.
@@ -55,7 +64,7 @@ interface Auth
     /**
      * Determine if the current user is the given role.
      *
-     * @param string|array $role
+     * @param string $role
      * @return bool
      */
     public function is($role);
@@ -63,7 +72,7 @@ interface Auth
     /**
      * Determine if the user has the given ability.
      *
-     * @param $ability
+     * @param string $ability
      * @return bool
      */
     public function can($ability);

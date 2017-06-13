@@ -103,7 +103,7 @@ interface Route
      * @param string|array|null $middleware
      * @return
      */
-    public function multi($methods, $path, $action, $middleware = null);
+    public function multi(array $methods, $path, $action, $middleware = null);
 
     /**
      * Adds routes for the method 'GET', 'HEAD', 'POST', 'PUT', 'PATCH' and 'DELETE'.

@@ -218,29 +218,6 @@ if (!function_exists('plugin_manager')) {
     }
 }
 
-if (! function_exists('redirect')) {
-    /**
-     * Get a redirect response to the given path.
-     *
-     * @param string $path
-     * @param array $parameters
-     * @param array $flash
-     * @param int $status
-     * @param array $headers
-     * @return \Core\Services\Contracts\Response
-     */
-    function redirect($path = '', $parameters = [], $flash = [], $status = 302, $headers = [])
-    {
-        if (!empty($flash)) {
-            DI::getInstance()->get('flash')->merge(null, $flash);
-        }
-
-        $url = DI::getInstance()->get('request')->baseUrl() . (!empty($path) ? '/' . $path : '') . (!empty($parameters) ? '?' . http_build_query($parameters) : '');
-
-        return DI::getInstance()->get('response')->redirect($url, $status, $headers);
-    }
-}
-
 if (!function_exists('request')) {
     /**
      * Get the Request Object
@@ -281,23 +258,19 @@ if (!function_exists('session')) {
     /**
      * Get the Session.
      *
-     * @param string|Closure|null $keyOrCallback Key using "dot" notation or callback function to writing data.
+     * @param string|Closure|null $key Key using "dot" notation
      * @param mixed $default
      * @return \Core\Services\Contracts\Session|mixed
      */
-    function session($keyOrCallback = null, $default = null)
+    function session($key = null, $default = null) //todo kein callback zulassen
     {
         /** @var \Core\Services\Contracts\Session $session */
         $session = DI::getInstance()->get('session');
-        if ($keyOrCallback === null) {
+        if ($key === null) {
             return $session;
         }
 
-        if (is_callable($keyOrCallback)) {
-            return $session->lock($keyOrCallback);
-        }
-
-        return $session->get($keyOrCallback, $default);
+        return $session->get($key, $default);
     }
 }
 
@@ -306,8 +279,8 @@ if (!function_exists('stdio')) {
      * Get the standard input/output streams.
      *
      * @param resource $stdin  Standard input stream
-     * @param resource $stdout Standard output stream.
-     * @param resource $stderr Standard error stream.
+     * @param resource $stdout Standard output stream
+     * @param resource $stderr Standard error stream
      * @return \Core\Services\Contracts\Stdio
      */
     function stdio($stdin = null, $stdout = null, $stderr = null)

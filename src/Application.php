@@ -68,8 +68,8 @@ class Application
          * Register routes.
          */
         call_user_func(function() {
-            @include __DIR__ . '/../../../../.manifest/plugins/routes.php';
             require __DIR__ . '/../../../../config/boot/routes.php';
+            @include __DIR__ . '/../../../../.manifest/plugins/routes.php';
         });
 
         /*
@@ -83,7 +83,7 @@ class Application
     /**
      * Get the Route Service.
      *
-     * @return \Core\Services\Route
+     * @return \Core\Services\Contracts\Route
      */
     public static function route()
     {

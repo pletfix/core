@@ -12,8 +12,8 @@ class AgeFlash implements Bootable
      */
     public function boot()
     {
-        register_shutdown_function(function() {
+//        register_shutdown_function(function() {
             DI::getInstance()->get('flash')->age();
-        });
+//        });
     }
 }

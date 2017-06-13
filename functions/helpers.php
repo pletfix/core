@@ -499,6 +499,36 @@ if (! function_exists('old')) {
     }
 }
 
+if (! function_exists('redirect')) {
+    /**
+     * Get a redirect response to the given path.
+     *
+     * @param string $path
+     * @param array $parameters
+     * @param array $flash
+     * @param int $status
+     * @param array $headers
+     * @return \Core\Services\Contracts\Response
+     */
+    function redirect($path, $parameters = [], $flash = [], $status = 302, $headers = [])
+    {
+        if (!empty($flash)) {
+            DI::getInstance()->get('flash')->merge(null, $flash);
+        }
+
+//        if (substr($path, 0, 8) !== 'https://' && substr($path, 0, 7) !== 'http://') {
+//            $url = DI::getInstance()->get('request')->baseUrl() . (!empty($path) ? '/' . $path : '') . (!empty($parameters) ? '?' . http_build_query($parameters) : '');
+//        }
+//        else {
+//            $url = $path . (!empty($parameters) ? '?' . http_build_query($parameters) : '');
+//        }
+
+        $url = DI::getInstance()->get('request')->baseUrl() . (!empty($path) ? '/' . $path : '') . (!empty($parameters) ? '?' . http_build_query($parameters) : '');
+
+        return DI::getInstance()->get('response')->redirect($url, $status, $headers);
+    }
+}
+
 if (!function_exists('remove_dir')) {
     /**
      * Delete a folder (or file).
@@ -555,7 +585,7 @@ if (!function_exists('url')) {
      */
     function url($path = '', $parameters = [])
     {
-        return request()->baseUrl() . (!empty($path) ? '/' . $path : '') . (!empty($parameters) ? '?' . http_build_query($parameters) : '');
+        return DI::getInstance()->get('request')->baseUrl() . (!empty($path) ? '/' . $path : '') . (!empty($parameters) ? '?' . http_build_query($parameters) : '');
     }
 }
 

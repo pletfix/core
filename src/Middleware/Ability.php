@@ -2,6 +2,7 @@
 
 namespace Core\Middleware;
 
+use Core\Exceptions\AuthenticationException;
 use Core\Services\Contracts\Delegate;
 use Core\Middleware\Contracts\Middleware as MiddlewareContract;
 use Core\Services\Contracts\Request;
@@ -14,6 +15,12 @@ class Ability implements MiddlewareContract
     public function process(Request $request, Delegate $delegate, $abilities = null)
     {
         $auth = auth();
+
+        if (!$auth->isLoggedIn()) {
+            session()->set('origin_url', request()->fullUrl());
+            return redirect('auth/login');
+        }
+
         $pass = false;
         foreach (explode('|', $abilities) as $ability) {
             if ($auth->can($ability)) {
@@ -23,7 +30,7 @@ class Ability implements MiddlewareContract
         }
 
         if (!$pass) {
-            return abort(HTTP_STATUS_FORBIDDEN);
+            abort(HTTP_STATUS_FORBIDDEN);
         }
 
         return $delegate->process($request);

@@ -19,7 +19,7 @@ class CommandFactory implements CommandFactoryContract
     private $cachedFile;
 
     /**
-     * Create a new Factory instance.
+     * Create a new factory instance.
      */
     public function __construct()
     {
@@ -93,6 +93,8 @@ class CommandFactory implements CommandFactoryContract
 
         ksort($list);
 
+        // todo plugin sollte den core überschreiben können und app die plugins
+
         return $list;
     }
 
@@ -133,7 +135,7 @@ class CommandFactory implements CommandFactoryContract
     {
         if (!is_dir($cacheDir = dirname($this->cachedFile))) {
             if (!@mkdir($cacheDir, 0775, true) && !is_dir($cacheDir)) {
-                throw new \RuntimeException(sprintf('Command Factory was not able to create directory "%s"', $cacheDir));
+                throw new \RuntimeException(sprintf('Command factory was not able to create directory "%s"', $cacheDir));
             }
         }
 
@@ -142,7 +144,7 @@ class CommandFactory implements CommandFactoryContract
         }
 
         if (file_put_contents($this->cachedFile, '<?php return ' . var_export($list, true) . ';' . PHP_EOL, LOCK_EX) === false) {
-            throw new \RuntimeException(sprintf('Command Factory was not able to save cached file "%s"', $this->cachedFile));
+            throw new \RuntimeException(sprintf('Command factory was not able to save cached file "%s"', $this->cachedFile));
         }
 
         //@chmod($this->cachedFile, 0664); // not necessary, because only the cli need to have access
@@ -150,7 +152,7 @@ class CommandFactory implements CommandFactoryContract
         $time = $this->modificationTime();
 
         if (!touch($this->cachedFile, $time)) {
-            throw new \RuntimeException(sprintf('Command Factory was not able to modify time of cached file "%s"', $this->cachedFile));
+            throw new \RuntimeException(sprintf('Command factory was not able to modify time of cached file "%s"', $this->cachedFile));
         }
     }
 

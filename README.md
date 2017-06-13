@@ -31,9 +31,7 @@ If you want to develop at the Pletfix Core, you can create a workbench as follow
     - In the `require` section, remove the `"pletfix/core": "dev-master"` entry and insert all required packages from 
       the core instead.
     - Add `"Core\\": "workbench/pletfix/core/src/"` to the `psr-4` autoload section.
-    - In the `files` autoload section, change the path of the core's function files from
-      "vendor/pletfix/core/functions/helpers.php" to "workbench/pletfix/core/functions/helpers.php", and the 
-      the other files as well.
+    - Add the core's function files into the `files` autoload section.
     
     After this the `autolaod` section looks like below:
     

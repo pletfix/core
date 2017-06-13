@@ -141,8 +141,7 @@ class PluginManager implements PluginManagerContract
         $this->publishLanguages($register);
         $this->publishViews($register);
         $this->publishRoutes($register);
-        $this->publishMiddleware($register);
-        $this->publishControllers($register);
+        $this->publishClasses($register);
         $this->publishServices($register);
         $this->publishBootstraps($register);
         $this->enablePackage($register);
@@ -252,10 +251,10 @@ class PluginManager implements PluginManagerContract
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
         if ($register) {
-
             // make absolute path to relative path
             $basePath = base_path();
             $basePathLength = strlen($basePath);
+            /** @noinspection PhpIncludeInspection */
             $assets = include $build;
             foreach ($assets as $asset => $sources) {
                 foreach ($sources as $i => $source) {
@@ -264,7 +263,6 @@ class PluginManager implements PluginManagerContract
                     }
                 }
             }
-
             // insert asset build information
             /** @noinspection PhpIncludeInspection */
             $list[$this->plugin] = $assets;
@@ -442,7 +440,10 @@ class PluginManager implements PluginManagerContract
 
         $dest = '<?php' . PHP_EOL;
         if (!empty($packages)) {
-            $dest .= PHP_EOL . '$route = \Core\Application::route();' . PHP_EOL;
+            $dest .= PHP_EOL .
+                'use Core\Services\Contracts\Route;' . PHP_EOL
+                . PHP_EOL .
+                '$route = \Core\Application::route();' . PHP_EOL;
         }
 
         foreach ($packages as $package => $path) {
@@ -462,8 +463,11 @@ class PluginManager implements PluginManagerContract
                 $src = trim(substr($src, 0, -2));
             }
 
-            // strip the $di variable if exists
+            // strip the $route variable if exists
             $src = trim(preg_replace('/\$route\s*=\s*\\\\Core\\\\Application::route\(\);/', '', $src));
+
+            // strip "use Core\Services\Contracts\Route;" if exists
+            $src = trim(preg_replace('/use Core\\\\Services\\\\Contracts\\\\Route;/', '', $src));
 
             // append content to summery file
             $dest .= PHP_EOL .
@@ -477,66 +481,47 @@ class PluginManager implements PluginManagerContract
     }
 
     /**
-     * Update manifest "middleware.php"
+     * Update manifest "classes.php"
      *
      * @param bool $register
      */
-    private function publishMiddleware($register)
+    private function publishClasses($register)
     {
-        // read middleware from folder
-        $middlewarePath = $this->path . '/src/Middleware';
-        if (!@file_exists($middlewarePath)) {
+        // read classes from folder
+        $path = $this->path . '/src';
+        if (!@file_exists($path)) {
             return;
         }
 
         $classes = [];
-        list_classes($classes, $middlewarePath, $this->namespace . 'Middleware');
+        list_classes($classes, $path, rtrim($this->namespace, '\\'));
 
         // update manifest
-        $manifest = manifest_path('plugins/middleware.php');
+        $manifest = manifest_path('plugins/classes.php');
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
+        $len = strlen($this->namespace);
         foreach ($classes as $class) {
-            $name = basename(str_replace('\\', '/', $class));
+            $ns = substr($class, $len);
+            if (($pos = strpos($ns, '\\')) === false) {
+                continue; // no subdirectory
+            }
+            if (strpos($ns, '\\Contracts\\') !== false) {
+                continue; // contracts
+            }
+            $group = substr($ns, 0, $pos);
+            if (in_array($group, ['Bootstraps', 'Commands', 'Services'])) {
+                continue; // listed by an another migration file
+            }
+            $name = substr($ns, $pos + 1); //basename(str_replace('\\', '/', $class));
             if ($register) {
-                $list[$name] = $class;
+                if (!isset($list[$group])) {
+                    $list[$group] = [];
+                }
+                $list[$group][$name] = $class;
             }
             else {
-                unset($list[$name]);
-            }
-        }
-
-        //ksort($list);
-        $this->saveArray($manifest, $list);
-    }
-
-    /**
-     * Update manifest "controllers.php"
-     *
-     * @param bool $register
-     */
-    private function publishControllers($register)
-    {
-        // read controllers from folder
-        $controllerPath = $this->path . '/src';
-        if (!@file_exists($controllerPath)) {
-            return;
-        }
-
-        $classes = [];
-        list_classes($classes, $controllerPath, rtrim($this->namespace, '\\'), 'Controller');
-
-        // update manifest
-        $manifest = manifest_path('plugins/controllers.php');
-        /** @noinspection PhpIncludeInspection */
-        $list = @file_exists($manifest) ? include $manifest : [];
-        foreach ($classes as $class) {
-            $name = basename(str_replace('\\', '/', $class));
-            if ($register) {
-                $list[$name] = $class;
-            }
-            else {
-                unset($list[$name]);
+                unset($list[$group][$name]);
             }
         }
 

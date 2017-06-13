@@ -14,6 +14,12 @@ class Role implements MiddlewareContract
     public function process(Request $request, Delegate $delegate, $roles = null)
     {
         $auth = auth();
+
+        if (!$auth->isLoggedIn()) {
+            session()->set('origin_url', request()->fullUrl());
+            return redirect('auth/login');
+        }
+
         $pass = false;
         foreach (explode('|', $roles) as $role) {
             if ($auth->is($role)) {
@@ -23,7 +29,7 @@ class Role implements MiddlewareContract
         }
 
         if (!$pass) {
-            return abort(HTTP_STATUS_FORBIDDEN);
+            abort(HTTP_STATUS_FORBIDDEN);
         }
 
         return $delegate->process($request);

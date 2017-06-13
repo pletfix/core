@@ -7,16 +7,17 @@ use Core\Services\Contracts\Delegate;
 use Core\Middleware\Contracts\Middleware as MiddlewareContract;
 use Core\Services\Contracts\Request;
 
-class Auth implements MiddlewareContract
+class Locale implements MiddlewareContract
 {
     /**
      * @inheritdoc
      */
     public function process(Request $request, Delegate $delegate)
     {
-        if (!auth()->isLoggedIn()) {
-            session()->set('origin_url', request()->fullUrl());
-            return redirect('auth/login');
+        $locale = cookie('locale');
+
+        if ($locale !== config('app.locale')) {
+            locale($locale);
         }
 
         return $delegate->process($request);

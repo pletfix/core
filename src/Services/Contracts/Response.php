@@ -23,7 +23,7 @@ interface Response
      *
      * @return $this
      */
-    public function output($content, $status = 200, $headers = []);
+    public function output($content, $status = HTTP_STATUS_OK, $headers = []);
 
     /**
      * Get the evaluated view contents for the given view.
@@ -34,17 +34,17 @@ interface Response
      * @param array $headers An array of response headers
      * @return $this
      */
-    public function view($name, array $variables = [], $status = 200, $headers = []);
+    public function view($name, array $variables = [], $status = HTTP_STATUS_OK, $headers = []);
 
     /**
      * Get a redirect response to the given URL.
      *
      * @param string $url
-     * @param int $status 301: permanently, 302: non permanently (default), 303: other TODO
+     * @param int $status 301: permanently, 302: temporarily (default), 303: other
      * @param array $headers An array of response headers
      * @return Response
      */
-    public function redirect($url, $status = 302, $headers = []);
+    public function redirect($url, $status = HTTP_STATUS_FOUND, $headers = []);
 
     /**
      * Sets the HTTP status code.
@@ -53,7 +53,7 @@ interface Response
      * @return $this
      * // @throws \Exception If invalid status code
      */
-    public function status($code = 200);
+    public function status($code);
 
     /**
      * Gets the HTTP status code.

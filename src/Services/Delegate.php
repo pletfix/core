@@ -35,7 +35,6 @@ class Delegate implements DelegateContract
      */
     private $parameters = [];
 
-
     /**
      * PLugin's middleware.
      *
@@ -132,9 +131,15 @@ class Delegate implements DelegateContract
     private function getPluginMiddleware($class)
     {
         if ($this->pluginMiddleware === null) {
-            $manifest = manifest_path('plugins/middleware.php');
-            /** @noinspection PhpIncludeInspection */
-            $this->pluginMiddleware = file_exists($manifest) ? include $manifest : [];
+            $manifest = manifest_path('plugins/classes.php');
+            if (file_exists($manifest)) {
+                /** @noinspection PhpIncludeInspection */
+                $classes = include $manifest;
+                $this->pluginMiddleware = isset($classes['Middleware']) ? $classes['Middleware'] : [];
+            }
+            else {
+                $this->pluginMiddleware = [];
+            }
         }
 
         return isset($this->pluginMiddleware[$class]) ? $this->pluginMiddleware[$class] : null;

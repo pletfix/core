@@ -25,7 +25,7 @@ class Response implements ResponseContract
      *
      * @var int
      */
-    private $status = 200;
+    private $status = HTTP_STATUS_OK;
 
     /**
      * HTTP headers
@@ -46,7 +46,7 @@ class Response implements ResponseContract
      */
     public function clear()
     {
-        $this->status  = 200;
+        $this->status  = HTTP_STATUS_OK;
         $this->headers = [];
         $this->content = '';
 
@@ -56,7 +56,7 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
-    public function output($content, $status = 200, $headers = [])
+    public function output($content, $status = HTTP_STATUS_OK, $headers = [])
     {
         $this->content = $content;
         $this->status  = $status;
@@ -70,7 +70,7 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
-    public function view($name, array $variables = [], $status = 200, $headers = [])
+    public function view($name, array $variables = [], $status = HTTP_STATUS_OK, $headers = [])
     {
         return $this->output(DI::getInstance()->get('view')->render($name, $variables), $status, $headers);
     }
@@ -78,7 +78,7 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
-    public function redirect($url, $status = 302, $headers = [])
+    public function redirect($url, $status = HTTP_STATUS_FOUND, $headers = [])
     {
         if (!empty($headers)) {
             $this->header($headers);
@@ -90,7 +90,7 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
-    public function status($code = 200)
+    public function status($code)
     {
 //        if (!array_key_exists($code, static::$statusTexts)) {
 //            throw new \Exception('Invalid status code.');

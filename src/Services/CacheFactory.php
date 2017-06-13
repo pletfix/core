@@ -34,14 +34,14 @@ class CacheFactory implements CacheFactoryContract
     private $caches = [];
 
     /**
-     * Name of the default Store.
+     * Name of the default store.
      *
      * @var string
      */
     private $defaultStore;
 
     /**
-     * Create a new Factory instance.
+     * Create a new factory instance.
      */
     public function __construct()
     {
@@ -71,10 +71,11 @@ class CacheFactory implements CacheFactoryContract
         }
 
         if (!isset($config['driver'])) {
-            throw new InvalidArgumentException('Cache Driver for store "' . $name . '" is not specified.');
+            throw new InvalidArgumentException('Cache driver for store "' . $name . '" is not specified.');
         }
 
-        switch ($config['driver']) {
+        // todo dynamisch gestalten, driver evtl auch im Plugins suchen
+        switch ($config['driver']) { // todo use class name such like "Apcu"
             case 'apc':
                 $provider = new ApcuCache;
                 break;
@@ -97,7 +98,7 @@ class CacheFactory implements CacheFactoryContract
                 $provider->setRedis($redis);
                 break;
             default:
-                throw new InvalidArgumentException('Cache Driver "' . $config['driver'] . '" is not supported.');
+                throw new InvalidArgumentException('Cache driver "' . $config['driver'] . '" is not supported.');
         }
 
         return $this->caches[$name] = new Cache($provider);

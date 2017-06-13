@@ -4,8 +4,6 @@ namespace Core\Services;
 
 use Closure;
 use Core\Exceptions\HttpException;
-use Core\Services\Contracts\Request;
-use Core\Services\Contracts\Response;
 use Core\Services\Contracts\Route as RouteContract;
 
 /**
@@ -39,10 +37,10 @@ class Route implements RouteContract
     /**
      * Dispatch the request to the application.
      *
-     * @param Request $request
+     * @param Contracts\Request $request
      * @return Response
      */
-    public function dispatch(Request $request)
+    public function dispatch(Contracts\Request $request)
     {
         $route = $this->find($request);
         if (is_null($route)) {
@@ -90,9 +88,15 @@ class Route implements RouteContract
     private function getPluginController($class)
     {
         if ($this->pluginControllers === null) {
-            $manifest = manifest_path('plugins/controllers.php');
-            /** @noinspection PhpIncludeInspection */
-            $this->pluginControllers = file_exists($manifest) ? include $manifest : [];
+            $manifest = manifest_path('plugins/classes.php');
+            if (file_exists($manifest)) {
+                /** @noinspection PhpIncludeInspection */
+                $classes = include $manifest;
+                $this->pluginControllers = isset($classes['Controllers']) ? $classes['Controllers'] : [];
+            }
+            else {
+                $this->pluginControllers = [];
+            }
         }
 
         return isset($this->pluginControllers[$class]) ? $this->pluginControllers[$class] : null;
@@ -101,10 +105,10 @@ class Route implements RouteContract
     /**
      * Find the route matching the given request.
      *
-     * @param Request $request
+     * @param Contracts\Request $request
      * @return object|null
      */
-    private function find(Request $request)
+    private function find(Contracts\Request $request)
     {
         $method = $request->method();
         $path   = $request->path();
@@ -123,11 +127,11 @@ class Route implements RouteContract
     /**
      * Get parameters of the request.
      *
-     * @param Request $request
+     * @param Contracts\Request $request
      * @param object $route
      * @return array
      */
-    private function getParameters(Request $request, $route)
+    private function getParameters(Contracts\Request $request, $route)
     {
         $path    = $request->path();
         $pattern = $this->pattern($route);
@@ -255,7 +259,7 @@ class Route implements RouteContract
     /**
      * @inheritdoc
      */
-    public function multi($methods, $path, $action, $middleware = null)
+    public function multi(array $methods, $path, $action, $middleware = null)
     {
         foreach ($methods as $method) {
             if (!in_array($method, ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'])) {

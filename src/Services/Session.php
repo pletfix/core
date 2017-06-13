@@ -39,7 +39,7 @@ class Session implements SessionContract
      */
     public function __construct()
     {
-        $path = rtrim(dirname($_SERVER['PHP_SELF']), '/.');
+        $path = rtrim(dirname($_SERVER['PHP_SELF']), '/');
 
         $config = array_merge([
             'lifetime'  => 0,
