@@ -100,6 +100,15 @@ interface Request //extends ServerRequestInterface
     public function file($key = null, $default = null);
 
     /**
+     * Get a HTTP header item.
+     *
+     * @param string|null $key
+     * @param string|null $default
+     * @return string|array
+     */
+    public function header($key = null, $default = null);
+
+    /**
      * Gets the raw HTTP request body of the request.
      *
      * @return string
@@ -112,7 +121,7 @@ interface Request //extends ServerRequestInterface
      * If the X-HTTP-Method-Override header is set, and if the method is a POST, then it is used to determine the
      * "real" intended HTTP method. The method is always an uppercase string.
      *
-     * @return string (GET, HEAD, POST, PUT, PATCH or DELETE)
+     * @return string ('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE' or 'OPTIONS')
      */
     public function method();
 
@@ -130,12 +139,12 @@ interface Request //extends ServerRequestInterface
      */
     public function isSecure();
 
-    /**
-     * Determine if the request is the result of an AJAX call.
-     *
-     * @return bool
-     */
-    public function isAjax();
+//    /**
+//     * Determine if the request is the result of an AJAX call.
+//     *
+//     * @return bool
+//     */
+//    public function isAjax();
 
     /**
      * Determine if the request is sending JSON.

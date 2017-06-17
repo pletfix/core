@@ -181,21 +181,6 @@ class Route implements RouteContract
      */
     private function mergeMiddleware(array $middleware)
     {
-//        foreach ($middleware as $i => $class) {
-//            if ($class[0] != '\\') {
-//                if (($pos = strpos($class, ':')) !== false) {
-//                    $class = substr($class, 0, $pos);
-//                }
-//                if (file_exists(app_path('Middleware/' .  $class . '.php'))) {
-//                    $middleware[$i] = '\\App\\Middleware\\' . $middleware[$i];
-//                }
-//                // todo plugin berücksichtigen
-//                else {
-//                    $middleware[$i] = '\\Core\\Middleware\\' . $middleware[$i];
-//                }
-//            }
-//        }
-
         return array_unique(array_merge($this->middleware, $middleware));
     }
 
