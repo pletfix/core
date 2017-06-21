@@ -53,11 +53,12 @@ interface Collection extends ArrayAccess, Arrayable, Countable, IteratorAggregat
     /**
      * Determine if an item exists in the collection.
      *
-     * @param  string|callable  $value
-     * @param  int|string|null  $key
+     * @param  string|callable $value
+     * @param  int|string|null $key
+     * @param bool $strict
      * @return bool
      */
-    public function contains($value, $key = null);
+    public function contains($value, $key = null, $strict = false);
 
     /**
      * Determine if an item exists in the collection using strict comparison.
@@ -502,21 +503,12 @@ interface Collection extends ArrayAccess, Arrayable, Countable, IteratorAggregat
     /**
      * Filter items by the given key value pair.
      *
-     * @param  string $key
-     * @param  mixed $operator
-     * @param  mixed $value
+     * @param string $key
+     * @param mixed $value
+     * @param string $operator
      * @return static
      */
-    public function where($key, $operator, $value);
-
-    /**
-     * Filter items by the given key value pair.
-     *
-     * @param  string $key
-     * @param  mixed $value
-     * @return static
-     */
-    public function whereEqual($key, $value = null);
+    public function where($key, $value, $operator = '==');
 
     /**
      * Filter items by the given key value pair.
@@ -527,6 +519,16 @@ interface Collection extends ArrayAccess, Arrayable, Countable, IteratorAggregat
      * @return static
      */
     public function whereIn($key, $values, $strict = false);
+
+    /**
+     * Filter items that do not match the given key value pair.
+     *
+     * @param  string $key
+     * @param  mixed $values
+     * @param  bool $strict
+     * @return static
+     */
+    public function whereNotIn($key, $values, $strict = false);
 
     /**
      * Zip the collection together with one or more arrays.

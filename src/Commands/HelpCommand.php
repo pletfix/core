@@ -56,7 +56,7 @@ class HelpCommand extends AbstractCommand
     {
         // Has the "version" option been entered?
         if ($this->input('version')) {
-            $this->line('Happy Framework ' . Application::version());
+            $this->line('Pletfix ' . Application::version());
 
             return self::EXIT_SUCCESS;
         }
@@ -94,7 +94,7 @@ class HelpCommand extends AbstractCommand
         // No name was given, so list all available commands!
 
         $this->notice('Help:');
-        $this->line('  Command tool for Happy Framework');
+        $this->line('  Command tool for Pletfix');
         $this->line('');
 
         $this->notice('Usage:');

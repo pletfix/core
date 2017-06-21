@@ -23,13 +23,9 @@ class MinkTestCase extends TestCase
     /**
      * Setup the test environment.
      *
-     * - Load Services
-     * - Call Bootstraps
-     * - Start Mink Session
-     *
      * This method is called before a test is executed.
      */
-    function setUp()
+    protected function setUp()
     {
         parent::setUp();
 
@@ -41,7 +37,7 @@ class MinkTestCase extends TestCase
     /**
      * @inheritdoc
      */
-    function tearDown()
+    protected function tearDown()
     {
         $this->session->stop();
     }

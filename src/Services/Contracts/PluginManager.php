@@ -25,4 +25,11 @@ interface PluginManager
      * Unregister the plugin
      */
     public function unregister();
+
+    /**
+     * Determine if the plugin is already registered.
+     *
+     * @return bool
+     */
+    public function isRegistered();
 }

@@ -137,9 +137,13 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
-    public function getHeaders() // todo umbennenen in headers()
+    public function getHeader($name = null) // todo umbennenen in headers()
     {
-        return $this->headers;
+        if ($name === null) {
+            return $this->headers;
+        }
+
+        return isset($this->headers[$name]) ? $this->headers[$name] : null;
     }
 
     /**

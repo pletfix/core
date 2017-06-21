@@ -2,6 +2,7 @@
 
 namespace Core\Services;
 
+use ArrayAccess;
 use Core\Services\Contracts\Arrayable;
 use Core\Services\Contracts\Collection as CollectionContract;
 use Core\Services\Contracts\Jsonable;
@@ -18,7 +19,7 @@ use Traversable;
  *
  * License: MIT
  *
- * This code based on Laravel's Collection 5.3 (see copyright notice license-laravel.md)
+ * This code based on Laravel's Collection 5.3.
  *
  * @see https://laravel.com/docs/5.3/collections Laravel's Documentation
  * @see https://github.com/illuminate/support/blob/5.3/Collection.php Laravel's Collection on GitHub by Taylor Otwell
@@ -95,6 +96,11 @@ class Collection implements CollectionContract
         }
 
         return function ($item) use ($value) {
+            if ($value === null) {
+                return $item;
+            }
+
+            $item = (array)$item;
             return isset($item[$value]) ? $item[$value] : null;
         };
     }
@@ -124,7 +130,7 @@ class Collection implements CollectionContract
      *
      * @return array
      */
-    public function all() // todo mit toArray ersetzen!
+    public function all()
     {
         return $this->items;
     }
@@ -145,23 +151,28 @@ class Collection implements CollectionContract
     /**
      * Determine if an item exists in the collection.
      *
-     * @param  string|callable  $value
-     * @param  int|string|null  $key
+     * @param  string|callable $value
+     * @param  int|string|null $key
+     * @param bool $strict
      * @return bool
      */
-    public function contains($value, $key = null) // todo parameter waren verdreht - testen!
+    public function contains($value, $key = null, $strict = false)
     {
-        if (func_num_args() == 2) {
-            return $this->contains(function ($item) use ($value, $key) { // todo rekursiver aufruf vermeiden
-                return (isset($item[$key]) ? $item[$key] : null) == $value;  // todo prüfen, wenn value = null
-            });
+        if ($key !== null) {
+            foreach ($this->items as $item) {
+                $v = isset($item[$key]) ? $item[$key] : null;
+                if ((!$strict && $v == $value) || $v === $value) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         if ($this->useAsCallable($value)) {
-            return !is_null($this->first($value));
+            return $this->first($value) !== null;
         }
 
-        return in_array($value, $this->items);
+        return in_array($value, $this->items, $strict);
     }
 
     /**
@@ -171,21 +182,9 @@ class Collection implements CollectionContract
      * @param  int|string|null  $key
      * @return bool
      */
-    public function containsStrict($value, $key = null) // todo parameter waren verdreht - testen!
+    public function containsStrict($value, $key = null)
     {
-        // todo Funktion fast doppelt, ist auch nicht dokumentiert.
-
-        if (func_num_args() == 2) {
-            return $this->contains(function ($item) use ($value, $key) { // todo rekursiver aufruf vermeiden
-                return (isset($item[$key]) ? $item[$key] : null) === $value;  // todo prüfen, wenn value = null
-            });
-        }
-
-        if ($this->useAsCallable($value)) {
-            return ! is_null($this->first($value));
-        }
-
-        return in_array($value, $this->items, true);
+        return $this->contains($value, $key, true);
     }
 
     /**
@@ -329,10 +328,11 @@ class Collection implements CollectionContract
     {
         $callback = $this->valueRetriever($callback);
 
-        return $this->reduce(function ($result, $item) use ($callback) {
+        return $this->filter(function ($value) {
+            return $value !== null;
+        })->reduce(function ($result, $item) use ($callback) {
             $value = $callback($item);
-
-            return is_null($result) || $value > $result ? $value : $result;
+            return $result === null || $value > $result ? $value : $result;
         });
     }
 
@@ -355,7 +355,7 @@ class Collection implements CollectionContract
             return $values->get($middle);
         }
 
-        return (new static([$values->get($middle - 1), $values->get($middle)]))->avg(); // todo Ergebnis testen
+        return (new static([$values->get($middle - 1), $values->get($middle)]))->avg();
     }
 
     /**
@@ -368,10 +368,11 @@ class Collection implements CollectionContract
     {
         $callback = $this->valueRetriever($callback);
 
-        return $this->reduce(function ($result, $item) use ($callback) {
-            $value = $callback($item); // todo null ausschließen?
-
-            return is_null($result) || $value < $result ? $value : $result;
+        return $this->filter(function ($value) {
+            return $value !== null;
+        })->reduce(function ($result, $item) use ($callback) {
+            $value = $callback($item);
+            return $result === null || $value < $result ? $value : $result;
         });
     }
 
@@ -422,11 +423,11 @@ class Collection implements CollectionContract
 
         $keys = array_rand($this->items, $amount);
 
-        if ($amount == 1) {
+        if (count(func_get_args()) == 0) {
             return $this->items[$keys];
         }
 
-        return new static(array_intersect_key($this->items, array_flip($keys)));
+        return new static(array_intersect_key($this->items, array_flip((array)$keys)));
     }
 
     /**
@@ -522,6 +523,10 @@ class Collection implements CollectionContract
      */
     public function chunk($size)
     {
+        if ($size <= 0) {
+            return new static;
+        }
+
         $chunks = [];
         foreach (array_chunk($this->items, $size, true) as $chunk) {
             $chunks[] = new static($chunk);
@@ -655,7 +660,7 @@ class Collection implements CollectionContract
      */
     public function flatten($depth = INF)
     {
-        return new static(static::array_flatten($this->items, $depth));
+        return new static(static::arrayFlatten($this->items, $depth));
     }
 
     /**
@@ -665,7 +670,7 @@ class Collection implements CollectionContract
      * @param  int  $depth
      * @return array
      */
-    private static function array_flatten($array, $depth = INF) // todo raus hier!
+    private static function arrayFlatten($array, $depth = INF)
     {
         return array_reduce($array, function ($result, $item) use ($depth) {
             if ($item instanceof CollectionContract) {
@@ -678,7 +683,7 @@ class Collection implements CollectionContract
                 return array_merge($result, array_values($item));
             }
             else {
-                return array_merge($result, static::array_flatten($item, $depth - 1));
+                return array_merge($result, static::arrayFlatten($item, $depth - 1));
             }
         }, []);
     }
@@ -786,7 +791,7 @@ class Collection implements CollectionContract
         $keys  = array_keys($this->items);
         $items = array_map($callback, $this->items, $keys);
 
-        return new static(array_combine($keys, $items)); // todo scheint mir sehr umständlich gemacht - Performanz prüfen gegenüber foreach-Lösung
+        return new static(array_combine($keys, $items));
     }
 
     /**
@@ -799,7 +804,15 @@ class Collection implements CollectionContract
      */
     public function mapWithKeys(callable $callback)
     {
-        return $this->flatMap($callback);
+        $result = [];
+        foreach ($this->items as $key => $value) {
+            $assoc = $callback($value, $key);
+            foreach ($assoc as $mapKey => $mapValue) {
+                $result[$mapKey] = $mapValue;
+            }
+        }
+
+        return new static($result);
     }
 
     /**
@@ -839,16 +852,24 @@ class Collection implements CollectionContract
     {
         $results = [];
         foreach ($this->items as $item) {
-            if (is_null($keyOfKey)) {
+            if (!is_array($item) && !($item instanceof ArrayAccess)) {
+                if (is_object($item)) {
+                    $item = [
+                        $keyOfValue => isset($item->{$keyOfValue}) ? $item->{$keyOfValue} : null,
+                        $keyOfKey => isset($item->{$keyOfKey}) ? $item->{$keyOfKey} : null,
+                    ];
+                }
+                else {
+                    $item = $this->getArrayableItems($item);
+                }
+            }
+            if ($keyOfKey === null) {
                 $results[] = isset($item[$keyOfValue]) ? $item[$keyOfValue] : null;
             }
             else {
                 $results[isset($item[$keyOfKey]) ? $item[$keyOfKey] : null] = isset($item[$keyOfValue]) ? $item[$keyOfValue] : null;
             }
         }
-
-        // todo kann evtl optimiert werden mit array_column()
-        /** @see http://php.net/manual/de/function.array-column.php */
 
         return new static($results);
     }
@@ -1029,14 +1050,14 @@ class Collection implements CollectionContract
      */
     public function unique($keyOrCallback = null, $strict = false)
     {
-        if (is_null($keyOrCallback)) {
+        if ($keyOrCallback === null) {
             return new static(array_unique($this->items, SORT_REGULAR));
         }
 
         $callback = $this->valueRetriever($keyOrCallback);
         $exists = [];
-        return $this->filter(function ($item) use ($callback, $strict, &$exists) {
-            $id = $callback($item);
+        return $this->filter(function ($item, $key) use ($callback, $strict, &$exists) {
+            $id = $callback($item, $key);
             if (in_array($id, $exists, $strict)) {
                 return false;
             }
@@ -1058,39 +1079,14 @@ class Collection implements CollectionContract
     /**
      * Filter items by the given key value pair.
      *
-     * @param  string  $key
-     * @param  mixed  $operator
-     * @param  mixed  $value
+     * @param string $key
+     * @param mixed $value
+     * @param string $operator
      * @return static
      */
-    public function where($key, $operator, $value)
+    public function where($key, $value, $operator = '==')
     {
-        return $this->filter($this->operatorForWhere($key, $operator, $value));
-    }
-
-    /**
-     * Filter items by the given key value pair.
-     *
-     * @param  string  $key
-     * @param  mixed  $value
-     * @return static
-     */
-    public function whereEqual($key, $value = null)
-    {
-        return $this->filter($this->operatorForWhere($key, '=', $value));
-    }
-
-    /**
-     * Get an operator checker callback.
-     *
-     * @param  string  $key
-     * @param  string  $operator
-     * @param  mixed  $value
-     * @return \Closure
-     */
-    private function operatorForWhere($key, $operator, $value)
-    {
-        return function ($item) use ($key, $operator, $value) {
+        return $this->filter(function ($item) use ($key, $operator, $value) {
             $retrieved = isset($item[$key]) ? $item[$key] : null;
             switch ($operator) {
                 default:
@@ -1105,18 +1101,13 @@ class Collection implements CollectionContract
                 case '===': return $retrieved === $value;
                 case '!==': return $retrieved !== $value;
             }
-        };
+        });
     }
 
     /**
-     * Filter items by the given key value pair.
-     *
-     * @param  string  $key
-     * @param  mixed  $values
-     * @param  bool  $strict
-     * @return static
+     * @inheritdoc
      */
-    public function whereIn($key, $values, $strict = false) // todo was ist, wenn key nicht exisiteirt?
+    public function whereIn($key, $values, $strict = false)
     {
         $values = $this->getArrayableItems($values);
 
@@ -1126,13 +1117,19 @@ class Collection implements CollectionContract
     }
 
     /**
-     * Zip the collection together with one or more arrays.
-     *
-     * e.g. new Collection([1, 2, 3])->zip([4, 5, 6]);
-     *      => [[1, 4], [2, 5], [3, 6]]
-     *
-     * @param  mixed ...$items
-     * @return static
+     * @inheritdoc
+     */
+    public function whereNotIn($key, $values, $strict = false)
+    {
+        $values = $this->getArrayableItems($values);
+
+        return $this->filter(function ($item) use ($key, $values, $strict) {
+            return !in_array(isset($item[$key]) ? $item[$key] : null, $values, $strict);
+        });
+    }
+
+    /**
+     * @inheritdoc
      */
     public function zip($items)
     {
@@ -1289,30 +1286,10 @@ class Collection implements CollectionContract
      */
     public function transform(callable $callback)
     {
-        $this->items = $this->map($callback)->all(); // todo scheint mir sehr umständlich gemacht - Performanz prüfen gegenüber foreach-Lösung
-
-//        foreach ($this->items as $key => $item) {
-//            $this->items[$key] = $callback();
-//        }
+        $this->items = $this->map($callback)->all();
 
         return $this;
     }
-
-//    // todo baustelle. Funktion alphabetisch einreihen
-//    /**
-//     * Cast each item in the collection to the given class.
-//     *
-//     * @param string $class
-//     * @return static
-//     */
-//    public function cast($class)
-//    {
-//        foreach ($this->items as $key => $item) {
-//            $this->items[$key] = new $class($item); // todo was ist, wenn der Construktor der Klasse nicht so funktioniert
-//        }
-//
-//        return $this;
-//    }
 
     /*
      * --------------------------------------------------------------------------------------------------------------

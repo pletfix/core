@@ -554,9 +554,9 @@ class Stdio implements StdioContract
      */
     public function setStdin($stdin)
     {
-        if ($this->stdin !== null) {
-            fclose($this->stdin);
-        }
+//        if ($this->stdin !== null) {
+//            fclose($this->stdin);
+//        }
 
         $this->stdin = $stdin;
     }
@@ -574,10 +574,9 @@ class Stdio implements StdioContract
      */
     public function setStdout($stdout)
     {
-        if ($this->stdout !== null) {
-            fclose($this->stdout);
-        }
-
+//        if ($this->stdout !== null) {
+//            fclose($this->stdout);
+//        }
         $this->stdout = $stdout;
     }
 
@@ -594,9 +593,9 @@ class Stdio implements StdioContract
      */
     public function setStderr($stderr)
     {
-        if ($this->stderr !== null) {
-            fclose($this->stderr);
-        }
+//        if ($this->stderr !== null) {
+//            fclose($this->stderr);
+//        }
 
         $this->stderr = $stderr;
     }

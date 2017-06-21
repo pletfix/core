@@ -2,34 +2,39 @@
 
 namespace Core\Testing;
 
+use Core\Services\DI;
+use PHPUnit_Framework_Assert as PHPUnit;
 use PHPUnit_Framework_TestCase;
 
 class TestCase extends PHPUnit_Framework_TestCase
 {
     /**
-     * Setup the test environment.
+     * Assert whether the client was redirected to a given URL.
      *
-     * - Load Services
-     * - Call Bootstraps
+     * @param string $url
+     */
+    public function assertRedirectedTo($url)
+    {
+        $response = DI::getInstance()->get('response');
+        PHPUnit::assertTrue(in_array($response->getStatusCode(), [301, 302, 303]));
+        PHPUnit::assertEquals($url, $response->getHeader('location'));
+    }
+
+    /**
+     * Setup the test environment.
      *
      * This method is called before a test is executed.
      */
     protected function setUp()
     {
-        /*
-         * Push the Services into the Dependency Injector.
-         */
-        call_user_func(function() {
-            @include __DIR__ . '/../../../../../.manifest/plugins/services.php';
-            require __DIR__ . '/../../../../../config/boot/services.php';
-        });
+    }
 
-        /*
-         * Bootstrap the framework
-         */
-        call_user_func(function() {
-            require __DIR__ . '/../../../../../config/boot/bootstrap.php';
-            @include __DIR__ . '/../../../../../.manifest/plugins/bootstrap.php';
-        });
+    /**
+     * Tears down the fixture.
+     *
+     * This method is called after a test is executed.
+     */
+    protected function tearDown()
+    {
     }
 }

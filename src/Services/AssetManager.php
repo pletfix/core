@@ -247,7 +247,7 @@ class AssetManager implements AssetManagerContract
         // @chmod($this->manifestFile, 0664); // not necessary, because only the cli need to have access
 
         // delete old unique file
-        if (!is_null($oldFile) && @file_exists($oldFile)) {
+        if ($oldFile !== null && @file_exists($oldFile)) {
             unlink($oldFile);
         }
     }

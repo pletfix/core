@@ -3,7 +3,6 @@
 namespace Core\Services;
 
 use Core\Exceptions\StopException;
-use Core\Services\Contracts\Stdio;
 use Core\Services\Contracts\Command as CommandContract;
 use InvalidArgumentException;
 use LogicException;

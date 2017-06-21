@@ -132,10 +132,10 @@ class Request implements RequestContract
      */
     public function baseUrl()
     {
-        if (is_null($this->baseUrl)) {
+        if ($this->baseUrl === null) {
             $scheme        = $this->isSecure() ? 'https' : 'http';
             $host          = isset($_SERVER['HTTP_HOST']) ? strtolower($_SERVER['HTTP_HOST']) : (isset($_SERVER['SERVER_NAME']) ? strtolower($_SERVER['SERVER_NAME']) : $this->ip());
-            $port          = $_SERVER['SERVER_PORT'];
+            $port          = isset($_SERVER['SERVER_PORT']) ? $_SERVER['SERVER_PORT'] : 80;
             $basePath      = dirname($_SERVER['PHP_SELF']); // PHP_SELF = /myapp/public/index.php
             $isDefaultPort = ($scheme == 'http' && $port == '80') || ($scheme == 'https' && $port == '443');
 
@@ -382,7 +382,7 @@ class Request implements RequestContract
      */
     public function ip()
     {
-        return $_SERVER['SERVER_ADDR'] != '::1' ? $_SERVER['SERVER_ADDR'] : '127.0.0.1';
+        return isset($_SERVER['SERVER_ADDR']) && $_SERVER['SERVER_ADDR'] != '::1' ? $_SERVER['SERVER_ADDR'] : '127.0.0.1';
     }
 
     /**

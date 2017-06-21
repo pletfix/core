@@ -48,7 +48,7 @@ if (! function_exists('asset')) {
     function asset($file)
     {
         static $manifest = null;
-        if (is_null($manifest)) {
+        if ($manifest === null) {
             $manifestFile = manifest_path('assets/manifest.php');
             /** @noinspection PhpIncludeInspection */
             $manifest = @file_exists($manifestFile) ? require $manifestFile : [];
@@ -127,8 +127,9 @@ if (! function_exists('command')) {
      */
     function command($name, array $argv = []) // todo command() testen
     {
+        array_unshift($argv, $name);
         /** @var \Core\Services\Contracts\Command|false $command */
-        $command = DI::getInstance()->get('command-factory')->command(array_unshift($argv, [$name]));
+        $command = DI::getInstance()->get('command-factory')->command($argv);
 
         return $command !== false ? $command->run() : 0;
     }
@@ -213,7 +214,9 @@ if (!function_exists('dd')) {
     function dd($value)
     {
         dump($value);
-        die(1);
+        if (!is_testing()) {
+            die(1);
+        }
     }
 }
 
@@ -351,13 +354,13 @@ if (!function_exists('is_testing')) {
     }
 }
 
-if (!function_exists('is_win')) {
+if (!function_exists('is_windows')) {
     /**
      * Determine if the os is windows.
      *
      * @return bool
      */
-    function is_win()
+    function is_windows()
     {
         return strtolower(substr(PHP_OS, 0, 3)) == 'win'; // todo testen (mit laravel vergl.)
     }
@@ -543,15 +546,16 @@ if (!function_exists('remove_dir')) {
             return unlink($path);
         }
 
-        foreach (scandir($path) as $file) {
-            if ($file[0] == '.') {
+        foreach (scandir($path) as $filename) {
+            if ($filename[0] == '.') {
                 continue;
             }
+            $file = $path . DIRECTORY_SEPARATOR . $filename;
             if (@is_dir($file)) {
-                remove_dir($path . DIRECTORY_SEPARATOR . $file);
+                remove_dir($file);
             }
             else {
-                unlink($path);
+                unlink($file);
             }
         }
 

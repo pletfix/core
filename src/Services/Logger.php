@@ -71,7 +71,7 @@ class Logger implements LoggerContract
                 break;
             case 'syslog':
                 $this->log->pushHandler(
-                    new SyslogHandler(config('app.name', 'happy'), LOG_USER, $level)
+                    new SyslogHandler(config('app.name', 'Pletfix'), LOG_USER, $level)
                 );
                 break;
             case 'errorlog':

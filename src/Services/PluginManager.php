@@ -127,6 +127,14 @@ class PluginManager implements PluginManagerContract
     }
 
     /**
+     * @inheritdoc
+     */
+    public function isRegistered()
+    {
+        return isset($this->packages[$this->vendor . DIRECTORY_SEPARATOR . $this->plugin]);
+    }
+
+    /**
      * Register and unregister the plugin
      *
      * @param bool $register

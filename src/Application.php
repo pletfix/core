@@ -36,16 +36,6 @@ class Application
             require __DIR__ . '/../../../../config/boot/services.php';
         });
 
-//        echo 'include: ';
-//        benchmark(function ($loop) {
-//            require __DIR__ . '/../services.php';
-//        }, 1);
-//        echo 'serilize: ';
-//        benchmark(function ($loop) {
-//            Core\Services\DI::loadFromCache();
-//        }, 1);
-//        exit(1);
-
         /*
          * Bootstrap the framework
          */
@@ -53,16 +43,6 @@ class Application
             require __DIR__ . '/../../../../config/boot/bootstrap.php';
             @include __DIR__ . '/../../../../.manifest/plugins/bootstrap.php';
         });
-
-//        echo 'Load Bootstrap: ';
-//        benchmark(function ($loop) {
-//            (new Bootstraps\Dummy)->bootstrap();
-//        }, 1000);
-//
-//        echo 'Load Bootstrap static: ';
-//        benchmark(function ($loop) {
-//            Bootstraps\Dummy::bootstrap2();
-//        }, 1000);
 
         /*
          * Register routes.
