@@ -20,10 +20,12 @@ class CommandFactory implements CommandFactoryContract
 
     /**
      * Create a new factory instance.
+     *
+     * @param string|null $cachedFile
      */
-    public function __construct()
+    public function __construct($cachedFile = null)
     {
-        $this->cachedFile  = storage_path('cache/commands.php');
+        $this->cachedFile = $cachedFile ?: storage_path('cache/commands.php');
     }
 
     /**
@@ -135,7 +137,7 @@ class CommandFactory implements CommandFactoryContract
     {
         if (!is_dir($cacheDir = dirname($this->cachedFile))) {
             if (!@mkdir($cacheDir, 0775, true) && !is_dir($cacheDir)) {
-                throw new \RuntimeException(sprintf('Command factory was not able to create directory "%s"', $cacheDir));
+                throw new \RuntimeException(sprintf('Command factory was not able to create directory "%s"', $cacheDir)); // @codeCoverageIgnore
             }
         }
 
@@ -144,7 +146,7 @@ class CommandFactory implements CommandFactoryContract
         }
 
         if (file_put_contents($this->cachedFile, '<?php return ' . var_export($list, true) . ';' . PHP_EOL, LOCK_EX) === false) {
-            throw new \RuntimeException(sprintf('Command factory was not able to save cached file "%s"', $this->cachedFile));
+            throw new \RuntimeException(sprintf('Command factory was not able to save cached file "%s"', $this->cachedFile)); // @codeCoverageIgnore
         }
 
         //@chmod($this->cachedFile, 0664); // not necessary, because only the cli need to have access
@@ -152,7 +154,7 @@ class CommandFactory implements CommandFactoryContract
         $time = $this->modificationTime();
 
         if (!touch($this->cachedFile, $time)) {
-            throw new \RuntimeException(sprintf('Command factory was not able to modify time of cached file "%s"', $this->cachedFile));
+            throw new \RuntimeException(sprintf('Command factory was not able to modify time of cached file "%s"', $this->cachedFile)); // @codeCoverageIgnore
         }
     }
 

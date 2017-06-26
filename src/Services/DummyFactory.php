@@ -5,6 +5,9 @@ namespace Core\Services;
 use Core\Services\Contracts\DummyFactory as FactoryContract;
 use InvalidArgumentException;
 
+/**
+ * @codeCoverageIgnore
+ */
 class DummyFactory implements FactoryContract
 {
     /**

@@ -828,4 +828,11 @@ interface DateTime extends DateTimeInterface, JsonSerializable
      * @param string $locale
      */
     public static function setLocale($locale);
+
+    /**
+     * Set the locale format.
+     *
+     * @param array $format
+     */
+    public static function setLocaleFormat(array $format);
 }

@@ -143,7 +143,8 @@ class Postgres extends AbstractDatabase
     public function exec($statement, array $bindings = [])
     {
         if (strncasecmp($statement, 'INSERT INTO ', 12) === 0) {
-            $this->lastInsertTo = trim(substr($statement, 12, strpos($statement, ' ', 12)), '"'); //todo testen
+            $table = trim(substr($statement, 12));
+            $this->lastInsertTo = trim(substr($table, 0, strpos($table, ' ')), '"');
         }
 
         return parent::exec($statement, $bindings);

@@ -77,7 +77,7 @@ class Session implements SessionContract
     {
         if (!$this->writable) {
             if (!session_start()) {
-                throw new SessionException('Start of session failed!');
+                throw new SessionException('Start of session failed!'); // @codeCoverageIgnore
             }
 
             // Reset the cookie with a new expiration date, every time the user interacts with the backend.
@@ -85,7 +85,7 @@ class Session implements SessionContract
             if ($this->lifetime > 0 && ini_get('session.use_cookies')) {
                 $params = session_get_cookie_params();
                 if (!setcookie(session_name(), session_id(), time() + $this->lifetime, $params['path'], $params['domain'], $params['secure'], $params['httponly'])) {
-                    throw new SessionException('Refresh session cookies failed!');
+                    throw new SessionException('Refresh session cookies failed!'); // @codeCoverageIgnore
                 }
             }
 
@@ -142,13 +142,13 @@ class Session implements SessionContract
         if (ini_get('session.use_cookies')) {
             $params = session_get_cookie_params();
             if (!setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly'])) {
-                throw new SessionException('Deleting session cookies failed!');
+                throw new SessionException('Deleting session cookies failed!'); // @codeCoverageIgnore
             }
         }
 
         // Finally, destroy the session.
         if (!session_destroy()) {
-            throw new SessionException('Killing the session failed!');
+            throw new SessionException('Killing the session failed!'); // @codeCoverageIgnore
         };
 
         $this->writable = false;
@@ -169,7 +169,7 @@ class Session implements SessionContract
         }
 
         if (!session_regenerate_id(true)) {
-            throw new SessionException('Regeneration of session failed!');
+            throw new SessionException('Regeneration of session failed!'); // @codeCoverageIgnore
         };
 
         return $this;

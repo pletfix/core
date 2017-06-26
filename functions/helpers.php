@@ -74,7 +74,7 @@ if (! function_exists('bcrypt')) {
     {
         $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => $cost]);
         if ($hash === false) {
-            throw new RuntimeException('Bcrypt hashing not supported.');
+            throw new RuntimeException('Bcrypt hashing not supported.'); // @codeCoverageIgnore
         }
 
         return $hash;
@@ -145,13 +145,12 @@ if (!function_exists('config')) {
      */
     function config($key = null, $default = null)
     {
-//        return DI::getInstance()->get('config')->get($key, $default);
-
         /** @var \Core\Services\Contracts\Config $service */
         static $service;
-        if ($service === null) { // promote fast access...
-            $service = DI::getInstance()->get('config');
-        }
+        if ($service === null) {
+            // is execute by the bootstrap, always before the test is started!
+            $service = DI::getInstance()->get('config'); // @codeCoverageIgnore
+        } // @codeCoverageIgnore
 
         return $service->get($key, $default);
     }
@@ -191,13 +190,16 @@ if (!function_exists('dump')) {
     function dump($value, $return = null)
     {
         if (PHP_SAPI === 'cli') {
-            return var_export($value, $return);
+            $output = var_export($value, true);
+        }
+        else {
+            $output = '<pre>' . var_export($value, true) . '</pre>'; // @codeCoverageIgnore
         }
 
-        $output = '<pre>' . var_export($value, true) . '</pre>';
         if ($return) {
             return $output;
         }
+
         echo $output;
 
         return null;
@@ -215,7 +217,7 @@ if (!function_exists('dd')) {
     {
         dump($value);
         if (!is_testing()) {
-            die(1);
+            die(1); // @codeCoverageIgnore
         }
     }
 }
@@ -458,16 +460,11 @@ if (!function_exists('mail_address')) {
      */
     function mail_address($address)
     {
-        if (($pos = strpos($address, '<')) === false) {
+        if (($pos = strpos($address, '<')) === false || $address[strlen($address) - 1] != '>') {
             return $address;
         }
 
-        $n = strlen($address);
-        if ($address[$n - 1] != '>') {
-            $address = substr($address, $pos + 1, -1);
-        }
-
-        return $address;
+        return substr($address, $pos + 1, -1);
     }
 }
 
@@ -831,10 +828,6 @@ if (!function_exists('plural')) {
             return ucfirst($plural);
         }
 
-        if (ucwords($word) === $word) {
-            return ucwords($plural);
-        }
-
         return $plural;
     }
 }
@@ -861,10 +854,6 @@ if (!function_exists('singular')) {
 
         if (ucfirst($word) === $word) {
             return ucfirst($singular);
-        }
-
-        if (ucwords($word) === $word) {
-            return ucwords($singular);
         }
 
         return $singular;

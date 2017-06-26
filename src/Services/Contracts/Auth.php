@@ -14,6 +14,8 @@ interface Auth
 
     /**
      * Log the user out of the application.
+     *
+     * @return $this;
      */
     public function logout();
 
@@ -23,6 +25,7 @@ interface Auth
      * @param int $id
      * @param string $name
      * @param string $role
+     * @return $this;
      */
     public function setPrincipal($id, $name, $role);
 
@@ -81,6 +84,7 @@ interface Auth
      * Change the display name of the current user.
      *
      * @param string $name
+     * @return $this
      */
     public function changeName($name);
 
@@ -88,6 +92,7 @@ interface Auth
      * Change the role of the current user.
      *
      * @param string $role
+     * @return $this
      */
     public function changeRole($role);
 }

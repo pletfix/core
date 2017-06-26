@@ -72,10 +72,10 @@ interface Flash
      *
      * Omit the keys to keep all flash data.
      *
-     * @param array $keys
+     * @param string|array|null $keys
      * @return $this
      */
-    public function reflash(array $keys = null);
+    public function reflash($keys = null);
 
     /**
      * Age the flash data.

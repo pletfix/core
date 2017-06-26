@@ -162,27 +162,27 @@ class SQLiteSchema extends AbstractSchema
         $indexes = [];
 
         // Find INTEGER PRIMARY KEY AUTOINCREMENT column.
-        // The primary key is only listed in PRAGMA INDEX_LIST if the index was added explicitly.
         $info  = $this->db->query('PRAGMA TABLE_INFO(' . $this->db->quote($table) . ')');
-        $idColumn = null;
+        $pks = [];
         foreach ($info as $val) {
             if ($val['pk']) {
-                $idColumn = $val['name'];
-                break;
+                $pks[] = $val['name'];
             }
         }
 
         $info = $this->db->query('PRAGMA INDEX_LIST(' . $this->db->quote($table) . ')');
+        $foundPrimary = false;
         foreach ($info as $val) {
             $name    = $val['name'];
             $unique  = (bool)($val['unique']);
-            $primary = $val['origin'] == 'pk';
             $info2 = $this->db->query('PRAGMA INDEX_INFO(' . $this->db->quoteName($name) . ')');
             $columns = [];
+            //$primary = $val['origin'] == 'pk'; // not available by sqlite 3.7.17
+            $primary = true;
             foreach ($info2 as $val2) {
                 $columns[] = $val2['name'];
-                if ($primary && $idColumn == $val2['name']) {
-                    $idColumn = null;
+                if ($primary && !in_array($val2['name'], $pks)) {
+                    $primary = false;
                 }
             }
             $indexes[$name] = [
@@ -191,13 +191,15 @@ class SQLiteSchema extends AbstractSchema
                 'unique'  => $unique,
                 'primary' => $primary,
             ];
+            if ($primary) {
+                $foundPrimary = $primary;
+            }
         }
 
-        if (!is_null($idColumn)) {
-            $name = "sqlite_autoindex_{$table}_1";
-            $indexes[$name] = [
-                'name'    => $name,
-                'columns' => [$idColumn],
+        if (!$foundPrimary && !empty($pks)) {
+            $indexes['PRIMARY'] = [
+                'name'    => 'PRIMARY',
+                'columns' => array_values($pks),
                 'unique'  => true,
                 'primary' => true,
             ];

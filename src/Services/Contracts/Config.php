@@ -18,6 +18,7 @@ interface Config
      *
      * @param string|null $key Key using "dot" notation.
      * @param mixed $value
+     * @return $this
      */
     public function set($key, $value);
 

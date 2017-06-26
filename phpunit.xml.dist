@@ -17,6 +17,15 @@
             <directory suffix="Test.php">./tests</directory>
         </testsuite>
     </testsuites>
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">./src</directory>
+            <directory suffix=".php">./functions</directory>
+        </whitelist>
+    </filter>
+    <logging>
+        <log type="coverage-html" target="../../../storage/temp/coverage" />
+    </logging>
     <php>
         <env name="APP_ENV" value="testing"/>
     </php>

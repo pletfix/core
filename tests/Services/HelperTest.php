@@ -2,10 +2,11 @@
 
 namespace Core\Tests\Services;
 
+use Core\Services\Contracts\Collection;
 use Core\Services\Contracts\Response;
 use Core\Services\DI;
-//use Core\Testing\MinkTestCase;
 use Core\Testing\TestCase;
+use InvalidArgumentException;
 
 /**
  * This test includes Laravel's Pluralizer and Helper Tests ([MIT License](https://github.com/laravel/framework/blob/5.4/LICENSE.md)).
@@ -31,12 +32,23 @@ class HelperTest extends TestCase
 //    {
 //    }
 
+    public function testHttpStatus()
+    {
+        $this->assertSame('Bad Request', http_status_text(HTTP_STATUS_BAD_REQUEST));
+    }
+
     // Paths
 
     public function testAppPath()
     {
         $this->assertEquals(BASE_PATH . '/app', app_path());
         $this->assertEquals(BASE_PATH . '/app/foo', app_path('foo'));
+    }
+
+    public function testAssetPath()
+    {
+        $this->assertEquals(BASE_PATH . '/resources/assets', asset_path());
+        $this->assertEquals(BASE_PATH . '/resources/assets/foo', asset_path('foo'));
     }
 
     public function testBasePath()
@@ -49,6 +61,11 @@ class HelperTest extends TestCase
     {
         $this->assertEquals(BASE_PATH . '/config', config_path());
         $this->assertEquals(BASE_PATH . '/config/foo', config_path('foo'));
+    }
+
+    public function testEnvironmentFile()
+    {
+        $this->assertEquals(BASE_PATH . '/.env', environment_file());
     }
 
     public function testManifestPath()
@@ -81,6 +98,12 @@ class HelperTest extends TestCase
         $this->assertEquals(BASE_PATH . '/vendor/foo', vendor_path('foo'));
     }
 
+    public function testViewPath()
+    {
+        $this->assertEquals(BASE_PATH . '/resources/views', view_path());
+        $this->assertEquals(BASE_PATH . '/resources/views/foo', view_path('foo'));
+    }
+
     // Strings
 
     public function testPlural()
@@ -89,10 +112,9 @@ class HelperTest extends TestCase
         $this->assertEquals('Children', plural('Child'));
         $this->assertEquals('CHILDREN', plural('CHILD'));
         $this->assertEquals('Tests', plural('Test'));
-        $this->assertEquals('VortexFields', plural('VortexField'));
-        $this->assertEquals('MatrixFields', plural('MatrixField'));
-        $this->assertEquals('IndexFields', plural('IndexField'));
-        $this->assertEquals('VertexFields', plural('VertexField'));
+        $this->assertEquals('iPhones', plural('iPhone'));
+        $this->assertEquals('knowledge', plural('knowledge'));
+        $this->assertEquals('TRAFFIC', plural('TRAFFIC'));
     }
 
     public function testSingular()
@@ -101,6 +123,7 @@ class HelperTest extends TestCase
         $this->assertEquals('Child', singular('Children'));
         $this->assertEquals('CHILD', singular('CHILDREN'));
         $this->assertEquals('Test', singular('Tests'));
+        $this->assertEquals('iPhone', singular('iPhones'));
     }
 
     public function testCamelCase()
@@ -172,12 +195,14 @@ class HelperTest extends TestCase
 
     public function testAbort()
     {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->expectException(\Core\Exceptions\HttpException::class);
         abort(HTTP_STATUS_FORBIDDEN);
     }
 
     public function testAbortWithMessage()
     {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->expectException(\Core\Exceptions\HttpException::class);
         $this->expectExceptionMessage('Foo');
         abort(HTTP_STATUS_INTERNAL_SERVER_ERROR, 'Foo');
@@ -190,7 +215,7 @@ class HelperTest extends TestCase
 //            system('composer require pletfix/example & php console plugin pletfix/example');
 //        }
 
-        di()->set('request', ResponseFake::class, true);
+        di()->set('request', RequestFake::class, true);
 
         $manifestFile = manifest_path('assets/manifest.php');
         /** @noinspection PhpIncludeInspection */
@@ -219,6 +244,16 @@ class HelperTest extends TestCase
     {
         $result = benchmark(function(){}, 1, true);
         $this->assertEquals(3, count($result));
+
+        ob_start();
+        try {
+            $result = benchmark(function () {}, 2);
+        }
+        finally {
+            $out = ob_get_clean();
+        }
+        $this->assertNull($result);
+        $this->assertStringStartsWith('Delay:', $out);
     }
 
     public function testCommand()
@@ -304,11 +339,14 @@ class HelperTest extends TestCase
         putenv('test_empty=empty');
         putenv('test_null=null');
         putenv('test_string=Pletfix');
+        putenv('test_string2="Pletfix"');
+        $this->assertNull(env(''));
         $this->assertTrue(env('test_true'));
         $this->assertFalse(env('test_false'));
         $this->assertEmpty(env('test_empty'));
         $this->assertNull(env('test_null'));
         $this->assertSame('Pletfix', env('test_string'));
+        $this->assertSame('Pletfix', env('test_string2'));
     }
 
     public function testError()
@@ -316,6 +354,7 @@ class HelperTest extends TestCase
         $this->assertEquals('foodef1', error('foo1', 'foodef1'));
         flash()->set('errors.foo1', 'bar1')->age();
         $this->assertEquals('bar1', error('foo1', 'foodef1'));
+        $this->assertEquals(['foo1' => 'bar1'], error());
     }
 
     public function testIsConsole()
@@ -380,6 +419,27 @@ class HelperTest extends TestCase
         }
     }
 
+    public function testLocale()
+    {
+        $curr = config('app.locale');
+        $other = $curr == 'en' ? 'de' : 'en';
+        $this->assertSame($curr, locale());
+        $this->assertSame($other, locale($other));
+        try {
+            $this->assertSame($other, DI::getInstance()->get('translator')->getLocale());
+            $this->assertSame($other, DI::getInstance()->get('date-time')->getLocale());
+        }
+        finally {
+            locale($curr);
+        }
+    }
+
+    public function testMailAddress()
+    {
+        $this->assertSame('user@example.com', mail_address('User <user@example.com>'));
+        $this->assertSame('user@example.com', mail_address('user@example.com'));
+    }
+
     public function testListClasses()
     {
         $path = storage_path('~test');
@@ -428,6 +488,7 @@ class HelperTest extends TestCase
         $this->assertEquals('foodef3', old('foo3', 'foodef3'));
         flash()->set('input.foo3', 'bar3')->age();
         $this->assertEquals('bar3', old('foo3', 'foodef3'));
+        $this->assertEquals(['foo3' => 'bar3'], old());
     }
 
     public function testRedirect()
@@ -442,15 +503,22 @@ class HelperTest extends TestCase
         $path = storage_path('~test');
         @mkdir($path);
         @touch($path . '/a.txt');
+        @touch($path . '/b.txt');
         @mkdir($path . '/foo');
         @touch($path . '/foo/b.txt');
         try {
+            // remove a file
+            $this->assertFileExists($path . '/b.txt');
+            remove_dir($path . '/b.txt');
+            $this->assertFileNotExists($path . '/b.txt');
+            // remove a directory
             $this->assertFileExists($path . '/foo/b.txt');
             remove_dir($path);
             $this->assertDirectoryNotExists($path);
         }
         finally {
             @unlink($path . '/a.txt');
+            @unlink($path . '/b.txt');
             @unlink($path . '/foo/b.txt');
             @rmdir($path . '/foo');
             @rmdir($path);
@@ -459,7 +527,7 @@ class HelperTest extends TestCase
 
     public function testT()
     {
-        DI::getInstance()->get('config')->set('app.locale', '~test1');
+        DI::getInstance()->get('translator')->setLocale('~test1');
         DI::getInstance()->get('config')->set('app.fallback_locale', '~test2');
 
         $path1 = resource_path('lang/~test1');
@@ -492,101 +560,201 @@ class HelperTest extends TestCase
 
     public function testAssetManager()
     {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->assertInstanceOf(\Core\Services\Contracts\AssetManager::class, asset_manager());
     }
 
     public function testAuth()
     {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->assertInstanceOf(\Core\Services\Contracts\Auth::class, auth());
     }
 
     public function testCache()
     {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->assertInstanceOf(\Core\Services\Contracts\Cache::class, cache());
-        //$this->assertInstanceOf(\Core\Services\Contracts\Cache::class, cache($store)); // todo
+
+        DI::getInstance()->get('config')->set('cache.stores.~foo', ['driver' => 'array']);
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Cache::class, cache('~foo'));
+
+        $this->expectException(InvalidArgumentException::class);
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        cache('~bar');
     }
 
     public function testCollect()
     {
-        $c = collect(['a', 'b']); // todo
+        $c = collect(['a', 'b']);
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->assertInstanceOf(\Core\Services\Contracts\Collection::class, $c);
+        $this->assertSame(['a', 'b'], $c->all());
     }
 
     public function testCookie()
     {
-        // todo
+        $c = cookie();
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Cookie::class, $c);
+        $c->set('~foo', 'bar');
+        try {
+            $this->assertSame('bar', cookie('~foo', 'baz'));
+        }
+        finally {
+            $c->delete('~foo');
+        }
+        $this->assertSame('baz', cookie('~foo', 'baz'));
     }
 
     public function testDatabase()
     {
-        // todo
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Database::class, database());
+
+        DI::getInstance()->get('config')->set('database.stores.~foo', ['driver' => 'sqlite']);
+        $this->assertSame('sqlite', database('~foo')->config('driver'));
+
+        $this->expectException(InvalidArgumentException::class);
+        database('~bar');
     }
 
     public function testDatetime()
     {
-        // todo
+        $now = time();
+        $todayString = strftime('%Y-%m-%d', $now);
+
+        $dt = datetime();
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame($todayString, $dt->toDateString());
+
+        $dt = datetime(new \DateTime('now'));
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame($todayString, $dt->toDateString());
+
+        $dt = datetime($now);
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame($todayString, $dt->toDateString());
+
+        $dt = datetime(['2017', '03', '04', '05', '06', '07']);
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame('2017-03-04 05:06:07', $dt->toDateTimeString());
+
+        $dt::setLocaleFormat([
+            'datetime' => 'Y-m-d H:i',
+            'date'     => 'Y-m-d',
+            'time'     => 'H:i',
+        ]);
+
+        $dt = datetime('2017-03-04 05:06', null, 'locale');
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame('2017-03-04 05:06:00', $dt->toDateTimeString());
+
+        $dt = datetime('2017-03-04', null, 'locale.date');
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame('2017-03-04', $dt->toDateString());
+
+        $dt = datetime('05:06', null, 'locale.time');
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame($todayString . ' 05:06:00', $dt->toDateTimeString());
+
+        $dt = datetime('201703040506', null, 'Ymdhi');
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame('2017-03-04 05:06:00', $dt->toDateTimeString());
     }
 
     public function testDi()
     {
-        // todo
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DI::class, di());
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Config::class, di('config'));
+        /** @var Collection $c */
+        $c = di('collection', [['foo', 'bar']]);
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Collection::class, $c);
+        $this->assertSame(['foo', 'bar'], $c->all());
     }
 
     public function testLogger()
     {
-        // todo
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Psr\Log\LoggerInterface::class, logger());
     }
 
     public function testMailer()
     {
-        // todo
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Mailer::class, mailer());
     }
 
     public function testMigrator()
     {
-        // todo
-    }
-
-    public function testOauth()
-    {
-        // todo
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Migrator::class, migrator());
+        // todo migrator($store = null, $path = null)
     }
 
     public function testPluginManager()
     {
-        // todo
+        $this->expectException(InvalidArgumentException::class);
+        plugin_manager('~foo/~bar');
+
+        // todo Test-Plugin installieren
+        //$package = 'pletfix/example';
+        ///** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        //$this->assertInstanceOf(\Core\Services\Contracts\PluginManager::class, plugin_manager($package));
     }
 
     public function testRequest()
     {
-        // todo
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        //$this->assertInstanceOf(\Core\Services\Contracts\Request::class, request());
+        $this->assertInstanceOf(\Core\Tests\Services\RequestFake::class, request());  // todo!!
     }
 
     public function testResponse()
     {
-        // todo
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Response::class, response());
     }
 
     public function testSession()
     {
-        // todo
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Session::class, session());
+        $this->assertSame('bar', session('foo', 'bar'));
     }
 
     public function testStdio()
     {
-        // todo
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Stdio::class, stdio());
+        // todo stdio($stdin = null, $stdout = null, $stderr = null)
     }
 
     public function testView()
     {
-        // todo
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\View::class, view());
+        $this->expectException(InvalidArgumentException::class);
+        view('');
     }
 }
 
-class ResponseFake
+class RequestFake
 {
     public function baseUrl()
     {
         return 'my_base_url';
     }
 }
+

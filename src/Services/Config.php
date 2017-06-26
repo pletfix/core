@@ -40,12 +40,12 @@ class Config implements ConfigContract
     {
         if ($key === null) {
             $this->items = $value;
-            return;
+            return $this;
         }
 
         if (strpos($key, '.') === false) {
             $this->items[$key] = $value;
-            return;
+            return $this;
         }
 
         $keys = explode('.', $key);
@@ -58,6 +58,8 @@ class Config implements ConfigContract
             $subitems = &$subitems[$key];
         }
         $subitems[array_shift($keys)] = $value;
+
+        return $this;
     }
 
     /**

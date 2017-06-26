@@ -87,7 +87,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     }
 
     /**
-     * Format the instance as a string using the default setting.
+     * Format the instance as a string.
      *
      * @return string
      */
@@ -1132,7 +1132,15 @@ class DateTime extends BaseDateTime implements DateTimeContract
             self::$locale = $locale;    
         }
     }
-    
+
+    /**
+     * @inheritdoc
+     */
+    public static function setLocaleFormat(array $format)
+    {
+        self::$localeFormat = $format;
+    }
+
     /**
      * Returns the locale date time format.
      *

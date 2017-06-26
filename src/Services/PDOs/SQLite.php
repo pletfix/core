@@ -115,8 +115,12 @@ class SQLite extends AbstractDatabase
      */
     public function exec($statement, array $bindings = [])
     {
-        if (strncasecmp($statement, 'INSERT INTO ', 12)) {
-            $this->lastInsertTo = trim(substr($statement, 12, strpos($statement, ' ', 12)), '"'); //todo testen
+        if (strncasecmp($statement, 'INSERT INTO ', 12) === 0) {
+            $table = trim(substr($statement, 12));
+            $table = trim(substr($table, 0, strpos($table, ' ')), '"');
+            if ($table != '_comments') {
+                $this->lastInsertTo = $table;
+            }
         }
 
         return parent::exec($statement, $bindings);

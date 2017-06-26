@@ -37,7 +37,7 @@ class Auth implements AuthContract
         $this->setPrincipal($user->id, $user->name, $user->role);
 
         // If the user should be permanently "remembered" by the application we will create a "remember me" cookie.
-        if (!empty($credentials['remember'])) {
+        if (isset($credentials['remember']) && $credentials['remember']) {
             $this->createRememberMeTokenIfDoesntExist($user);
             $this->saveRememberMeCookie($user);
         }
@@ -59,6 +59,8 @@ class Auth implements AuthContract
             ->regenerate();
         $this->deleteRememberMeCookie();
         $this->attributes = [];
+
+        return $this;
     }
 
     /**
@@ -132,6 +134,8 @@ class Auth implements AuthContract
         ];
 
         session()->set('_auth', $this->attributes);
+
+        return $this;
     }
 
     /**
@@ -228,21 +232,19 @@ class Auth implements AuthContract
     }
 
     /**
-     * Change the display name of the current user.
-     *
-     * @param string $name
+     * @inheritdoc
      */
     public function changeName($name)
     {
         if ($this->isLoggedIn() && $this->name() !== $name) {
             $this->setPrincipal($this->id(), $name, $this->role());
         }
+
+        return $this;
     }
 
     /**
-     * Change the role of the current user.
-     *
-     * @param string $role
+     * @inheritdoc
      */
     public function changeRole($role)
     {
@@ -252,6 +254,8 @@ class Auth implements AuthContract
                 ->delete('_csrf_token')
                 ->regenerate();
         }
+
+        return $this;
     }
 
     /**

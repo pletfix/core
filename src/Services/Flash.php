@@ -123,14 +123,14 @@ class Flash implements FlashContract
     /**
      * @inheritdoc
      */
-    public function reflash(array $keys = null)
+    public function reflash($keys = null)
     {
         $session = $this->session();
         if ($keys === null) {
             $session->set('_flash.next', $session->get('_flash.current'));
         }
         else {
-            foreach ($keys as $key) {
+            foreach ((array)$keys as $key) {
                 $session->set('_flash.next.' . $key, $session->get('_flash.current.' . $key));
             }
         }

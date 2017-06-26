@@ -99,14 +99,14 @@ interface Request //extends ServerRequestInterface
      */
     public function file($key = null, $default = null);
 
-    /**
-     * Get a HTTP header item.
-     *
-     * @param string|null $key
-     * @param string|null $default
-     * @return string|array
-     */
-    public function header($key = null, $default = null);
+//    /**
+//     * Get a HTTP header item.
+//     *
+//     * @param string|null $key
+//     * @param string|null $default
+//     * @return string|array
+//     */
+//    public function header($key = null, $default = null);
 
     /**
      * Gets the raw HTTP request body of the request.

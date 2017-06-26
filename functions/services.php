@@ -140,7 +140,7 @@ if (!function_exists('di')) {
      */
     function di($name = null, $arguments = [])
     {
-        if (is_null($name)) {
+        if ($name === null) {
             return DI::getInstance();
         }
 
@@ -258,11 +258,11 @@ if (!function_exists('session')) {
     /**
      * Get the Session.
      *
-     * @param string|Closure|null $key Key using "dot" notation
+     * @param string|null $key Key using "dot" notation
      * @param mixed $default
      * @return \Core\Services\Contracts\Session|mixed
      */
-    function session($key = null, $default = null) //todo kein callback zulassen
+    function session($key = null, $default = null)
     {
         /** @var \Core\Services\Contracts\Session $session */
         $session = DI::getInstance()->get('session');
