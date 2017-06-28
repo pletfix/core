@@ -149,6 +149,14 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
+    public function getContent()
+    {
+        return $this->content;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function write($str)
     {
         $this->content .= $str;
@@ -163,11 +171,11 @@ class Response implements ResponseContract
     {
         if ($expires === false) {
             $this->headers['Expires'] = 'Mon, 26 Jul 1997 05:00:00 GMT';
-            $this->headers['Cache-Control'] = array(
+            $this->headers['Cache-Control'] = [
                 'no-store, no-cache, must-revalidate',
                 'post-check=0, pre-check=0',
                 'max-age=0'
-            );
+            ];
             $this->headers['Pragma'] = 'no-cache';
         }
         else {
@@ -221,6 +229,7 @@ class Response implements ResponseContract
             );
         }
         else {
+            // @codeCoverageIgnoreStart
             header(
                 sprintf(
                     '%s %d %s',
@@ -231,6 +240,7 @@ class Response implements ResponseContract
                 true,
                 $this->status
             );
+            // @codeCoverageIgnoreEnd
         }
 
         // Send other headers

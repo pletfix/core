@@ -489,7 +489,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
      */
     public function weekOfMonth()
     {
-        return (int)ceil($this->getDay() / 7);
+        return $this->weekOfYear() - $this->startOfMonth()->weekOfYear() + 1;
     }
 
     /**

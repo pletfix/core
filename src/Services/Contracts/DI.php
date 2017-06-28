@@ -17,7 +17,7 @@ interface DI
     /**
      * Get the given service.
      *
-     * The second parameter will be ignored by shared services, because singletons can never have arguments in the
+     * The second parameter is ignored by shared services, because singletons can never have arguments in the
      * constructor!
      *
      * @param string $name Name of the service
@@ -34,12 +34,4 @@ interface DI
      * @param bool $shared if true, the service will be created as a singleton object
      */
     public function set($name, $definition, $shared = false);
-
-    /**
-     * Bind a shared service to the container.
-     *
-     * @param string $name Name of the service.
-     * @param string|object|\Closure $definition Could by a class name, instance or a function.
-     */
-    public function singleton($name, $definition);
 }

@@ -79,12 +79,19 @@ interface Response
     public function header($name, $value = null);
 
     /**
-     * Returns the headers from the response
+     * Returns the headers from the response.
      *
      * @param string|null $name Header name
      * @return array
      */
     public function getHeader($name = null);
+
+    /**
+     * Returns the content from the response.
+     *
+     * @return string
+     */
+    public function getContent();
 
     /**
      * Writes content to the response body.

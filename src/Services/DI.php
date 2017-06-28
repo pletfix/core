@@ -44,8 +44,8 @@ class DI implements DIContract
     public static function getInstance()
     {
         if (self::$instance === null) {
-            self::$instance = new self();
-        }
+            self::$instance = new self(); // @codeCoverageIgnore
+        } // @codeCoverageIgnore
 
         return self::$instance;
     }
@@ -76,7 +76,7 @@ class DI implements DIContract
             return $this->createInstance($service->definition, $arguments, false);
         }
 
-        if (is_null($service->instance)) {
+        if ($service->instance === null) {
             $service->instance = $this->createInstance($service->definition, [], true);
         }
 
@@ -93,14 +93,6 @@ class DI implements DIContract
             'shared'     => $shared,
             'instance'   => null
         ];
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function singleton($name, $definition)
-    {
-        $this->set($name, $definition, true);
     }
 
     /**
@@ -123,7 +115,7 @@ class DI implements DIContract
 
         if (is_object($definition)) {
             if ($shared) {
-                return $definition(...$arguments);
+                return $definition;
             }
             else {
                 return new $definition(...$arguments);

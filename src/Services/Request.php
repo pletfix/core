@@ -166,9 +166,9 @@ class Request implements RequestContract
      */
     public function path()
     {
-        if (is_null($this->path)) {
-            $uri = $_SERVER['f'];            // /myapp/public/path?a=4
-            if (false !== $pos = strpos($uri, '?')) {
+        if ($this->path === null && isset($_SERVER['REQUEST_URI'])) {
+            $uri = $_SERVER['REQUEST_URI']; // /myapp/public/path?a=4
+            if (($pos = strpos($uri, '?')) !== false) {
                 $uri = substr($uri, 0, $pos);
             }
             $basePath = dirname($_SERVER['PHP_SELF']); // PHP_SELF = /myapp/public/index.php
@@ -187,12 +187,12 @@ class Request implements RequestContract
 //     */
 //    public function query($key = null, $default = null)
 //    {
-//        if (is_null($this->query)) {
+//        if ($this->query === null) {
 //            parse_str($_SERVER['QUERY_STRING'], $output);
 //            $this->query = $output;
 //        }
 //
-//        if (is_null($key)) {
+//        if ($key === null) {
 //            return $this->query;
 //        }
 //
@@ -204,10 +204,9 @@ class Request implements RequestContract
      */
     public function input($key = null, $default = null)
     {
-        if (is_null($this->input)) {
+        if ($this->input === null) {
             if ($this->isJson()) {
-                $body = $this->body();
-                $input = !empty($body) ? json_decode($body, true) : [];
+                $input = json_decode($this->body(), true) ?: [];
             }
             else {
                 $input = $_POST;
@@ -215,7 +214,7 @@ class Request implements RequestContract
             $this->input = array_merge($input, $_GET); // todo Prio Get/Post richtig? Cookie nicht?
         }
 
-        if (is_null($key)) {
+        if ($key === null) {
             return $this->input;
         }
 
@@ -227,7 +226,7 @@ class Request implements RequestContract
      */
     public function cookie($key = null, $default = null)
     {
-        if (is_null($key)) {
+        if ($key === null) {
             return $_COOKIE;
         }
 
@@ -239,7 +238,7 @@ class Request implements RequestContract
      */
     public function file($key = null, $default = null)
     {
-        if (is_null($key)) {
+        if ($key === null) {
             return $_FILES;
         }
 
@@ -347,7 +346,7 @@ class Request implements RequestContract
      */
     public function body()
     {
-        if (is_null($this->body)) {
+        if ($this->body === null) {
             $this->body = file_get_contents('php://input') ?: '';
         }
 
@@ -359,7 +358,7 @@ class Request implements RequestContract
      */
     public function method()
     {
-        if (is_null($this->method)) {
+        if ($this->method === null) {
             $this->method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper($_SERVER['REQUEST_METHOD']) : 'GET';
             if ($this->method === 'POST') {
                 if (isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
@@ -369,7 +368,7 @@ class Request implements RequestContract
                     $this->method = strtoupper($_POST['_method']);
                 }
                 else if (isset($_GET['_method'])) {
-                    $this->method = strtoupper($_GET['_method']);
+                    $this->method = strtoupper($_GET['_method']); // todo POST vor GET?
                 }
             }
         }
@@ -390,9 +389,7 @@ class Request implements RequestContract
      */
     public function isSecure()
     {
-        $https = isset($_SERVER['HTTPS']) ? $_SERVER['HTTPS'] : null;
-
-        return !empty($https) && strtolower($https) !== 'off';
+        return !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off';
     }
 
 //    /**

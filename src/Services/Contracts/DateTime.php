@@ -365,8 +365,6 @@ interface DateTime extends DateTimeInterface, JsonSerializable
     /**
      * Week number of month.
      *
-     * Weeks starting on Monday.
-     *
      * @return int
      */
     public function weekOfMonth();

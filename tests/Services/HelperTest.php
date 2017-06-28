@@ -527,11 +527,11 @@ class HelperTest extends TestCase
 
     public function testT()
     {
-        DI::getInstance()->get('translator')->setLocale('~test1');
-        DI::getInstance()->get('config')->set('app.fallback_locale', '~test2');
+        DI::getInstance()->get('translator')->setLocale('~testlocale');
+        DI::getInstance()->get('config')->set('app.fallback_locale', '~testfallback');
 
-        $path1 = resource_path('lang/~test1');
-        $path2 = resource_path('lang/~test2');
+        $path1 = resource_path('lang/~testlocale');
+        $path2 = resource_path('lang/~testfallback');
         @mkdir($path1);
         @mkdir($path2);
         file_put_contents($path1 . '/dummy.php', '<?php return [\'welcome\' => \'Hello {name}!\'];');
@@ -639,7 +639,7 @@ class HelperTest extends TestCase
         $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
         $this->assertSame($todayString, $dt->toDateString());
 
-        $dt = datetime(['2017', '03', '04', '05', '06', '07']);
+        $dt = datetime([2017, 3, 4, 5, 6, 7]);
         /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
         $this->assertSame('2017-03-04 05:06:07', $dt->toDateTimeString());
