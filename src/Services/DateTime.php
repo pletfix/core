@@ -11,8 +11,8 @@ use InvalidArgumentException;
 /**
  * A simple PHP API extension for DateTime
  *
- * Function createTimeZone() based on Carbon (https://github.com/briannesbitt/Carbon/blob/1.22.1/LICENSE MIT license).
- * Function createFromFormat(), instance(), and functions for addition/subtraction based on Chronos
+ * createTimeZone(), next() and previous() are based on Carbon (https://github.com/briannesbitt/Carbon/blob/1.22.1/LICENSE MIT license).
+ * createFromFormat(), instance(), and methods for addition/subtraction based on Chronos.
  *
  * @see https://github.com/briannesbitt/Carbon/blob/1.22.1/src/Carbon/Carbon.php
  * @see https://github.com/cakephp/chronos/blob/1.1.0/src/Traits/FactoryTrait.php
@@ -870,7 +870,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     {
         $quarter = $this->quarter();
 
-        return $this->setMonth($quarter * 3)->startOfMonth(); // todo testen
+        return $this->setMonth($quarter * 3 - 2)->startOfMonth();
     }
 
     /**
@@ -880,7 +880,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     {
         $quarter = $this->quarter();
 
-        return $this->setMonth($quarter * 3 + 2)->endOfMonth(); // todo testen
+        return $this->setMonth($quarter * 3)->endOfMonth();
     }
 
     /**
@@ -976,22 +976,15 @@ class DateTime extends BaseDateTime implements DateTimeContract
 
     /**
      * Modify to the next occurrence of a given day of the week.
-     * If no dayOfWeek is provided, modify to the next occurrence
-     * of the current day of the week.  Use the supplied consts
-     * to indicate the desired dayOfWeek, ex. static::MONDAY.
      *
-     * TODO Sinnvoll? Wenn ja, dokumentieren und public machen
+     * If no dayOfWeek is provided, modify to the next occurrence of the current day of the week.
+     * Use the supplied consts to indicate the desired dayOfWeek, ex. static::MONDAY.
      *
-     * @param int|null $dayOfWeek
-     *
+     * @param int $dayOfWeek
      * @return static
      */
-    private function next($dayOfWeek = null)
+    private function next($dayOfWeek)
     {
-        if ($dayOfWeek === null) {
-            $dayOfWeek = $this->dayOfWeek();
-        }
-
         $days = [
             self::SUNDAY    => 'Sunday',
             self::MONDAY    => 'Monday',
@@ -1004,27 +997,20 @@ class DateTime extends BaseDateTime implements DateTimeContract
 
         $dow = $days[$dayOfWeek];
 
-        return $this->startOfDay()->modify("next $dow"); // todo geht nicht auch addDays(7) ?
+        return $this->startOfDay()->modify("next $dow");
     }
 
     /**
      * Modify to the previous occurrence of a given day of the week.
-     * If no dayOfWeek is provided, modify to the previous occurrence
-     * of the current day of the week.  Use the supplied consts
-     * to indicate the desired dayOfWeek, ex. static::MONDAY.
      *
-     * TODO Sinnvoll? Wenn ja, dokumentieren und public machen
+     * If no dayOfWeek is provided, modify to the previous occurrence of the current day of the week.
+     * Use the supplied consts to indicate the desired dayOfWeek, ex. static::MONDAY.
      *
-     * @param int|null $dayOfWeek
-     *
+     * @param int $dayOfWeek
      * @return static
      */
-    private function previous($dayOfWeek = null)
+    private function previous($dayOfWeek)
     {
-        if ($dayOfWeek === null) {
-            $dayOfWeek = $this->dayOfWeek();
-        }
-
         $days = [
             self::SUNDAY    => 'Sunday',
             self::MONDAY    => 'Monday',
@@ -1037,7 +1023,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
 
         $dow = $days[$dayOfWeek];
 
-        return $this->startOfDay()->modify("last $dow"); // todo geht nicht auch subDays(7) ?
+        return $this->startOfDay()->modify("last $dow");
     }
 
     ///////////////////////////////////////////////////////////////////
@@ -1058,7 +1044,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     /**
      * @inheritdoc
      */
-    public static function setDefaultTimezone($timezone)
+    public static function setDefaultTimezone($timezone = null)
     {
         if ($timezone instanceof DateTimeZone) {
             self::$timezone = $timezone;
@@ -1078,10 +1064,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
      */
     public function setTimezone($timezone)
     {
-        if ($timezone === null) {
-            $timezone = self::getDefaultTimezone();
-        }
-        else if (is_string($timezone)) {
+        if (is_string($timezone)) {
             $timezone = self::createTimezone($timezone);
         }
 

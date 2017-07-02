@@ -55,6 +55,8 @@ class Delegate implements DelegateContract
     public function setMiddleware($classes)
     {
         $this->middleware = $classes;
+
+        return $this;
     }
 
 //    /**
@@ -72,6 +74,8 @@ class Delegate implements DelegateContract
     {
         $this->action     = $action;
         $this->parameters = $parameters;
+
+        return $this;
     }
 
     /**
@@ -83,7 +87,9 @@ class Delegate implements DelegateContract
             $class = $this->middleware[$this->index++];
 
             if (($pos = strpos($class, ':')) !== false) {
-                $arguments = array_map(function($arg) { return trim($arg); }, explode(',', substr($class, $pos + 1)));
+                $arguments = array_map(function($arg) {
+                    return trim($arg);
+                }, explode(',', substr($class, $pos + 1)));
                 $class = substr($class, 0, $pos);
             }
             else {
@@ -92,11 +98,11 @@ class Delegate implements DelegateContract
 
             if ($class[0] != '\\') {
                 if (file_exists(app_path('Middleware/' .  str_replace('\\', '/', $class) . '.php'))) {
-                    $class = '\\App\\Middleware\\' . $class;
-                }
+                    $class = '\\App\\Middleware\\' . $class; // @codeCoverageIgnore
+                } // @codeCoverageIgnore
                 else if (($pluginMiddleware = $this->getPluginMiddleware($class)) !== null) {
-                    $class = $pluginMiddleware;
-                }
+                    $class = $pluginMiddleware; // @codeCoverageIgnore
+                } // @codeCoverageIgnore
                 else {
                     $class = '\\Core\\Middleware\\' . $class;
                 }
@@ -138,7 +144,7 @@ class Delegate implements DelegateContract
                 $this->pluginMiddleware = isset($classes['Middleware']) ? $classes['Middleware'] : [];
             }
             else {
-                $this->pluginMiddleware = [];
+                $this->pluginMiddleware = []; // @codeCoverageIgnore
             }
         }
 

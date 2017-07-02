@@ -2,7 +2,6 @@
 
 namespace Core\Middleware;
 
-use Core\Exceptions\AuthenticationException;
 use Core\Services\Contracts\Delegate;
 use Core\Middleware\Contracts\Middleware as MiddlewareContract;
 use Core\Services\Contracts\Request;

@@ -33,9 +33,10 @@ namespace Core\Tests\Services {
 
         public function testView()
         {
-            $viewMock = $this->getMockBuilder(View::class)->setMethods(['render'])->getMock();
-            $viewMock->method('render')->will($this->returnValue('blub'));
-            di()->set('view', $viewMock, true);
+            $view = $this->getMockBuilder(View::class)->setMethods(['render'])->getMock();
+//            $view->expects($this->once())->method('render')->will($this->returnValue('blub'));
+            $view->expects($this->once())->method('render')->willReturn('blub');
+            di()->set('view', $view, true);
 
             $this->r->clear();
             $result = $this->r->view('fake');

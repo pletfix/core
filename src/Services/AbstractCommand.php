@@ -577,6 +577,8 @@ abstract class AbstractCommand implements CommandContract
     public function write($text, $newline = false, array $styles = [], $verbosity = Stdio::VERBOSITY_NORMAL)
     {
         $this->stdio->write($text, $newline, $styles, $verbosity);
+
+        return $this;
     }
 
     /**
@@ -585,6 +587,8 @@ abstract class AbstractCommand implements CommandContract
     public function line($text)
     {
         $this->stdio->line($text);
+
+        return $this;
     }
 
     /**
@@ -593,6 +597,8 @@ abstract class AbstractCommand implements CommandContract
     public function info($text)
     {
         $this->stdio->info($text);
+
+        return $this;
     }
 
     /**
@@ -601,6 +607,8 @@ abstract class AbstractCommand implements CommandContract
     public function notice($text)
     {
         $this->stdio->notice($text);
+
+        return $this;
     }
 
     /**
@@ -609,6 +617,8 @@ abstract class AbstractCommand implements CommandContract
     public function question($text)
     {
         $this->stdio->question($text);
+
+        return $this;
     }
 
     /**
@@ -617,6 +627,8 @@ abstract class AbstractCommand implements CommandContract
     public function warn($text)
     {
         $this->stdio->warn($text);
+
+        return $this;
     }
 
     /**
@@ -625,6 +637,8 @@ abstract class AbstractCommand implements CommandContract
     public function error($text)
     {
         $this->stdio->error($text);
+
+        return $this;
     }
 
     /**
@@ -633,6 +647,8 @@ abstract class AbstractCommand implements CommandContract
     public function quiet($text, array $styles = [])
     {
         $this->stdio->quiet($text, $styles);
+
+        return $this;
     }
 
     /**
@@ -641,6 +657,8 @@ abstract class AbstractCommand implements CommandContract
     public function verbose($text, array $styles = [])
     {
         $this->stdio->verbose($text, $styles);
+
+        return $this;
     }
 
     /**
@@ -649,6 +667,8 @@ abstract class AbstractCommand implements CommandContract
     public function debug($text, array $styles = [])
     {
         $this->stdio->debug($text, $styles);
+
+        return $this;
     }
 
     /**
@@ -657,6 +677,8 @@ abstract class AbstractCommand implements CommandContract
     public function hr($width = 79)
     {
         $this->stdio->hr($width);
+
+        return $this;
     }
 
     /**
@@ -665,6 +687,8 @@ abstract class AbstractCommand implements CommandContract
     public function table(array $headers, array $rows)
     {
         $this->stdio->table($headers, $rows);
+
+        return $this;
     }
 
     ///////////////////////////////////////////////////////////////////////////

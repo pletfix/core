@@ -100,11 +100,13 @@ class Stdio implements StdioContract
     private function hasColorSupport()
     {
         if (DIRECTORY_SEPARATOR === '\\') {
+            // @codeCoverageIgnoreStart
             return
                 0 >= version_compare('10.0.10586', PHP_WINDOWS_VERSION_MAJOR.'.'.PHP_WINDOWS_VERSION_MINOR.'.'.PHP_WINDOWS_VERSION_BUILD)
                 || false !== getenv('ANSICON')
                 || 'ON' === getenv('ConEmuANSI')
                 || 'xterm' === getenv('TERM');
+            // @codeCoverageIgnoreEnd
         }
 
         return function_exists('posix_isatty') && @posix_isatty($this->stdout);
@@ -113,11 +115,10 @@ class Stdio implements StdioContract
     ///////////////////////////////////////////////////////////////////////////
     // Input
 
-    //todo canRead() testen
     /**
      * @inheritdoc
      */
-    public function canRead($timeout = 0)
+    public function canRead($timeout = 0) // todo geht so nicht
     {
         $readFds = [$this->stdin];
         $readyFds = stream_select($readFds, $writeFds, $errorFds, $timeout);
@@ -226,17 +227,17 @@ class Stdio implements StdioContract
     /**
      * @inheritdoc
      */
-    public function secret($prompt, $default = null)
+    public function secret($prompt, $default = null, $stty = true)
     {
         $prompt = $this->format($prompt, [self::STYLE_GREEN]) . ':' . PHP_EOL . '> ';
 
         do {
             $this->write($prompt);
 
-            if ('\\' === DIRECTORY_SEPARATOR) {
+            if (DIRECTORY_SEPARATOR === '\\') {
+                // @codeCoverageIgnoreStart
                 $exe = __DIR__ . '/../../bin/hiddeninput.exe';
-                //$b = file_exists($exe);
-                if ('phar:' === substr(__FILE__, 0, 5)) { // handle code running from a phar
+                if (substr(__FILE__, 0, 5) === 'phar:') { // handle code running from a phar
                     $tmpExe = sys_get_temp_dir() . '/hiddeninput.exe';
                     copy($exe, $tmpExe);
                     $exe = $tmpExe;
@@ -246,8 +247,9 @@ class Stdio implements StdioContract
                 if (isset($tmpExe)) {
                     unlink($tmpExe);
                 }
-            }
-            else if ($this->hasSttyAvailable()) {
+                // @codeCoverageIgnoreEnd
+            } // @codeCoverageIgnore
+            else if ($stty && $this->hasSttyAvailable()) {
                 $sttyMode = shell_exec('stty -g');
                 try {
                     shell_exec('stty -echo'); // Disable echo
@@ -284,7 +286,7 @@ class Stdio implements StdioContract
      */
     private function hasSttyAvailable()
     {
-        if (null !== self::$stty) {
+        if (self::$stty !== null) {
             return self::$stty;
         }
 
@@ -305,8 +307,10 @@ class Stdio implements StdioContract
             passthru('clear');
         }
         else {
-            passthru('cls');
+            passthru('cls'); // @codeCoverageIgnore
         }
+
+        return $this;
     }
 
     /**
@@ -336,7 +340,7 @@ class Stdio implements StdioContract
     public function write($text, $newline = false, array $styles = [], $verbosity = self::VERBOSITY_NORMAL)
     {
         if ($verbosity > $this->verbosity) {
-            return;
+            return $this;
         }
 
         if (!empty($styles)) {
@@ -347,11 +351,12 @@ class Stdio implements StdioContract
             $text .= PHP_EOL;
         }
 
-        if (fwrite($this->stdout, $text) === false) {
+        $length = fwrite($this->stdout, $text);
+        if ($length !== strlen($text)) {
             throw new RuntimeException('Unable to write output.');
         }
 
-        // fflush($this->stdout); // macht symfony\console\Output\StreamOutput.php
+        return $this;
     }
 
     /**
@@ -359,7 +364,7 @@ class Stdio implements StdioContract
      */
     public function line($text)
     {
-        $this->write($text, true);
+        return $this->write($text, true);
     }
 
     /**
@@ -367,7 +372,7 @@ class Stdio implements StdioContract
      */
     public function info($text)
     {
-        $this->write($text, true, [self::STYLE_GREEN]);
+        return $this->write($text, true, [self::STYLE_GREEN]);
     }
 
     /**
@@ -375,7 +380,7 @@ class Stdio implements StdioContract
      */
     public function notice($text)
     {
-        $this->write($text, true, [self::STYLE_YELLOW]);
+        return $this->write($text, true, [self::STYLE_YELLOW]);
     }
 
     /**
@@ -383,7 +388,7 @@ class Stdio implements StdioContract
      */
     public function question($text)
     {
-        $this->write($text, true, [self::STYLE_BLACK, self::STYLE_CYAN_BG]);
+        return $this->write($text, true, [self::STYLE_BLACK, self::STYLE_CYAN_BG]);
     }
 
     /**
@@ -391,7 +396,7 @@ class Stdio implements StdioContract
      */
     public function warn($text)
     {
-        $this->write($text, true, [self::STYLE_BLACK, self::STYLE_YELLOW_BG]);
+        return $this->write($text, true, [self::STYLE_BLACK, self::STYLE_YELLOW_BG]);
     }
 
     /**
@@ -399,7 +404,7 @@ class Stdio implements StdioContract
      */
     public function error($text)
     {
-        $this->write($text, true, [self::STYLE_WHITE, self::STYLE_RED_BG], self::VERBOSITY_QUIET);
+        return $this->write($text, true, [self::STYLE_WHITE, self::STYLE_RED_BG], self::VERBOSITY_QUIET);
     }
 
     /**
@@ -407,7 +412,7 @@ class Stdio implements StdioContract
      */
     public function quiet($text, array $styles = [])
     {
-        $this->write($text, true, $styles, self::VERBOSITY_QUIET);
+        return $this->write($text, true, $styles, self::VERBOSITY_QUIET);
     }
 
     /**
@@ -415,7 +420,7 @@ class Stdio implements StdioContract
      */
     public function verbose($text, array $styles = [])
     {
-        $this->write($text, true, $styles, self::VERBOSITY_VERBOSE);
+        return $this->write($text, true, $styles, self::VERBOSITY_VERBOSE);
     }
 
     /**
@@ -423,7 +428,7 @@ class Stdio implements StdioContract
      */
     public function debug($text, array $styles = [])
     {
-        $this->write($text, true, $styles, self::VERBOSITY_DEBUG);
+        return $this->write($text, true, $styles, self::VERBOSITY_DEBUG);
     }
 
     /**
@@ -431,7 +436,7 @@ class Stdio implements StdioContract
      */
     public function hr($width = 79)
     {
-        $this->write(str_repeat('-', $width), true);
+        return $this->write(str_repeat('-', $width), true);
     }
 
     /**
@@ -450,6 +455,8 @@ class Stdio implements StdioContract
 //
 //        $table->render();
 //        $this->newLine();
+
+        return $this;
     }
 
     /**
@@ -536,6 +543,8 @@ class Stdio implements StdioContract
     public function err($text = null)
     {
         fwrite($this->stderr, $text . PHP_EOL);
+
+        return $this;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -559,6 +568,8 @@ class Stdio implements StdioContract
 //        }
 
         $this->stdin = $stdin;
+
+        return $this;
     }
 
     /**
@@ -578,6 +589,8 @@ class Stdio implements StdioContract
 //            fclose($this->stdout);
 //        }
         $this->stdout = $stdout;
+
+        return $this;
     }
 
     /**
@@ -598,6 +611,16 @@ class Stdio implements StdioContract
 //        }
 
         $this->stderr = $stderr;
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getVerbosity()
+    {
+        return $this->verbosity;
     }
 
     /**
@@ -612,14 +635,8 @@ class Stdio implements StdioContract
         }
 
         $this->verbosity = $level;
-    }
 
-    /**
-     * @inheritdoc
-     */
-    public function getVerbosity()
-    {
-        return $this->verbosity;
+        return $this;
     }
 
     /**

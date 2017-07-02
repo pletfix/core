@@ -5,6 +5,8 @@ namespace Core\Services;
 use Closure;
 use Core\Exceptions\HttpException;
 use Core\Services\Contracts\Route as RouteContract;
+use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * The Route class represents a HTTP Router.
@@ -43,13 +45,12 @@ class Route implements RouteContract
     public function dispatch(Contracts\Request $request)
     {
         $route = $this->find($request);
-        if (is_null($route)) {
+        if ($route === null) {
             throw new HttpException(404, 'No matching route found!');
         }
 
         /** @var \Core\Services\Delegate $delegate */
         $delegate = DI::getInstance()->get('delegate');
-        $delegate->setMiddleware($route->middleware);
 
         $action = $route->action;
         $params = $this->getParameters($request, $route);
@@ -57,11 +58,11 @@ class Route implements RouteContract
             list($class, $method) = explode('@', $action);
             if ($class[0] != '\\') {
                 if (file_exists(app_path('Controllers/' .  str_replace('\\', '/', $class) . '.php'))) {
-                    $class = '\\App\\Controllers\\' . $class;
-                }
+                    $class = '\\App\\Controllers\\' . $class; // @codeCoverageIgnore
+                } // @codeCoverageIgnore
                 else if (($pluginMiddleware = $this->getPluginController($class)) !== null) {
-                    $class = $pluginMiddleware;
-                }
+                    $class = $pluginMiddleware; // @codeCoverageIgnore
+                } // @codeCoverageIgnore
                 else {
                     $class = '\\Core\\Controllers\\' . $class;
                 }
@@ -73,8 +74,10 @@ class Route implements RouteContract
             $delegate->setAction($action, $params);
         }
         else {
-            throw new \RuntimeException('Malformed route definition!!');
+            throw new RuntimeException('Malformed route definition!!');
         }
+
+        $delegate->setMiddleware($route->middleware);
 
         return $delegate->process($request);
     }
@@ -95,7 +98,7 @@ class Route implements RouteContract
                 $this->pluginControllers = isset($classes['Controllers']) ? $classes['Controllers'] : [];
             }
             else {
-                $this->pluginControllers = [];
+                $this->pluginControllers = []; // @codeCoverageIgnore
             }
         }
 
@@ -136,7 +139,7 @@ class Route implements RouteContract
         $path    = $request->path();
         $pattern = $this->pattern($route);
         if (preg_match_all($pattern, $path, $matches, PREG_SET_ORDER) === false) {
-            return [];
+            return []; // @codeCoverageIgnore
         }
 
         unset($matches[0][0]);
@@ -171,6 +174,8 @@ class Route implements RouteContract
                 $this->middleware = $previous;
             }
         }
+
+        return $this;
     }
 
     /**
@@ -189,8 +194,7 @@ class Route implements RouteContract
      */
     public function get($path, $action, $middleware = null)
     {
-        $this->add('GET',  $path, $action, $middleware);
-        $this->add('HEAD', $path, $action, $middleware);
+        return $this->add('GET',  $path, $action, $middleware)->add('HEAD', $path, $action, $middleware);
     }
 
     /**
@@ -198,7 +202,7 @@ class Route implements RouteContract
      */
     public function head($path, $action, $middleware = null)
     {
-        $this->add('HEAD', $path, $action, $middleware);
+        return $this->add('HEAD', $path, $action, $middleware);
     }
 
     /**
@@ -206,7 +210,7 @@ class Route implements RouteContract
      */
     public function post($path, $action, $middleware = null)
     {
-        $this->add('POST', $path, $action, $middleware);
+        return $this->add('POST', $path, $action, $middleware);
     }
 
     /**
@@ -214,7 +218,7 @@ class Route implements RouteContract
      */
     public function put($path, $action, $middleware = null)
     {
-        $this->add('PUT', $path, $action, $middleware);
+        return $this->add('PUT', $path, $action, $middleware);
     }
 
     /**
@@ -222,7 +226,7 @@ class Route implements RouteContract
      */
     public function patch($path, $action, $middleware = null)
     {
-        $this->add('PATCH', $path, $action, $middleware);
+        return $this->add('PATCH', $path, $action, $middleware);
     }
 
     /**
@@ -230,7 +234,7 @@ class Route implements RouteContract
      */
     public function delete($path, $action, $middleware = null)
     {
-        $this->add('DELETE', $path, $action, $middleware);
+        return $this->add('DELETE', $path, $action, $middleware);
     }
 
     /**
@@ -238,7 +242,7 @@ class Route implements RouteContract
      */
     public function options($path, $action, $middleware = null)
     {
-        $this->add('OPTIONS', $path, $action, $middleware);
+        return $this->add('OPTIONS', $path, $action, $middleware);
     }
 
     /**
@@ -248,10 +252,12 @@ class Route implements RouteContract
     {
         foreach ($methods as $method) {
             if (!in_array($method, ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'])) {
-                throw new \InvalidArgumentException('Invalid HTTP method: ' . $method);
+                throw new InvalidArgumentException('Invalid HTTP method: ' . $method);
             }
             $this->add($method, $path, $action, $middleware);
         }
+
+        return $this;
     }
 
     /**
@@ -262,6 +268,8 @@ class Route implements RouteContract
         foreach (['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'] as $method) {
             $this->add($method, $path, $action, $middleware);
         }
+
+        return $this;
     }
     
     /**
@@ -282,6 +290,8 @@ class Route implements RouteContract
         $this->add('PATCH',  $path . '/{' . $var . '}',      $controller . '@update',  $middleware);
         $this->add('GET',    $path . '/{' . $var . '}',      $controller . '@show',    $middleware);
         $this->add('HEAD',   $path . '/{' . $var . '}',      $controller . '@show',    $middleware);
+
+        return $this;
     }
 
     /**
@@ -291,6 +301,7 @@ class Route implements RouteContract
      * @param string $path Path of the route, e.g. "/photos/{id}/edit"
      * @param Closure|string $action , e.g. "PhotoController@edit"
      * @param string|array|null $middleware
+     * @return $this
      */
     private function add($method, $path, $action, $middleware = null)
     {
@@ -300,5 +311,15 @@ class Route implements RouteContract
             'action'     => $action,
             'middleware' => $middleware !== null ? $this->mergeMiddleware((array)$middleware) : $this->middleware
         ];
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getRoutes()
+    {
+        return $this->routes;
     }
 }

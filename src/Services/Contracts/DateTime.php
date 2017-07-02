@@ -28,7 +28,7 @@ interface DateTime extends DateTimeInterface, JsonSerializable
     public function copy();
 
     /**
-     * Returns a ISO8601 representation of the instance.
+     * Convert the DateTime instance into JSON serializable.
      *
      * @return string
      */
@@ -787,14 +787,14 @@ interface DateTime extends DateTimeInterface, JsonSerializable
      *
      * @param DateTimeZone|string|null $timezone
      */
-    public static function setDefaultTimezone($timezone);
+    public static function setDefaultTimezone($timezone = null);
 
     /**
      * Set the actual timezone.
      *
      * If null is passed, the default will be used.
      *
-     * @param DateTimeZone|string|null $timezone
+     * @param DateTimeZone|string $timezone
      * @return \Core\Services\DateTime
      */
     public function setTimezone($timezone);

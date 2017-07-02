@@ -21,6 +21,7 @@ interface Route
      *
      * @param string|array $middleware
      * @param Closure|null $nested
+     * @return $this
      */
     public function middleware($middleware, Closure $nested = null);
 
@@ -30,7 +31,7 @@ interface Route
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
      * @param string|array|null $middleware
-     * @return
+     * @return $this
      */
     public function get($path, $action, $middleware = null);
 
@@ -40,7 +41,7 @@ interface Route
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
      * @param string|array|null $middleware
-     * @return
+     * @return $this
      */
     public function head($path, $action, $middleware = null);
 
@@ -50,7 +51,7 @@ interface Route
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
      * @param string|array|null $middleware
-     * @return
+     * @return $this
      */
     public function post($path, $action, $middleware = null);
 
@@ -60,7 +61,7 @@ interface Route
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
      * @param string|array|null $middleware
-     * @return
+     * @return $this
      */
     public function put($path, $action, $middleware = null);
 
@@ -70,7 +71,7 @@ interface Route
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
      * @param string|array|null $middleware
-     * @return
+     * @return $this
      */
     public function patch($path, $action, $middleware = null);
 
@@ -80,7 +81,7 @@ interface Route
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
      * @param string|array|null $middleware
-     * @return
+     * @return $this
      */
     public function delete($path, $action, $middleware = null);
 
@@ -90,7 +91,7 @@ interface Route
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
      * @param string|array|null $middleware
-     * @return
+     * @return $this
      */
     public function options($path, $action, $middleware = null);
 
@@ -101,7 +102,7 @@ interface Route
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
      * @param string|array|null $middleware
-     * @return
+     * @return $this
      */
     public function multi(array $methods, $path, $action, $middleware = null);
 
@@ -111,7 +112,7 @@ interface Route
      * @param string $path
      * @param string|\Closure $action Could by a method name or a function.
      * @param string|array|null $middleware
-     * @return
+     * @return $this
      */
     public function any($path, $action, $middleware = null);
 
@@ -133,7 +134,14 @@ interface Route
      * @param string $path
      * @param string $controller
      * @param string|array|null $middleware
-     * @return
+     * @return $this
      */
     public function resource($path, $controller, $middleware = null);
+
+    /**
+     * Get all routing items.
+     *
+     * @return object[]
+     */
+    public function getRoutes();
 }

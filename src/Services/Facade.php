@@ -2,6 +2,9 @@
 
 namespace Core\Services;
 
+/**
+ * @codeCoverageIgnore
+ */
 class Facade
 {
     /*

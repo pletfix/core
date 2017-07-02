@@ -22,6 +22,7 @@ interface Delegate
      * Set the list of Middleware classes.
      *
      * @param array $classes
+     * @return $this
      */
     public function setMiddleware($classes);
 
@@ -37,7 +38,7 @@ interface Delegate
      *
      * @param callable $action
      * @param array $parameters
-     * @return mixed
+     * @return $this
      */
     public function setAction($action, array $parameters);
 

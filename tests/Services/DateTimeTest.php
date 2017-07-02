@@ -15,17 +15,12 @@ class DateTimeTest extends TestCase
     {
         DI::getInstance()->get('config')
             ->set('app.timezone', 'Europe/Berlin')
-            ->set('app.first_dow', 1);
-        DateTime::setDefaultTimezone('Europe/Berlin');
-        DateTime::setFirstDayOfWeek(1);
+            ->set('app.first_dow', DateTime::MONDAY);
     }
 
 //    protected function tearDown()
 //    {
 //    }
-
-    ///////////////////////////////////////////////////////////////////
-    // Create a DateTime Instance
 
     public function testConstruct()
     {
@@ -56,20 +51,25 @@ class DateTimeTest extends TestCase
 
     public function testJsonSerialize()
     {
-        // todo
+        $this->assertSame('2017-02-03T04:05:06+0100', (new DateTime('2017-02-03 04:05:06.654321'))->jsonSerialize());
     }
 
     public function testInstance()
     {
-        // todo
+        $dt = DateTime::instance(new DateTime('2017-02-03 04:05:06'));
+        $this->assertInstanceOf(DateTimeContract::class, $dt);
+        $this->assertSame('2017-02-03 04:05:06', $dt->toDateTimeString());
+
+        $dt = DateTime::instance(new \DateTime('2017-02-03 04:05:06'));
+        $this->assertInstanceOf(DateTimeContract::class, $dt);
+        $this->assertSame('2017-02-03 04:05:06', $dt->toDateTimeString());
     }
 
     public function testCreateFromParts()
     {
-        $dt = DateTime::createFromParts([2017, 2, 3], new DateTimeZone('Europe/London')); // todo extra test für TZ
+        $dt = DateTime::createFromParts([2017, 2, 3]);
         $this->assertInstanceOf(DateTimeContract::class, $dt);
         $this->assertSame('2017-02-03 00:00:00', $dt->toDateTimeString());
-        $this->assertSame('Europe/London', $dt->getTimezone()->getName());
 
         $dt = DateTime::createFromParts([2017, 2, 3, 4, 5, 6]);
         $this->assertInstanceOf(DateTimeContract::class, $dt);
@@ -101,9 +101,6 @@ class DateTimeTest extends TestCase
         $this->assertSame('+00:00', $dt->getTimezone()->getName());
     }
 
-    ///////////////////////////////////////////////////////////////////
-    // String Formatting
-
     public function testToString()
     {
         $dt = new DateTime('2017-02-03 04:05:06');
@@ -121,14 +118,12 @@ class DateTimeTest extends TestCase
         $this->assertSame('2017-02-03T04:05:06+01:00', $dt->toRfc3339String());
         $this->assertSame('Fri, 03 Feb 2017 04:05:06 +0100', $dt->toRssString());
         $this->assertSame('2017-02-03T04:05:06+01:00', $dt->toW3cString());
+        $this->assertSame('2017-02-03 04:05:06', (string)$dt);
     }
-    
-    ///////////////////////////////////////////////////////////////////
-    // Parts of Date Time
 
     public function testSetAndGetParts()
     {
-        $dt = new DateTime;
+        $dt = new DateTime('2001-01-01');
         $this->assertInstanceOf(DateTimeContract::class, $dt->setYear(2017));
         $this->assertInstanceOf(DateTimeContract::class, $dt->setMonth(2));
         $this->assertInstanceOf(DateTimeContract::class, $dt->setDay(3));
@@ -141,6 +136,26 @@ class DateTimeTest extends TestCase
         $this->assertSame(4, $dt->getHour());
         $this->assertSame(5, $dt->getMinute());
         $this->assertSame(6, $dt->getSecond());
+    }
+
+    public function testStartAndEndOfWeek()
+    {
+        $this->assertSame(DateTime::MONDAY, DateTime::getFirstDayOfWeek());
+
+        DateTime::setFirstDayOfWeek(DateTime::FRIDAY);
+        $dt1 = (new DateTime('2017-02-03 04:05:06'))->startOfWeek();
+        $dt2 = (new DateTime('2017-02-03 04:05:06'))->endOfWeek();
+        $this->assertSame('2017-02-03 00:00:00', $dt1->toDateTimeString());
+        $this->assertSame('2017-02-09 23:59:59', $dt2->toDateTimeString());
+        $this->assertInstanceOf(DateTimeContract::class, $dt1);
+        $this->assertInstanceOf(DateTimeContract::class, $dt2);
+        $this->assertSame(DateTime::FRIDAY, DateTime::getFirstDayOfWeek());
+
+        DateTime::setFirstDayOfWeek(DateTime::MONDAY);
+        $dt1 = (new DateTime('2017-02-03 04:05:06'))->startOfWeek();
+        $dt2 = (new DateTime('2017-02-03 04:05:06'))->endOfWeek();
+        $this->assertSame('2017-01-30 00:00:00', $dt1->toDateTimeString());
+        $this->assertSame('2017-02-05 23:59:59', $dt2->toDateTimeString());
     }
 
     public function testSetDateTime()
@@ -161,13 +176,13 @@ class DateTimeTest extends TestCase
 
     public function testDayOfWeek()
     {
-        $this->assertSame(0, (new DateTime('2017-02-05'))->dayOfWeek()); // Sunday
-        $this->assertSame(1, (new DateTime('2017-02-06'))->dayOfWeek()); // Monday
-        $this->assertSame(2, (new DateTime('2017-02-07'))->dayOfWeek());
-        $this->assertSame(3, (new DateTime('2017-02-08'))->dayOfWeek());
-        $this->assertSame(4, (new DateTime('2017-02-09'))->dayOfWeek());
-        $this->assertSame(5, (new DateTime('2017-02-10'))->dayOfWeek());
-        $this->assertSame(6, (new DateTime('2017-02-11'))->dayOfWeek());
+        $this->assertSame(DateTime::SUNDAY,    (new DateTime('2017-02-05'))->dayOfWeek());
+        $this->assertSame(DateTime::MONDAY,    (new DateTime('2017-02-06'))->dayOfWeek());
+        $this->assertSame(DateTime::TUESDAY,   (new DateTime('2017-02-07'))->dayOfWeek());
+        $this->assertSame(DateTime::WEDNESDAY, (new DateTime('2017-02-08'))->dayOfWeek());
+        $this->assertSame(DateTime::THURSDAY,  (new DateTime('2017-02-09'))->dayOfWeek());
+        $this->assertSame(DateTime::FRIDAY,    (new DateTime('2017-02-10'))->dayOfWeek());
+        $this->assertSame(DateTime::SATURDAY,  (new DateTime('2017-02-11'))->dayOfWeek());
     }
 
     public function testDayOfYear()
@@ -177,7 +192,7 @@ class DateTimeTest extends TestCase
 
     public function testWeekOfMonth()
     {
-        $this->assertSame(1, (new DateTime('2017-02-01'))->weekOfMonth());
+        $this->assertSame(1, (new DateTime('2017-02-01'))->weekOfMonth()); // Mi
         $this->assertSame(1, (new DateTime('2017-02-05'))->weekOfMonth()); // So
         $this->assertSame(2, (new DateTime('2017-02-06'))->weekOfMonth()); // Mo
         $this->assertSame(2, (new DateTime('2017-02-12'))->weekOfMonth()); // So
@@ -186,7 +201,9 @@ class DateTimeTest extends TestCase
 
     public function testWeekOfYear()
     {
-        $this->assertSame(5, (new DateTime('2017-02-03'))->weekOfYear()); // todo andere Jahreswechsel prüfen
+        $this->assertSame(5, (new DateTime('2017-02-03'))->weekOfYear());
+        $this->assertSame(53, (new DateTime('2016-01-01'))->weekOfYear());
+        $this->assertSame(1, (new DateTime('2015-01-01'))->weekOfYear());
     }
 
     public function testDaysInMonth()
@@ -236,305 +253,173 @@ class DateTimeTest extends TestCase
         $this->assertFalse((new DateTime('2017-04-11'))->isSaturday());
     }
 
-    ///////////////////////////////////////////////////////////////////
-    // Addition and Subtraction
-
     public function testAddAndSub()
     {
-        // todo
+        $dt = new DateTime('2017-02-03 04:05:06');
+
+        $this->assertInstanceOf(DateTimeContract::class, $dt->addYears(5));
+        $this->assertInstanceOf(DateTimeContract::class, $dt->subYears(3));
+        $this->assertSame('2019-02-03 04:05:06', $dt->toDateTimeString());
+
+        $this->assertInstanceOf(DateTimeContract::class, $dt->addMonths(17));
+        $this->assertInstanceOf(DateTimeContract::class, $dt->subMonths(3));
+        $this->assertSame('2020-04-03 04:05:06', $dt->toDateTimeString());
+
+        $this->assertInstanceOf(DateTimeContract::class, $dt->addDays(35));
+        $this->assertInstanceOf(DateTimeContract::class, $dt->subDays(3));
+        $this->assertSame('2020-05-05 04:05:06', $dt->toDateTimeString());
+
+        $this->assertInstanceOf(DateTimeContract::class, $dt->addHours(29));
+        $this->assertInstanceOf(DateTimeContract::class, $dt->subHours(3));
+        $this->assertSame('2020-05-06 06:05:06', $dt->toDateTimeString());
+
+        $this->assertInstanceOf(DateTimeContract::class, $dt->addMinutes(65));
+        $this->assertInstanceOf(DateTimeContract::class, $dt->subMinutes(3));
+        $this->assertSame('2020-05-06 07:07:06', $dt->toDateTimeString());
+
+        $this->assertInstanceOf(DateTimeContract::class, $dt->addSeconds(65));
+        $this->assertInstanceOf(DateTimeContract::class, $dt->subSeconds(3));
+        $this->assertSame('2020-05-06 07:08:08', $dt->toDateTimeString());
     }
 
-    public function testSubYears()
+    public function testAddAndSubQuarters()
     {
-        // todo
+        $dt = new DateTime('2017-02-03 04:05:06');
+        $this->assertInstanceOf(DateTimeContract::class, $dt->addQuarters(5));
+        $this->assertInstanceOf(DateTimeContract::class, $dt->subQuarters(3));
+        $this->assertSame('2017-08-03 04:05:06', $dt->toDateTimeString());
     }
 
-    public function testAddQuarters()
+    public function testAddAndSubWeeks()
     {
-        // todo
+        $dt = new DateTime('2017-02-03 04:05:06');
+        $this->assertInstanceOf(DateTimeContract::class, $dt->addWeeks(5));
+        $this->assertInstanceOf(DateTimeContract::class, $dt->subWeeks(3));
+        $this->assertSame('2017-02-17 04:05:06', $dt->toDateTimeString());
     }
 
-    public function testSubQuarters()
+    public function testDiff()
     {
-        // todo
+        $dt = new DateTime('2017-02-03 04:05:06');
+        $this->assertSame(2, $dt->diffInYears(new DateTime('2015-02-03 04:05:06')));
+        $this->assertSame(2, $dt->diffInQuarters(new DateTime('2016-08-03 04:05:06')));
+        $this->assertSame(5, $dt->diffInMonths(new DateTime('2016-09-03 04:05:06')));
+        $this->assertSame(3, $dt->diffInWeeks(new DateTime('2017-01-13 04:05:06')));
+        $this->assertSame(6, $dt->diffInDays(new DateTime('2017-01-28 04:05:06')));
+        $this->assertSame(3, $dt->diffInHours(new DateTime('2017-02-03 01:05:06')));
+        $this->assertSame(3, $dt->diffInMinutes(new DateTime('2017-02-03 04:02:06')));
+        $this->assertSame(56, $dt->diffInSeconds(new DateTime('2017-02-03 04:04:10')));
+
+        $this->assertSame($dt->diffInYears(new DateTime), $dt->diffInYears());
+        $this->assertSame($dt->diffInQuarters(new DateTime), $dt->diffInQuarters());
+        $this->assertSame($dt->diffInMonths(new DateTime), $dt->diffInMonths());
+        $this->assertSame($dt->diffInWeeks(new DateTime), $dt->diffInWeeks());
+        $this->assertSame($dt->diffInDays(new DateTime), $dt->diffInDays());
+        $this->assertSame($dt->diffInHours(new DateTime), $dt->diffInHours());
+        $this->assertSame($dt->diffInMinutes(new DateTime), $dt->diffInMinutes());
+        $this->assertSame($dt->diffInSeconds(new DateTime), $dt->diffInSeconds());
     }
 
-    public function testAddMonths()
+    public function testStartAndEndOf()
     {
-        // todo
+        $this->assertSame('2017-01-01 00:00:00', (new DateTime('2017-02-03 04:05:06'))->startOfYear()->toDateTimeString());
+        $this->assertSame('2017-01-01 00:00:00', (new DateTime('2017-02-03 04:05:06'))->startOfQuarter()->toDateTimeString());
+        $this->assertSame('2017-04-01 00:00:00', (new DateTime('2017-04-01 04:05:06'))->startOfQuarter()->toDateTimeString());
+        $this->assertSame('2017-02-01 00:00:00', (new DateTime('2017-02-03 04:05:06'))->startOfMonth()->toDateTimeString());
+        $this->assertSame('2017-02-03 00:00:00', (new DateTime('2017-02-03 04:05:06'))->startOfDay()->toDateTimeString());
+        $this->assertSame('2017-02-03 04:00:00', (new DateTime('2017-02-03 04:05:06'))->startOfHour()->toDateTimeString());
+        $this->assertSame('2017-02-03 04:05:00', (new DateTime('2017-02-03 04:05:06'))->startOfMinute()->toDateTimeString());
+        $this->assertSame('2017-12-31 23:59:59', (new DateTime('2017-02-03 04:05:06'))->endOfYear()->toDateTimeString());
+        $this->assertSame('2017-03-31 23:59:59', (new DateTime('2017-02-03 04:05:06'))->endOfQuarter()->toDateTimeString());
+        $this->assertSame('2017-02-28 23:59:59', (new DateTime('2017-02-03 04:05:06'))->endOfMonth()->toDateTimeString());
+        $this->assertSame('2017-02-03 23:59:59', (new DateTime('2017-02-03 04:05:06'))->endOfDay()->toDateTimeString());
+        $this->assertSame('2017-02-03 04:59:59', (new DateTime('2017-02-03 04:05:06'))->endOfHour()->toDateTimeString());
+        $this->assertSame('2017-02-03 04:05:59', (new DateTime('2017-02-03 04:05:06'))->endOfMinute()->toDateTimeString());
     }
-
-    public function testSubMonths()
-    {
-        // todo
-    }
-
-    public function testAddWeeks()
-    {
-        // todo
-    }
-
-    public function testSubWeeks()
-    {
-        // todo
-    }
-
-    public function testAddDays()
-    {
-        // todo
-    }
-
-    public function testSubDays()
-    {
-        // todo
-    }
-
-    public function testAddHours()
-    {
-        // todo
-    }
-
-    public function testSubHours()
-    {
-        // todo
-    }
-
-    public function testAddMinutes()
-    {
-        // todo
-    }
-
-    public function testSubMinutes()
-    {
-        // todo
-    }
-
-    public function testAddSeconds()
-    {
-        // todo
-    }
-
-    public function testSubSeconds()
-    {
-        // todo
-    }
-
-    ///////////////////////////////////////////////////////////////////
-    // Differences
-
-    public function testDiffInYears()
-    {
-        // todo
-    }
-
-    public function testDiffInQuarters()
-    {
-        // todo
-    }
-
-    public function testDiffInMonths()
-    {
-        // todo
-    }
-
-    public function testDiffInWeeks()
-    {
-        // todo
-    }
-
-    public function testDiffInDays()
-    {
-        // todo
-    }
-
-    public function testDiffInHours()
-    {
-        // todo
-    }
-
-    public function testDiffInMinutes()
-    {
-        // todo
-    }
-
-    public function testDiffInSeconds()
-    {
-        // todo
-    }
-
-    ///////////////////////////////////////////////////////////////////
-    // Start Of and End Of
-
-    public function testStartOfYear()
-    {
-        // todo
-    }
-
-    public function testEndOfYear()
-    {
-        // todo
-    }
-
-    public function testStartOfQuarter()
-    {
-        // todo
-    }
-
-    public function testEndOfQuarter()
-    {
-        // todo
-    }
-
-    public function testStartOfMonth()
-    {
-        // todo
-    }
-
-    public function testEndOfMonth()
-    {
-        // todo
-    }
-
-    public function testStartOfWeek()
-    {
-        // todo
-    }
-
-    public function testEndOfWeek()
-    {
-        // todo
-    }
-
-    public function testStartOfDay()
-    {
-        // todo
-    }
-
-    public function testEndOfDay()
-    {
-        // todo
-    }
-
-    public function testStartOfHour()
-    {
-        // todo
-    }
-
-    public function testEndOfHour()
-    {
-        // todo
-    }
-
-    public function testStartOfMinute()
-    {
-        // todo
-    }
-
-    public function testEndOfMinute()
-    {
-        // todo
-    }
-
-    ///////////////////////////////////////////////////////////////////
-    // Locale
 
     public function testLocale()
     {
-        // testCreateFromLocaleFormat
-        // testCreateFromLocaleDateFormat
-        // testCreateFromLocaleTimeFormat
+        DI::getInstance()->get('config')
+            ->set('app.locale', '~testlocale')
+            ->set('app.fallback_locale', '~testfallback');
 
-        // testToLocaleDateTimeString
-        // testToLocaleDateString
-        // testToLocaleTimeString
+        $path1 = resource_path('lang/~testlocale');
+        $path2 = resource_path('lang/~testfallback');
+        @mkdir($path1);
+        @mkdir($path2);
+        file_put_contents($path1 . '/datetime.php', '<?php return [\'datetime\' => \'d.m.Y H:i\', \'date\' => \'d.m.Y\', \'time\' => \'H:i\'];');
+        file_put_contents($path2 . '/datetime.php', '<?php return [\'datetime\' => \'Y_m_d_H_i\', \'date\' => \'Y_m_d\', \'time\' => \'H_i\'];');
+        try {
+            $dt = DateTime::createFromLocaleFormat('03.02.2017 04:05');
+            $this->assertInstanceOf(DateTimeContract::class, $dt);
+            $this->assertSame('2017-02-03 04:05:00', $dt->toDateTimeString());
+            $this->assertSame('03.02.2017 04:05', $dt->toLocaleDateTimeString());
+            $this->assertSame('03.02.2017', $dt->toLocaleDateString());
+            $this->assertSame('04:05', $dt->toLocaleTimeString());
 
-//        DI::getInstance()->get('config')->set('app.locale', '~testlocale')->set('app.fallback_locale', '~testfallback');
-//        $path1 = resource_path('lang/~testlocale');
-//        $path2 = resource_path('lang/~testfallback');
-//        @mkdir($path1);
-//        @mkdir($path2);
-//        file_put_contents($path1 . '/datetime.php', '<?php return [\'datetime\' => \'d.m.Y H:i\', \'date\' => \'d.m.Y\', \'time\' => \'H:i\'];');
-//        file_put_contents($path2 . '/datetime.php', '<?php return [\'datetime\' => \'Y-m-d H:i\', \'date\' => \'Y-m-d\', \'time\' => \'H:i\'];');
-//        try {
-//
-//        }
-//        finally {
-//            @unlink($path1 . '/datetime.php');
-//            @unlink($path2 . '/datetime.php');
-//            @rmdir($path1);
-//            @rmdir($path2);
-//        }
+            $dt = DateTime::createFromLocaleDateFormat('03.02.2017');
+            $this->assertInstanceOf(DateTimeContract::class, $dt);
+            $this->assertSame('2017-02-03', $dt->toDateString());
 
-        DateTime::setLocaleFormat([
-            'datetime' => 'Y-m-d H:i',
-            'date'     => 'Y-m-d',
-            'time'     => 'H:i',
-        ]);
+            $dt = DateTime::createFromLocaleTimeFormat('04:05');
+            $this->assertInstanceOf(DateTimeContract::class, $dt);
+            $this->assertSame('04:05:00', $dt->toTimeString());
 
-//
-//        $dt = datetime('2017-03-04 05:06', null, 'locale');
-//        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-//        $this->assertInstanceOf(DateTimeContract::class, $dt);
-//        $this->assertSame('2017-03-04 05:06:00', $dt->toDateTimeString());
-//
-//        $dt = datetime('2017-03-04', null, 'locale.date');
-//        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-//        $this->assertInstanceOf(DateTimeContract::class, $dt);
-//        $this->assertSame('2017-03-04', $dt->toDateString());
-//
-//        $dt = datetime('05:06', null, 'locale.time');
-//        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-//        $this->assertInstanceOf(DateTimeContract::class, $dt);
-//        $this->assertSame($todayString . ' 05:06:00', $dt->toDateTimeString());
-//
-//        $dt = datetime('201703040506', null, 'Ymdhi');
-//        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-//        $this->assertInstanceOf(DateTimeContract::class, $dt);
-//        $this->assertSame('2017-03-04 05:06:00', $dt->toDateTimeString());
+            DateTime::setLocaleFormat([
+                'datetime' => 'YmdHi',
+                'date'     => 'Ymd',
+                'time'     => 'Hi',
+            ]);
+            $dt = DateTime::createFromLocaleFormat('201702030405');
+            $this->assertSame('2017-02-03 04:05:00', $dt->toDateTimeString());
+            $this->assertSame('201702030405', $dt->toLocaleDateTimeString());
+            $this->assertSame('20170203', $dt->toLocaleDateString());
+            $this->assertSame('0405', $dt->toLocaleTimeString());
+
+            DateTime::setLocale('wrong'); // locale don't exist, fallback!
+            $this->assertSame('wrong', $dt->getLocale());
+            $dt = DateTime::createFromLocaleFormat('2017_02_03_04_05');
+            $this->assertSame('2017-02-03 04:05:00', $dt->toDateTimeString());
+            $this->assertSame('2017_02_03_04_05', $dt->toLocaleDateTimeString());
+            $this->assertSame('2017_02_03', $dt->toLocaleDateString());
+            $this->assertSame('04_05', $dt->toLocaleTimeString());
+        }
+        finally {
+            @unlink($path1 . '/datetime.php');
+            @unlink($path2 . '/datetime.php');
+            @rmdir($path1);
+            @rmdir($path2);
+        }
     }
 
-    public function testGetDefaultTimezone()
+    public function testTimezone()
     {
-        // todo
+        $this->assertInstanceOf(DateTimeZone::class, DateTime::getDefaultTimezone());
+        $this->assertSame('Europe/Berlin', DateTime::getDefaultTimezone()->getName()); // UTC+1
+        $dt = new DateTime('2017-02-03 04:05:06');
+        $this->assertInstanceOf(DateTimeZone::class, $dt->getTimezone());
+        $this->assertSame('Europe/Berlin', $dt->getTimezone()->getName());
+        $this->assertSame('2017-02-03 04:05:06', $dt->toDateTimeString());
+
+        DateTime::setDefaultTimezone('Europe/London'); // UTC+0
+        $this->assertSame('Europe/London', DateTime::getDefaultTimezone()->getName());
+        $this->assertSame('Europe/Berlin', $dt->getTimezone()->getName());
+        $this->assertSame('2017-02-03 04:05:06', $dt->toDateTimeString());
+
+        $dt = new DateTime('2017-02-03 04:05:06', 'Europe/London');
+        $this->assertSame('Europe/London', $dt->getTimezone()->getName());
+        $this->assertInstanceOf(DateTime::class, $dt->setTimezone('Asia/Aden')); // UTC+3
+        $this->assertSame('Asia/Aden', $dt->getTimezone()->getName());
+        $this->assertSame('2017-02-03 07:05:06', $dt->toDateTimeString());
+
+        DateTime::setDefaultTimezone(new DateTimeZone('Europe/London'));
+        $this->assertSame('Europe/London', DateTime::getDefaultTimezone()->getName());
+
+        DateTime::setDefaultTimezone();
+        $this->assertSame('Europe/Berlin', DateTime::getDefaultTimezone()->getName());
+
+        $this->expectException(InvalidArgumentException::class);
+        new DateTime('2017-02-03 04:05:06', 'wrong');
     }
 
-    public function testSetDefaultTimezone()
-    {
-        // todo
-    }
-
-    public function testSetTimezone()
-    {
-        // todo
-    }
-
-    public function testGetFirstDayOfWeek()
-    {
-        // todo
-    }
-
-    public function testSetFirstDayOfWeek()
-    {
-        // todo
-    }
-
-    public function testGetLocale()
-    {
-        // todo
-    }
-
-    public function testSetLocale()
-    {
-        // todo
-    }
-
-    public function testSetLocaleFormat()
-    {
-        // todo
-    }
-
-    ///////////////////////////////////////////////////////////////////
-    // Timezone
-
-    // todo
 }

@@ -67,7 +67,7 @@ interface Stdio
      * Prompts the user for input, and returns it.
      *
      * @param string $prompt Prompt text.
-     * @param string|array|null $options String of options. Pass null to omit.
+     * @param string|array|null $options String of options, e.g. ['y' => 'yes', 'n' => 'no'].  Pass null to omit.
      * @param string|null $default Default input value. Pass null to omit.
      * @return string Either the default value, or the user-provided input.
      */
@@ -114,12 +114,15 @@ interface Stdio
      *
      * @param string $prompt Prompt text.
      * @param string|null $default Default input value.
+     * @param bool $stty Try to use stty.
      * @return mixed Either the default value, or the user-provided input.
      */
-    public function secret($prompt, $default = null);
+    public function secret($prompt, $default = null, $stty = true);
 
     /**
      * Clear the console
+     *
+     * @return $this;
      */
     public function clear();
 
@@ -139,6 +142,7 @@ interface Stdio
      * @param bool $newline Whether to add a newline
      * @param array $styles Combination of Stdio::STYLE constants
      * @param int $verbosity Determine if the output should be only at the verbose level
+     * @return $this
      */
     public function write($text, $newline = false, array $styles = [], $verbosity = self::VERBOSITY_NORMAL);
 
@@ -146,6 +150,7 @@ interface Stdio
      * Write standard text.
      *
      * @param string $text
+     * @return $this
      */
     public function line($text);
 
@@ -153,6 +158,7 @@ interface Stdio
      * Write a information.
      *
      * @param string $text
+     * @return $this
      */
     public function info($text);
 
@@ -160,6 +166,7 @@ interface Stdio
      * Write a notice.
      *
      * @param string $text
+     * @return $this
      */
     public function notice($text);
 
@@ -167,6 +174,7 @@ interface Stdio
      * Write a question.
      *
      * @param string $text
+     * @return $this
      */
     public function question($text);
 
@@ -174,6 +182,7 @@ interface Stdio
      * Write a warning.
      *
      * @param string $text
+     * @return $this
      */
     public function warn($text);
 
@@ -181,6 +190,7 @@ interface Stdio
      * Write an error text.
      *
      * @param string $text
+     * @return $this
      */
     public function error($text);
 
@@ -189,6 +199,7 @@ interface Stdio
      *
      * @param string $text
      * @param array $styles Combination of Stdio::STYLE constants
+     * @return $this
      */
     public function quiet($text, array $styles = []);
 
@@ -197,6 +208,7 @@ interface Stdio
      *
      * @param string $text
      * @param array $styles Combination of Stdio::STYLE constants
+     * @return $this
      */
     public function verbose($text, array $styles = []);
 
@@ -205,6 +217,7 @@ interface Stdio
      *
      * @param string $text
      * @param array $styles Combination of Stdio::STYLE constants
+     * @return $this
      */
     public function debug($text, array $styles = []);
 
@@ -212,6 +225,7 @@ interface Stdio
      * Outputs a series of minus characters to the standard output, acts as a visual separator.
      *
      * @param int $width Width of the line, defaults to 79
+     * @return $this
      */
     public function hr($width = 79);
 
@@ -229,6 +243,7 @@ interface Stdio
      *
      * @param array $headers
      * @param array $rows
+     * @return $this
      */
     public function table(array $headers, array $rows);
 
@@ -236,6 +251,7 @@ interface Stdio
      * Prints text to Standard Error.
      *
      * @param string $text
+     * @return $this
      */
     public function err($text = null);
 
@@ -250,6 +266,7 @@ interface Stdio
      * Set a Standard Input Handle.
      *
      * @param resource $stdin
+     * @return $this
      */
     public function setStdin($stdin);
 
@@ -264,6 +281,7 @@ interface Stdio
      * Set a Standard Output handle.
      *
      * @param resource $stdout
+     * @return $this
      */
     public function setStdout($stdout);
 
@@ -278,15 +296,9 @@ interface Stdio
      * Set a Standard Error handle.
      *
      * @param resource $stderr
+     * @return $this
      */
     public function setStderr($stderr);
-
-    /**
-     * Sets the verbosity of the output.
-     *
-     * @param int $level The level of verbosity (one of the Stdio::VERBOSITY constants)
-     */
-    public function setVerbosity($level);
 
     /**
      * Gets the current verbosity of the output.
@@ -294,6 +306,14 @@ interface Stdio
      * @return int The current level of verbosity (one of the Stdio::VERBOSITY constants)
      */
     public function getVerbosity();
+
+    /**
+     * Sets the verbosity of the output.
+     *
+     * @param int $level The level of verbosity (one of the Stdio::VERBOSITY constants)
+     * @return $this
+     */
+    public function setVerbosity($level);
 
     /**
      * Returns whether verbosity is quiet (-q).

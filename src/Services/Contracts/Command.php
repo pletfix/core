@@ -84,7 +84,7 @@ interface Command
      * Prompts the user for input, and returns it.
      *
      * @param string $prompt Prompt text.
-     * @param string|array|null $options String of options. Pass null to omit.
+     * @param string|array|null $options String of options, e.g. ['y' => 'yes', 'n' => 'no'].  Pass null to omit.
      * @param string|null $default Default input value. Pass null to omit.
      * @return string Either the default value, or the user-provided input.
      */
@@ -154,6 +154,7 @@ interface Command
      * @param bool $newline Whether to add a newline
      * @param array $styles Combination of Stdio::STYLE constants
      * @param int $verbosity Determine if the output should be only at the verbose level
+     * @return $this;
      */
     public function write($text, $newline = false, array $styles = [], $verbosity = Stdio::VERBOSITY_NORMAL);
 
@@ -161,6 +162,7 @@ interface Command
      * Write standard text.
      *
      * @param string $text
+     * @return $this;
      */
     public function line($text);
 
@@ -168,6 +170,7 @@ interface Command
      * Write a information.
      *
      * @param string $text
+     * @return $this;
      */
     public function info($text);
 
@@ -175,6 +178,7 @@ interface Command
      * Write a notice.
      *
      * @param string $text
+     * @return $this;
      */
     public function notice($text);
 
@@ -182,6 +186,7 @@ interface Command
      * Write a question.
      *
      * @param string $text
+     * @return $this;
      */
     public function question($text);
 
@@ -189,6 +194,7 @@ interface Command
      * Write a warning.
      *
      * @param string $text
+     * @return $this;
      */
     public function warn($text);
 
@@ -196,6 +202,7 @@ interface Command
      * Write an error text.
      *
      * @param string $text
+     * @return $this;
      */
     public function error($text);
 
@@ -204,6 +211,7 @@ interface Command
      *
      * @param string $text
      * @param array $styles Combination of Stdio::STYLE constants
+     * @return $this;
      */
     public function quiet($text, array $styles = []);
 
@@ -212,6 +220,7 @@ interface Command
      *
      * @param string $text
      * @param array $styles Combination of Stdio::STYLE constants
+     * @return $this;
      */
     public function verbose($text, array $styles = []);
 
@@ -220,6 +229,7 @@ interface Command
      *
      * @param string $text
      * @param array $styles Combination of Stdio::STYLE constants
+     * @return $this;
      */
     public function debug($text, array $styles = []);
 
@@ -227,6 +237,7 @@ interface Command
      * Outputs a series of minus characters to the standard output, acts as a visual separator.
      *
      * @param int $width Width of the line, defaults to 79
+     * @return $this;
      */
     public function hr($width = 79);
 
@@ -244,6 +255,7 @@ interface Command
      *
      * @param array $headers
      * @param array $rows
+     * @return $this;
      */
     public function table(array $headers, array $rows);
 

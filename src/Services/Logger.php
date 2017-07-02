@@ -40,7 +40,7 @@ class Logger implements LoggerContract
      */
     public function __construct()
     {
-        $this->log = new Monolog('name');
+        $this->log = new Monolog('');
         $this->log->pushProcessor(new PsrLogMessageProcessor);
 
         $config = array_merge([
@@ -55,19 +55,21 @@ class Logger implements LoggerContract
         $file   = storage_path('logs/' . $config[is_console() ? 'cli_file' : 'app_file']);
         $levels = $this->log->getLevels();
         $level  = $levels[strtoupper($config['level'])];
+        $format = "[%datetime%] %level_name%: %message% %context%\n";
 
         switch ($config['type']) {
             case 'single':
                 $this->log->pushHandler(
                     $handler = new StreamHandler($file, $level, true, $config['permission'], false)
                 );
-                $handler->setFormatter(new LineFormatter(null, null, true, true));
+
+                $handler->setFormatter(new LineFormatter($format, null, true, true));
                 break;
             case 'daily':
                 $this->log->pushHandler(
                     $handler = new RotatingFileHandler($file, $config['max_files'], $level, true, $config['permission'], false)
                 );
-                $handler->setFormatter(new LineFormatter(null, null, true, true));
+                $handler->setFormatter(new LineFormatter($format, null, true, true));
                 break;
             case 'syslog':
                 $this->log->pushHandler(
@@ -78,7 +80,7 @@ class Logger implements LoggerContract
                 $this->log->pushHandler(
                     $handler = new ErrorLogHandler(ErrorLogHandler::OPERATING_SYSTEM, $level)
                 );
-                $handler->setFormatter(new LineFormatter(null, null, true, true));
+                $handler->setFormatter(new LineFormatter($format, null, true, true));
                 break;
             default:
                 throw new RuntimeException('Invalid log type in configuration "app.log".');
@@ -90,7 +92,7 @@ class Logger implements LoggerContract
      */
     public function emergency($message, array $context = [])
     {
-        return $this->log->addRecord(Monolog::EMERGENCY, $message, $context);
+        $this->log->addRecord(Monolog::EMERGENCY, $message, $context);
     }
 
     /**
