@@ -1,0 +1,19 @@
+<?php
+
+namespace Core\Services;
+
+class PDO
+{
+    public $dsn;
+    public $username;
+    public $password;
+    public $options;
+
+    public function __construct ($dsn, $username, $password, $options)
+    {
+        $this->dsn      = $dsn;
+        $this->username = $username;
+        $this->password = $password;
+        $this->options  = $options;
+    }
+}

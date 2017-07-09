@@ -1,152 +1,169 @@
 <?php
 
-namespace Core\Tests\Services {
+namespace Core\Tests\Services;
 
-    use Core\Controllers\DummyController;
-    use Core\Exceptions\HttpException;
-    use Core\Middleware\Contracts\Middleware;
-    use Core\Services\Contracts\Delegate;
-    use Core\Services\Contracts\Response;
-    use Core\Services\Contracts\Request;
-    use Core\Services\Route;
-    use Core\Testing\TestCase;
-    use InvalidArgumentException;
-    use RuntimeException;
+use Core\Exceptions\HttpException;
+use Core\Services\Contracts\Response;
+use Core\Services\Delegate;
+use Core\Services\DI;
+use Core\Services\Request;
+use Core\Services\Route;
+use Core\Testing\TestCase;
+use InvalidArgumentException;
+use RuntimeException;
 
-    class RouteTest extends TestCase
+require_once __DIR__ . '/../Controllers/fakes/CoreDummyController.php.fake';
+require_once __DIR__ . '/../Controllers/fakes/PluginDummyController.php.fake';
+require_once __DIR__ . '/../Middleware/fakes/AppMiddlewareWithoutParams.php.fake';
+require_once __DIR__ . '/../Middleware/fakes/CoreMiddlewareWithParams.php.fake';
+
+class RouteTest extends TestCase
+{
+    /**
+     * @var Route;
+     */
+    private $route;
+
+    protected function setUp()
     {
-        public function testDispatchController()
-        {
-            $request = $this->getMockBuilder(\Core\Services\Request::class)->setMethods(['method', 'path'])->getMock();
-            $request->expects($this->any())->method('method')->willReturn('POST');
-            $request->expects($this->any())->method('path')->willReturn('dummy/foo/bar');
-
-            $delegate = $this->getMockBuilder(\Core\Services\Delegate::class)->setMethods(['setMiddleware', 'setAction', 'process'])->getMock();
-            $delegate->expects($this->once())->method('setMiddleware')->with([])->willReturn($delegate);
-            $delegate->expects($this->once())->method('setAction')->with([new DummyController, 'foo'], ['bar'])->willReturn($delegate);
-            $delegate->expects($this->once())->method('process')->with($request)->willReturn(new \Core\Services\Response());
-            di()->set('delegate', $delegate, true);
-
-            $r = new Route();
-            $this->assertInstanceOf(Route::class, $r->post('dummy/foo/{param}', 'DummyController@foo'));
-            $response = $r->dispatch($request);
-            $this->assertInstanceOf(Response::class, $response);
-        }
-
-        public function testDispatchClosure()
-        {
-            $f = function ($param) {
-                return $param . '!';
-            };
-
-            $request = $this->getMockBuilder(\Core\Services\Request::class)->setMethods(['method', 'path'])->getMock();
-            $request->expects($this->any())->method('method')->willReturn('POST');
-            $request->expects($this->any())->method('path')->willReturn('dummy/foo/bar');
-
-            $delegate = $this->getMockBuilder(\Core\Services\Delegate::class)->setMethods(['setMiddleware', 'setAction', 'process'])->getMock();
-            $delegate->expects($this->once())->method('setMiddleware')->with([])->willReturn($delegate);
-            $delegate->expects($this->once())->method('setAction')->with($f, ['bar'])->willReturn($delegate);
-            $delegate->expects($this->once())->method('process')->with($request)->willReturn(new \Core\Services\Response());
-            di()->set('delegate', $delegate, true);
-
-            $r = new Route();
-            $this->assertInstanceOf(Route::class, $r->post('dummy/foo/{param}', $f));
-            $response = $r->dispatch($request);
-            $this->assertInstanceOf(Response::class, $response);
-        }
-
-        public function testDispatchMalformed()
-        {
-            $request = $this->getMockBuilder(\Core\Services\Request::class)->setMethods(['method', 'path'])->getMock();
-            $request->expects($this->any())->method('method')->willReturn('POST');
-            $request->expects($this->any())->method('path')->willReturn('dummy/foo/bar');
-
-            di()->set('delegate', \Core\Services\Delegate::class, true);
-
-            $r = new Route();
-            $this->assertInstanceOf(Route::class, $r->post('dummy/foo/{param}', null));
-            $this->expectException(RuntimeException::class);
-            $r->dispatch($request);
-        }
-
-        public function test404()
-        {
-            $request = $this->getMockBuilder(\Core\Services\Request::class)->setMethods(['method', 'path'])->getMock();
-            $request->expects($this->any())->method('method')->willReturn('POST');
-            $request->expects($this->any())->method('path')->willReturn('wrong');
-
-            $r = new Route();
-            $this->assertInstanceOf(Route::class, $r->post('foo/bar/{param}', 'DummyController@foo'));
-            $this->expectException(HttpException::class);
-            $r->dispatch($request);
-        }
-
-        public function testMiddleware()
-        {
-            $r = new Route();
-            $this->assertInstanceOf(Route::class, $r->middleware('\Core\Tests\Services\Middleware3'));
-            $this->assertInstanceOf(Route::class, $r->post('foo1/bar', 'DummyController@foo1'));
-            $this->assertInstanceOf(Route::class, $r->middleware('\Core\Tests\Services\Middleware4', function () use ($r) {
-                $r->post('foo2/bar/{param}', 'DummyController@foo2');
-            }));
-
-            $routes = $r->getRoutes();
-            $this->assertTrue(is_array($routes));
-            $this->assertSame(2, count($routes));
-            $this->assertInstanceOf(\stdClass::class, $routes[0]);
-            $this->assertObjectHasAttribute('middleware', $routes[0]);
-            $this->assertSame(['\Core\Tests\Services\Middleware3'], $routes[0]->middleware);
-            $this->assertSame(['\Core\Tests\Services\Middleware3', '\Core\Tests\Services\Middleware4'], $routes[1]->middleware);
-        }
-
-        public function testAddRoutes()
-        {
-            $r = new Route();
-            $this->assertInstanceOf(Route::class, $r->get('foo1/bar', 'DummyController@foo1'));
-            $this->assertInstanceOf(Route::class, $r->head('foo1/bar', 'DummyController@foo1'));
-            $this->assertInstanceOf(Route::class, $r->post('foo1/bar', 'DummyController@foo1'));
-            $this->assertInstanceOf(Route::class, $r->put('foo1/bar', 'DummyController@foo1'));
-            $this->assertInstanceOf(Route::class, $r->patch('foo1/bar', 'DummyController@foo1'));
-            $this->assertInstanceOf(Route::class, $r->delete('foo1/bar', 'DummyController@foo1'));
-            $this->assertInstanceOf(Route::class, $r->options('foo1/bar', 'DummyController@foo1'));
-            $this->assertInstanceOf(Route::class, $r->multi(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 'foo1/bar', 'DummyController@foo1'));
-            $this->assertInstanceOf(Route::class, $r->any('foo1/bar', 'DummyController@foo1'));
-            $this->assertInstanceOf(Route::class, $r->resource('foo1/bar', 'DummyController'));
-
-            $this->expectException(InvalidArgumentException::class);
-            $r->multi(['WRONG'], 'foo1/bar', 'DummyController@foo1');
-        }
+        $this->route = new Route(__DIR__ . '/plugin_manifest/classes.php');
     }
 
-    class Middleware3 implements Middleware
+    public function testDispatchController()
     {
-        public function process(Request $request, Delegate $delegate)
-        {
-            $response = $delegate->process($request);
-            $response->output('M1' . $response->getContent());
+        $request = $this->getMockBuilder(Request::class)->setMethods(['method', 'path'])->getMock();
+        $request->expects($this->any())->method('method')->willReturn('POST');
+        $request->expects($this->any())->method('path')->willReturn('dummy/foo/bar');
 
-            return $response;
-        }
+        $delegate = $this->getMockBuilder(Delegate::class)->setMethods(['setMiddleware', 'setAction', 'process'])->getMock();
+        $delegate->expects($this->once())->method('setMiddleware')->with([])->willReturn($delegate);
+
+        /** @noinspection PhpUndefinedNamespaceInspection, PhpUndefinedClassInspection, PhpUnnecessaryFullyQualifiedNameInspection */
+        $delegate->expects($this->once())->method('setAction')->with([new \Core\Controllers\CoreDummyController, 'foo'], ['bar'])->willReturn($delegate);
+        $delegate->expects($this->once())->method('process')->with($request)->willReturn(new \Core\Services\Response());
+        DI::getInstance()->set('delegate', $delegate, true);
+
+        $this->assertInstanceOf(Route::class, $this->route->post('dummy/foo/{param}', 'CoreDummyController@foo'));
+        $response = $this->route->dispatch($request);
+        $this->assertInstanceOf(Response::class, $response);
     }
 
-    class Middleware4 implements Middleware
+    public function testDispatchControllerFromPlugin()
     {
-        public function process(Request $request, Delegate $delegate, $x = 'x', $y = 'y', $z = 'z')
-        {
-            $response = $delegate->process($request);
-            $response->output('M2' . $x . $y . $z . $response->getContent());
+        $request = $this->getMockBuilder(Request::class)->setMethods(['method', 'path'])->getMock();
+        $request->expects($this->any())->method('method')->willReturn('POST');
+        $request->expects($this->any())->method('path')->willReturn('dummy/foo/bar');
 
-            return $response;
-        }
+        $delegate = $this->getMockBuilder(Delegate::class)->setMethods(['setMiddleware', 'setAction', 'process'])->getMock();
+        $delegate->expects($this->once())->method('setMiddleware')->with([])->willReturn($delegate);
+
+        /** @noinspection PhpUndefinedNamespaceInspection, PhpUndefinedClassInspection, PhpUnnecessaryFullyQualifiedNameInspection */
+        $delegate->expects($this->once())->method('setAction')->with([new \Pletfix\Test\Controllers\DummyController, 'foo'], ['bar'])->willReturn($delegate);
+        $delegate->expects($this->once())->method('process')->with($request)->willReturn(new \Core\Services\Response());
+        DI::getInstance()->set('delegate', $delegate, true);
+
+        $this->assertInstanceOf(Route::class, $this->route->post('dummy/foo/{param}', 'DummyController@foo'));
+        $response = $this->route->dispatch($request);
+        $this->assertInstanceOf(Response::class, $response);
     }
-}
 
-namespace Core\Controllers {
-    class DummyController
+    public function testDispatchClosure()
     {
-        public function foo($param = null)
-        {
+        $f = function ($param) {
             return $param . '!';
-        }
+        };
+
+        $request = $this->getMockBuilder(Request::class)->setMethods(['method', 'path'])->getMock();
+        $request->expects($this->any())->method('method')->willReturn('POST');
+        $request->expects($this->any())->method('path')->willReturn('dummy/foo/bar');
+
+        $delegate = $this->getMockBuilder(Delegate::class)->setMethods(['setMiddleware', 'setAction', 'process'])->getMock();
+        $delegate->expects($this->once())->method('setMiddleware')->with([])->willReturn($delegate);
+        $delegate->expects($this->once())->method('setAction')->with($f, ['bar'])->willReturn($delegate);
+        $delegate->expects($this->once())->method('process')->with($request)->willReturn(new \Core\Services\Response());
+        DI::getInstance()->set('delegate', $delegate, true);
+
+        $this->assertInstanceOf(Route::class, $this->route->post('dummy/foo/{param}', $f));
+        $response = $this->route->dispatch($request);
+        $this->assertInstanceOf(Response::class, $response);
+    }
+
+    public function testDispatchMalformed()
+    {
+        $request = $this->getMockBuilder(Request::class)->setMethods(['method', 'path'])->getMock();
+        $request->expects($this->any())->method('method')->willReturn('POST');
+        $request->expects($this->any())->method('path')->willReturn('dummy/foo/bar');
+
+        DI::getInstance()->set('delegate', Delegate::class, true);
+
+        $this->assertInstanceOf(Route::class, $this->route->post('dummy/foo/{param}', null));
+        $this->expectException(RuntimeException::class);
+        $this->route->dispatch($request);
+    }
+
+    public function test404()
+    {
+        $request = $this->getMockBuilder(Request::class)->setMethods(['method', 'path'])->getMock();
+        $request->expects($this->any())->method('method')->willReturn('POST');
+        $request->expects($this->any())->method('path')->willReturn('wrong');
+
+        $this->assertInstanceOf(Route::class, $this->route->post('foo/bar/{param}', 'CoreDummyController@foo'));
+        $this->expectException(HttpException::class);
+        $this->route->dispatch($request);
+    }
+
+    public function testMiddleware()
+    {
+        $this->assertInstanceOf(Route::class, $this->route->middleware('\App\Middleware\MiddlewareWithoutParams'));
+        $this->assertInstanceOf(Route::class, $this->route->post('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Route::class, $this->route->middleware('\Core\Middleware\MiddlewareWithParams', function () {
+            $this->route->post('foo2/bar/{param}', 'CoreDummyController@foo2');
+        }));
+
+        $routes = $this->route->getRoutes();
+        $this->assertTrue(is_array($routes));
+        $this->assertSame(2, count($routes));
+        $this->assertInstanceOf(\stdClass::class, $routes[0]);
+        $this->assertObjectHasAttribute('middleware', $routes[0]);
+        $this->assertSame(['\App\Middleware\MiddlewareWithoutParams'], $routes[0]->middleware);
+        $this->assertSame(['\App\Middleware\MiddlewareWithoutParams', '\Core\Middleware\MiddlewareWithParams'], $routes[1]->middleware);
+    }
+
+    public function testAddRoutes()
+    {
+        $this->assertInstanceOf(Route::class, $this->route->get('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Route::class, $this->route->head('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Route::class, $this->route->post('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Route::class, $this->route->put('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Route::class, $this->route->patch('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Route::class, $this->route->delete('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Route::class, $this->route->options('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Route::class, $this->route->multi(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 'foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Route::class, $this->route->any('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Route::class, $this->route->resource('foo1/bar', 'CoreDummyController'));
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->route->multi(['WRONG'], 'foo1/bar', 'CoreDummyController@foo1');
+    }
+
+    public function testPluginManifestNotExists()
+    {
+        $route = new Route(__DIR__ . '/plugin_manifest/classes2.php');
+
+        $request = $this->getMockBuilder(Request::class)->setMethods(['method', 'path'])->getMock();
+        $request->expects($this->any())->method('method')->willReturn('POST');
+        $request->expects($this->any())->method('path')->willReturn('dummy/foo/bar');
+
+        $delegate = $this->getMockBuilder(Delegate::class)->setMethods(['setMiddleware', 'setAction', 'process'])->getMock();
+        $delegate->expects($this->once())->method('setMiddleware')->with([])->willReturn($delegate);
+
+        /** @noinspection PhpUndefinedNamespaceInspection, PhpUndefinedClassInspection, PhpUnnecessaryFullyQualifiedNameInspection */
+        $delegate->expects($this->once())->method('setAction')->with([new \Core\Controllers\CoreDummyController, 'foo'], ['bar'])->willReturn($delegate);
+        $delegate->expects($this->once())->method('process')->with($request)->willReturn(new \Core\Services\Response());
+        DI::getInstance()->set('delegate', $delegate, true);
+
+        $this->assertInstanceOf(Route::class, $route->post('dummy/foo/{param}', 'CoreDummyController@foo'));
+        $response = $route->dispatch($request);
+        $this->assertInstanceOf(Response::class, $response);
     }
 }

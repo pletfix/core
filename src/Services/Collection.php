@@ -64,19 +64,19 @@ class Collection implements CollectionContract
         if (is_array($items)) {
             return $items;
         }
-        elseif ($items instanceof self) {
+        else if ($items instanceof self) {
             return $items->all();
         }
-        elseif ($items instanceof Arrayable) {
+        else if ($items instanceof Arrayable) {
             return $items->toArray();
         }
-        elseif ($items instanceof Jsonable) {
+        else if ($items instanceof Jsonable) {
             return json_decode($items->toJson(), true);
         }
-        elseif ($items instanceof JsonSerializable) {
+        else if ($items instanceof JsonSerializable) {
             return $items->jsonSerialize();
         }
-        elseif ($items instanceof Traversable) {
+        else if ($items instanceof Traversable) {
             return iterator_to_array($items);
         }
 
@@ -545,12 +545,11 @@ class Collection implements CollectionContract
         $results = [];
         foreach ($this->items as $item) {
             if ($item instanceof CollectionContract) {
-                $item = $item->all();
+                $results = array_merge($results, $item->all());
             }
-            elseif (!is_array($item)) {
-                continue;
+            else if (is_array($item)) {
+                $results = array_merge($results, $item);
             }
-            $results = array_merge($results, $item);
         }
 
         return new static($results);
@@ -679,7 +678,7 @@ class Collection implements CollectionContract
             if (!is_array($item)) {
                 return array_merge($result, [$item]);
             }
-            elseif ($depth === 1) {
+            else if ($depth === 1) {
                 return array_merge($result, array_values($item));
             }
             else {
@@ -887,22 +886,13 @@ class Collection implements CollectionContract
     /**
      * Shuffle the items in the collection.
      *
-     * @param int $seed
      * @return static
      */
-    public function shuffle($seed = null)
+    public function shuffle()
     {
         $items = $this->items;
 
-        if (is_null($seed)) {
-            shuffle($items);
-        }
-        else {
-            srand($seed);
-            usort($items, function () {
-                return rand(-1, 1);
-            });
-        }
+        shuffle($items);
 
         return new static($items);
     }
@@ -1380,10 +1370,10 @@ class Collection implements CollectionContract
             if ($value instanceof JsonSerializable) {
                 return $value->jsonSerialize();
             }
-            elseif ($value instanceof Jsonable) {
+            else if ($value instanceof Jsonable) {
                 return json_decode($value->toJson(), true);
             }
-            elseif ($value instanceof Arrayable) {
+            else if ($value instanceof Arrayable) {
                 return $value->toArray();
             }
             else {

@@ -108,6 +108,8 @@ class SQLite extends AbstractDatabase
                 PRIMARY KEY (table_name, column_name)
             )
         ');
+
+        return $this;
     }
 
     /**
@@ -137,6 +139,6 @@ class SQLite extends AbstractDatabase
             return 0;
         }
 
-        return (int)$this->pdo->lastInsertId();
+        return parent::lastInsertId();
     }
 }

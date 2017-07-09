@@ -1,0 +1,47 @@
+<?php
+
+namespace Pletfix\Test\Commands;
+
+use Core\Services\AbstractCommand;
+
+class DummyCommand extends AbstractCommand
+{
+    /**
+     * The console command name.
+     *
+     * @var string
+     */
+    protected $name = 'dummy:run';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Dummy Command.';
+
+    /**
+     * Possible arguments of the command.
+     *
+     * @var array
+     */
+    protected $arguments = [
+        'dummy' => ['type' => 'string', 'default' => 'hello', 'description' => 'Dummy'],
+    ];
+
+    /**
+     * Possible options of the command.
+     *
+     * @var array
+     */
+    protected $options = [
+        'dummy' => ['type' => 'bool',   'short' => 'r', 'description' => 'Dummy'],
+    ];
+
+    /**
+     * Execute the console command.
+     */
+    public function handle()
+    {
+    }
+}

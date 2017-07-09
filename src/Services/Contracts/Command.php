@@ -52,6 +52,8 @@ interface Command
 
     /**
      * Clear the console
+     *
+     * @return $this;
      */
     public function clear();
 
@@ -106,8 +108,8 @@ interface Command
      * will return false. However, if the user enters y or yes in response to the prompt, the method will return true.
      *
      * @param string $prompt Prompt text.
-     * @param boolean $default Default input value, true or false.
-     * @return mixed Either the default value, or the user-provided input.
+     * @param bool $default Default input value, true or false.
+     * @return bool Either the default value, or the user-provided input.
      */
     public function confirm($prompt, $default = false);
 

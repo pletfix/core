@@ -1,0 +1,16 @@
+{
+    "name": "pletfix/~faulty",
+    "description": "A plugin without psr-4 directive.",
+    "authors": [
+        {
+            "name": "Frank Rohlfing",
+            "email": "mail@pletfix.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=5.6.4"
+    },
+    "autoload": {
+    }
+}

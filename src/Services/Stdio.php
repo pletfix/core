@@ -80,9 +80,9 @@ class Stdio implements StdioContract
      */
     public function __construct ($stdin = null, $stdout = null, $stderr = null)
     {
-        $this->stdin  = $stdin  !== null ? $stdin  : fopen('php://stdin',  'r'); // == STDIN
-        $this->stdout = $stdout !== null ? $stdout : fopen('php://stdout', 'w'); // == STDOUT
-        $this->stderr = $stderr !== null ? $stderr : fopen('php://stderr', 'w'); // == STDERR
+        $this->stdin  = $stdin  ?: fopen('php://stdin',  'r'); // == STDIN
+        $this->stdout = $stdout ?: fopen('php://stdout', 'w'); // == STDOUT
+        $this->stderr = $stderr ?: fopen('php://stderr', 'w'); // == STDERR
 
         $this->canColor = $this->hasColorSupport();
     }
@@ -129,7 +129,7 @@ class Stdio implements StdioContract
     /**
      * @inheritdoc
      */
-    public function read($prompt, $options = null, $default = null)
+    public function read($prompt, array $options = null, $default = null)
     {
         // style the prompt
         $prompt = $this->format($prompt, [self::STYLE_GREEN]);
@@ -219,7 +219,7 @@ class Stdio implements StdioContract
     /**
      * @inheritdoc
      */
-    public function choice($prompt, $options, $default = null)
+    public function choice($prompt, array $options, $default = null)
     {
         return $this->read($prompt, $options, $default);
     }

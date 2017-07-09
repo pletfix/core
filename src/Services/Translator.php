@@ -35,6 +35,22 @@ class Translator implements TranslatorContract
     private static $manifest;
 
     /**
+     * Manifest file of languages.
+     *
+     * @var string
+     */
+    private $pluginManifestOfLanguages;
+
+    /**
+     * Create a new Translator instance.
+     * @param string|null $pluginManifestOfLanguages
+     */
+    public function __construct($pluginManifestOfLanguages = null)
+    {
+        $this->pluginManifestOfLanguages = $pluginManifestOfLanguages ?: manifest_path('plugins/languages.php');
+    }
+
+    /**
      * @inheritdoc
      */
     public function translate($key, array $replace = [], $fallback = true)
@@ -117,10 +133,9 @@ class Translator implements TranslatorContract
         }
 
         if (self::$manifest === null) {
-            $manifest = manifest_path('plugins/languages.php');
-            if (@file_exists($manifest)) {
+            if (@file_exists($this->pluginManifestOfLanguages)) {
                 /** @noinspection PhpIncludeInspection */
-                self::$manifest = include $manifest;
+                self::$manifest = include $this->pluginManifestOfLanguages;
             }
         }
 

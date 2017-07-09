@@ -37,6 +37,22 @@ class Route implements RouteContract
     private $pluginControllers;
 
     /**
+     * Manifest file of classes.
+     *
+     * @var string
+     */
+    private $pluginManifestOfClasses;
+
+    /**
+     * Create a new Route instance.
+     * @param string|null $pluginManifestOfClasses
+     */
+    public function __construct($pluginManifestOfClasses = null)
+    {
+        $this->pluginManifestOfClasses = $pluginManifestOfClasses ?: manifest_path('plugins/classes.php');
+    }
+
+    /**
      * Dispatch the request to the application.
      *
      * @param Contracts\Request $request
@@ -60,9 +76,9 @@ class Route implements RouteContract
                 if (file_exists(app_path('Controllers/' .  str_replace('\\', '/', $class) . '.php'))) {
                     $class = '\\App\\Controllers\\' . $class; // @codeCoverageIgnore
                 } // @codeCoverageIgnore
-                else if (($pluginMiddleware = $this->getPluginController($class)) !== null) {
-                    $class = $pluginMiddleware; // @codeCoverageIgnore
-                } // @codeCoverageIgnore
+                else if (($pluginController = $this->getPluginController($class)) !== null) {
+                    $class = $pluginController;
+                }
                 else {
                     $class = '\\Core\\Controllers\\' . $class;
                 }
@@ -91,14 +107,13 @@ class Route implements RouteContract
     private function getPluginController($class)
     {
         if ($this->pluginControllers === null) {
-            $manifest = manifest_path('plugins/classes.php');
-            if (file_exists($manifest)) {
+            if (file_exists($this->pluginManifestOfClasses)) {
                 /** @noinspection PhpIncludeInspection */
-                $classes = include $manifest;
+                $classes = include $this->pluginManifestOfClasses;
                 $this->pluginControllers = isset($classes['Controllers']) ? $classes['Controllers'] : [];
             }
             else {
-                $this->pluginControllers = []; // @codeCoverageIgnore
+                $this->pluginControllers = [];
             }
         }
 

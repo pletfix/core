@@ -2,21 +2,23 @@
 
 namespace Core\Testing;
 
+use Behat\Mink\Driver\DriverInterface;
 use Behat\Mink\Driver\GoutteDriver;
+use Behat\Mink\Session;
 
 class MinkTestCase extends TestCase
 {
     /**
      * Mink Session
      *
-     * @var \Behat\Mink\Session;
+     * @var Session;
      */
     protected $session;
 
     /**
      * Mink Driver
      *
-     * @var \Behat\Mink\Driver\DriverInterface;
+     * @var DriverInterface;
      */
     protected $driver;
 
@@ -30,7 +32,7 @@ class MinkTestCase extends TestCase
         parent::setUp();
 
         $this->driver = new GoutteDriver();
-        $this->session = new \Behat\Mink\Session($this->driver);
+        $this->session = new Session($this->driver);
         $this->session->start();
     }
 

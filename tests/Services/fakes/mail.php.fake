@@ -1,0 +1,8 @@
+<?php
+
+namespace Core\Services;
+
+function mail($to, $subject, $content, $header)
+{
+    return true;
+}

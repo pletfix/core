@@ -2,13 +2,15 @@
 
 namespace Core\Tests\Services;
 
-use Core\Commands\AssetCommand;
 use Core\Commands\HelpCommand;
 use Core\Services\CommandFactory;
 use Core\Testing\TestCase;
 
 class CommandFactoryTest extends TestCase
 {
+    /**
+     * @var string
+     */
     private $cache;
 
     protected function setUp()
@@ -25,9 +27,9 @@ class CommandFactoryTest extends TestCase
     public function testCommand()
     {
         $cf = new CommandFactory($this->cache);
-        $this->assertInstanceOf(HelpCommand::class, $cf->command([]));
-        $this->assertInstanceOf(HelpCommand::class, $cf->command(['help']));
-        $this->assertInstanceOf(HelpCommand::class, $cf->command(['fldjksfökajsf']));
+        $this->assertInstanceOf(HelpCommand::class, $cf->command([])); // invoke the Help command without arguments
+        $this->assertInstanceOf(HelpCommand::class, $cf->command(['help'])); // invoke the Help command without arguments
+        $this->assertInstanceOf(HelpCommand::class, $cf->command(['fldjksfökajsf'])); // command not exist, invoke Help command to finds an alternative of the command name
     }
 
     public function testCommandList()

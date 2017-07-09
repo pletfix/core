@@ -1,0 +1,18 @@
+<?php
+
+namespace Pletfix\Test\Middleware;
+
+use Core\Middleware\Contracts\Middleware;
+use Core\Services\Contracts\Delegate;
+use Core\Services\Contracts\Request;
+
+class Dummy implements Middleware
+{
+    public function process(Request $request, Delegate $delegate)
+    {
+        $response = $delegate->process($request);
+        $response->output('X' . $response->getContent());
+
+        return $response;
+    }
+}

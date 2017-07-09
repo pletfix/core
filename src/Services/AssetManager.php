@@ -4,9 +4,11 @@ namespace Core\Services;
 
 use Core\Services\Contracts\AssetManager as AssetManagerContract;
 use CssMin;
+use InvalidArgumentException;
 use JShrink\Minifier as JSMin;
 use Leafo\ScssPhp\Compiler as SCSSCompiler;
 use Less_Parser as LessCompiler;
+use RuntimeException;
 
 /**
  * Asset Management
@@ -21,31 +23,51 @@ use Less_Parser as LessCompiler;
 class AssetManager implements AssetManagerContract
 {
     /**
-     * Filename of the manifest.
-     *
-     * @var string
-     */
-    private $manifestFile;
-
-    /**
-     * Manifest
+     * Manifest of assets.
      *
      * @var array
      */
     private $manifest;
 
     /**
-     * Create a new AssetManager instance.
+     * Build file name.
+     *
+     * @var string
      */
-    public function __construct()
+    private $buildFile;
+
+    /**
+     * Manifest file of assets specified by the application itself.
+     *
+     * @var string
+     */
+    private $manifestFile;
+
+    /**
+     * Manifest file of assets provided by the plugins.
+     *
+     * @var string
+     */
+    private $pluginManifestOfAssets;
+
+    /**
+     * Create a new AssetManager instance.
+     *
+     * @param string|null $buildFile
+     * @param string|null $manifestFile
+     * @param string|null $pluginManifestOfAssets
+     */
+    public function __construct($buildFile = null, $manifestFile = null, $pluginManifestOfAssets = null) // todo Plugin testen, Parameter vertauschen
     {
-        $this->manifestFile = manifest_path('assets/manifest.php');
+        $this->buildFile = $buildFile ?: resource_path('assets/build.php');
+        $this->manifestFile = $manifestFile ?: manifest_path('assets/manifest.php');
+        $this->pluginManifestOfAssets = $pluginManifestOfAssets ?: manifest_path('plugins/assets.php');
 
         // be sure the manifest path is exits
         $dir = dirname($this->manifestFile);
         if (!@file_exists($dir)) {
-            if (@mkdir($dir, 0755, true) === false) {
-                throw new \RuntimeException('Unable to create directory ' . $dir);
+            if (!make_dir($dir, 0755)) {
+                throw new RuntimeException('Unable to create directory ' . $dir); // @codeCoverageIgnore
             }
         }
 
@@ -66,6 +88,8 @@ class AssetManager implements AssetManagerContract
                 $this->buildUniqueFile($file);
             }
         }
+
+        return $this;
     }
 
     /**
@@ -81,6 +105,8 @@ class AssetManager implements AssetManagerContract
                 $this->removeUniqueFile($file);
             }
         }
+
+        return $this;
     }
 
     /**
@@ -93,24 +119,23 @@ class AssetManager implements AssetManagerContract
     private function build($dest = null, $plugin = null)
     {
         if ($plugin !== null) {
-            $pluginManifest = manifest_path('plugins/assets.php');
             /** @noinspection PhpIncludeInspection */
-            $plugins = file_exists($pluginManifest) ? include $pluginManifest : [];
-            if (!isset($plugins[$plugin])) {
-                throw new \InvalidArgumentException('Plugin "' . $plugin . '" has no assets or is not installed.');
+            $builds = file_exists($this->pluginManifestOfAssets) ? include $this->pluginManifestOfAssets : [];
+            if (!isset($builds[$plugin])) {
+                throw new InvalidArgumentException('Plugin "' . $plugin . '" has no assets or is not installed.');
             }
             /** @noinspection PhpIncludeInspection */
-            $build = $plugins[$plugin];
+            $build = $builds[$plugin];
         }
         else {
             /** @noinspection PhpIncludeInspection */
-            $build = require resource_path('assets/build.php');
+            $build = require $this->buildFile;
         }
 
         // get only one asset if specified
         if ($dest !== null) {
             if (!isset($build[$dest])) {
-                throw new \InvalidArgumentException('Asset "' . $dest . '" is not defined.');
+                throw new InvalidArgumentException('Asset "' . $dest . '" is not defined.');
             }
             $build = [$dest => $build[$dest]];
         }
@@ -142,8 +167,8 @@ class AssetManager implements AssetManagerContract
         $ext = pathinfo($dest, PATHINFO_EXTENSION);
         $dir = !empty($ext) ? dirname($dest) : $dest;
         if (!@file_exists($dir)) {
-            if (@mkdir($dir, 0775, true) === false) {
-                throw new \RuntimeException('Unable to create directory ' . $dir);
+            if (!make_dir($dir, 0775)) {
+                throw new RuntimeException('Unable to create directory ' . $dir); // @codeCoverageIgnore
             }
         }
 
@@ -155,7 +180,7 @@ class AssetManager implements AssetManagerContract
                 if ($ext == 'js') {
                     $filter = ['js'];
                 }
-                else if ($ext == 'cs') {
+                else if ($ext == 'css') {
                     $filter = ['css', 'less', 'scss'];
                 }
                 else {
@@ -172,7 +197,7 @@ class AssetManager implements AssetManagerContract
 
         if (@file_exists($dest) && !@is_dir($dest)) {
             unlink($dest);
-        }
+        } // @codeCoverageIgnore
 
         foreach ($files as $file) {
             // get content
@@ -220,7 +245,7 @@ class AssetManager implements AssetManagerContract
                 }
             }
             if ($success === false) {
-                throw new \RuntimeException(sprintf('Asset Manager was not able to copy "%s" to "%s"', $file, $dest));
+                throw new RuntimeException(sprintf('Asset Manager was not able to copy "%s" to "%s"', $file, $dest)); // @codeCoverageIgnore
             }
         }
     }
@@ -242,7 +267,7 @@ class AssetManager implements AssetManagerContract
         $oldFile = isset($this->manifest[$file]) ? public_path($this->manifest[$file]) : null;
         $this->manifest[$file] = $uniqueFile;
         if (file_put_contents($this->manifestFile, '<?php return ' . var_export($this->manifest, true) . ';' . PHP_EOL, LOCK_EX) === false) {
-            throw new \RuntimeException(sprintf('Asset Manager was not able to save manifest file "%s"', $this->manifestFile));
+            throw new RuntimeException(sprintf('Asset Manager was not able to save manifest file "%s"', $this->manifestFile)); // @codeCoverageIgnore
         }
         // @chmod($this->manifestFile, 0664); // not necessary, because only the cli need to have access
 
@@ -255,14 +280,29 @@ class AssetManager implements AssetManagerContract
     /**
      * Remove files
      *
-     * @param array $sources List of files or folders to copy (full path)
+     * @param array $sources List of files or folders to remove (full path)
      * @param string $dest Destination file or folder (full path)
      */
     private function removeFiles(array $sources, $dest)
     {
         if (@is_dir($dest)) {
             foreach ($sources as $source) {
-                remove_dir($dest . DIRECTORY_SEPARATOR . basename($source));
+                if (@is_dir($source)) {
+                    $files = [];
+                    list_files($files, $source);
+                    foreach ($files as $file) {
+                        $file = $dest . DIRECTORY_SEPARATOR . basename($file);
+                        if (@file_exists($file)) {
+                            unlink($file);
+                        }
+                    }
+                }
+                else {
+                    $file = $dest . DIRECTORY_SEPARATOR . basename($source);
+                    if (@file_exists($file)) {
+                        unlink($file);
+                    }
+                }
             }
         }
         else {
@@ -292,7 +332,7 @@ class AssetManager implements AssetManagerContract
         // update manifest
         unset($this->manifest[$file]);
         if (file_put_contents($this->manifestFile, '<?php return ' . var_export($this->manifest, true) . ';' . PHP_EOL, LOCK_EX) === false) {
-            throw new \RuntimeException(sprintf('Asset Manager was not able to save manifest file "%s"', $this->manifestFile));
+            throw new RuntimeException(sprintf('Asset Manager was not able to save manifest file "%s"', $this->manifestFile)); // @codeCoverageIgnore
         }
     }
 }

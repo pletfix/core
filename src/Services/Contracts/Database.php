@@ -70,20 +70,22 @@ interface Database
 
     /**
      * Connects to the database.
+     *
+     * @return $this;
      */
     public function connect();
 
     /**
      * Disconnects from the database.
+     *
+     * @return $this
      */
     public function disconnect();
 
     /**
      * Reconnect to the database.
      *
-     * @return void
-     *
-     * @throws \LogicException
+     * @return $this
      */
     public function reconnect();
 

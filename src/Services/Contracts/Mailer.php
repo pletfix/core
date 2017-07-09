@@ -15,12 +15,26 @@ interface Mailer
     public function subject($subject);
 
     /**
+     * Get the subject.
+     *
+     * @return string
+     */
+    public function getSubject();
+
+    /**
      * Set the body of the message.
      *
      * @param string $body HTML or plain text message
      * @return $this
      */
     public function body($body);
+
+    /**
+     * Get the body.
+     *
+     * @return string
+     */
+    public function getBody();
 
     /**
      * Set the plain-text message body.
@@ -32,6 +46,13 @@ interface Mailer
      * @return $this
      */
     public function altBody($text);
+
+    /**
+     * Get the plain-text message body.
+     *
+     * @return string
+     */
+    public function getAltBody();
 
     /**
      * Set the view to render the body of the message.
@@ -77,6 +98,13 @@ interface Mailer
     public function clearTo();
 
     /**
+     * Get the receivers.
+     *
+     * @return array
+     */
+    public function getTo();
+
+    /**
      * Add a Carbon Copy.
      *
      * The formatting of the address must comply with RFC 2822, e.g.:
@@ -108,6 +136,13 @@ interface Mailer
      * @return $this
      */
     public function clearCC();
+
+    /**
+     * Get the Carbon Copies.
+     *
+     * @return array
+     */
+    public function getCC();
 
     /**
      * Add a Blind Carbon Copy.
@@ -142,6 +177,13 @@ interface Mailer
     public function clearBCC();
 
     /**
+     * Get the Carbon Copies.
+     *
+     * @return array
+     */
+    public function getBCC();
+
+    /**
      * Add a Reply-To address.
      *
      * The formatting of the address must comply with RFC 2822, e.g.:
@@ -167,11 +209,18 @@ interface Mailer
     public function removeReplyTo($replyTo);
 
     /**
-     * Remove all Reply-To adresses.
+     * Remove all Reply-To addresses.
      *
      * @return $this
      */
     public function clearReplyTo();
+
+    /**
+     * Get the Reply-To addresses.
+     *
+     * @return array
+     */
+    public function getReplyTo();
 
     /**
      * Override the default sender address.
@@ -187,11 +236,18 @@ interface Mailer
     public function from($from, $name = null);
 
     /**
-     * Reset the from address to the default.
+     * Reset the sender address to the default.
      *
      * @return $this
      */
     public function resetFrom();
+
+    /**
+     * Get the sender address.
+     *
+     * @return string
+     */
+    public function getFrom();
 
     /**
      * Attach a file.
@@ -229,6 +285,13 @@ interface Mailer
     public function clearAttachments();
 
     /**
+     * Get the attachments.
+     *
+     * @return array
+     */
+    public function getAttachments();
+
+    /**
      * Embed a file and get the source reference.
      *
      * @param string $file Path or URL of the file.
@@ -260,7 +323,14 @@ interface Mailer
      *
      * @return $this
      */
-    public function clearEmbeddedFile();
+    public function clearEmbeddedFiles();
+
+    /**
+     * Get the attachments.
+     *
+     * @return array
+     */
+    public function getEmbeddedFiles();
 
     /**
      * Sends an email.
@@ -270,7 +340,23 @@ interface Mailer
      * @param string|array|null $to Receiver, or receivers of the mail, e.g. "user@example.com" or "User <user@example.com>".
      * @param string|null $subject Subject of the email to be sent.
      * @param string|null $body Message to be sent.
+     * @return $this;
      * @throws MailException
      */
     public function send($to = null, $subject = null, $body = null);
+
+    /**
+     * Get the pretend option.
+     *
+     * @return string
+     */
+    public function getPretend();
+
+    /**
+     * Set the pretend option.
+     *
+     * @param string $pretend
+     * @return $this
+     */
+    public function setPretend($pretend);
 }

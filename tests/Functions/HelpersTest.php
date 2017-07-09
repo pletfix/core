@@ -1,10 +1,12 @@
 <?php
 
-namespace Core\Tests\Services;
+namespace Core\Tests\Functions;
 
 use Core\Services\Contracts\Collection;
 use Core\Services\Contracts\Response;
+use Core\Services\DatabaseFactory;
 use Core\Services\DI;
+use Core\Services\Request;
 use Core\Testing\TestCase;
 use InvalidArgumentException;
 
@@ -14,24 +16,8 @@ use InvalidArgumentException;
  * @see https://github.com/laravel/framework/blob/5.4/tests/Support/SupportPluralizerTest.php Pluralizer Test on GitHub
  * @see https://github.com/laravel/framework/blob/5.4/tests/Support/SupportHelpersTest.php Helpers Test on GitHub
  */
-class HelperTest extends TestCase
+class HelpersTest extends TestCase
 {
-    protected function setUp()
-    {
-//        function manifest_path($path = '')
-//        {
-//            if ($path == 'assets/manifest.php') {
-//                return BASE_PATH . '/tests/Services/asset_manifest.php';
-//            }
-//
-//            return call_user_func('manifest_path', $path);
-//        }
-    }
-
-//    protected function tearDown()
-//    {
-//    }
-
     public function testHttpStatus()
     {
         $this->assertSame('Bad Request', http_status_text(HTTP_STATUS_BAD_REQUEST));
@@ -215,7 +201,9 @@ class HelperTest extends TestCase
 //            system('composer require pletfix/example & php console plugin pletfix/example');
 //        }
 
-        di()->set('request', RequestFake::class, true);
+        $request = $this->getMockBuilder(Request::class)->setMethods(['baseUrl'])->getMock();
+        $request->expects($this->any())->method('baseUrl')->willReturn('my_base_url');
+        DI::getInstance()->set('request', $request, true);
 
         $manifestFile = manifest_path('assets/manifest.php');
         /** @noinspection PhpIncludeInspection */
@@ -476,6 +464,23 @@ class HelperTest extends TestCase
         }
     }
 
+    public function testMakeDir()
+    {
+        $path = storage_path('~test');
+        @rmdir($path . '/foo/bar');
+        @rmdir($path . '/foo');
+        @rmdir($path);
+        $this->assertTrue(make_dir($path. '/foo/bar'));
+        try {
+            $this->assertDirectoryExists($path);
+        }
+        finally {
+            @rmdir($path . '/foo/bar');
+            @rmdir($path . '/foo');
+            @rmdir($path);
+        }
+    }
+
     public function testMessage()
     {
         $this->assertEquals('foodef2', message('foodef2'));
@@ -493,6 +498,9 @@ class HelperTest extends TestCase
 
     public function testRedirect()
     {
+        $request = $this->getMockBuilder(Request::class)->setMethods(['baseUrl'])->getMock();
+        $request->expects($this->any())->method('baseUrl')->willReturn('my_base_url');
+        DI::getInstance()->set('request', $request, true);
         $this->assertInstanceOf(Response::class, redirect('foo', ['bar' => 4711, 'batz' => 'butz'], ['redirectFlash' => 4712]));
         $this->assertRedirectedTo('my_base_url/foo?bar=4711&batz=butz');
         $this->assertSame(4712, flash()->age()->get('redirectFlash'));
@@ -509,11 +517,11 @@ class HelperTest extends TestCase
         try {
             // remove a file
             $this->assertFileExists($path . '/b.txt');
-            remove_dir($path . '/b.txt');
+            $this->assertTrue(remove_dir($path . '/b.txt'));
             $this->assertFileNotExists($path . '/b.txt');
             // remove a directory
             $this->assertFileExists($path . '/foo/b.txt');
-            remove_dir($path);
+            $this->assertTrue(remove_dir($path));
             $this->assertDirectoryNotExists($path);
         }
         finally {
@@ -527,8 +535,12 @@ class HelperTest extends TestCase
 
     public function testT()
     {
-        DI::getInstance()->get('translator')->setLocale('~testlocale');
-        DI::getInstance()->get('config')->set('app.fallback_locale', '~testfallback');
+        DI::getInstance()->get('config')
+            ->set('app.locale', '~testlocale')
+            ->set('app.fallback_locale', '~testfallback');
+
+        DI::getInstance()->get('translator')
+            ->setLocale('~testlocale');
 
         $path1 = resource_path('lang/~testlocale');
         $path2 = resource_path('lang/~testfallback');
@@ -551,6 +563,10 @@ class HelperTest extends TestCase
 
     public function testUrl()
     {
+        $request = $this->getMockBuilder(Request::class)->setMethods(['baseUrl'])->getMock();
+        $request->expects($this->any())->method('baseUrl')->willReturn('my_base_url');
+        DI::getInstance()->set('request', $request, true);
+
         $this->assertEquals('my_base_url', url());
         $this->assertEquals('my_base_url/foo', url('foo'));
         $this->assertEquals('my_base_url/foo?bar=4711&batz=butz', url('foo', ['bar' => 4711, 'batz' => 'butz']));
@@ -613,6 +629,8 @@ class HelperTest extends TestCase
         $this->assertInstanceOf(\Core\Services\Contracts\Database::class, database());
 
         DI::getInstance()->get('config')->set('database.stores.~foo', ['driver' => 'sqlite']);
+        DI::getInstance()->set('database-factory', DatabaseFactory::class, true); // todo DI::reset() bauen
+
         $this->assertSame('sqlite', database('~foo')->config('driver'));
 
         $this->expectException(InvalidArgumentException::class);
@@ -716,9 +734,10 @@ class HelperTest extends TestCase
 
     public function testRequest()
     {
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        //$this->assertInstanceOf(\Core\Services\Contracts\Request::class, request());
-        $this->assertInstanceOf(\Core\Tests\Services\RequestFake::class, request());  // todo!!
+        $request = $this->getMockBuilder(Request::class)->setMethods(['baseUrl'])->getMock();
+        $request->expects($this->any())->method('baseUrl')->willReturn('my_base_url');
+        DI::getInstance()->set('request', $request, true);
+        $this->assertInstanceOf(Request::class, request());
     }
 
     public function testResponse()
@@ -738,7 +757,6 @@ class HelperTest extends TestCase
     {
         /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->assertInstanceOf(\Core\Services\Contracts\Stdio::class, stdio());
-        // todo stdio($stdin = null, $stdout = null, $stderr = null)
     }
 
     public function testView()
@@ -749,12 +767,3 @@ class HelperTest extends TestCase
         view('');
     }
 }
-
-class RequestFake // todo mock einsetzen
-{
-    public function baseUrl()
-    {
-        return 'my_base_url';
-    }
-}
-

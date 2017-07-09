@@ -5,7 +5,9 @@ namespace Core\Services;
 use Core\Exceptions\PluginException;
 use Core\Services\Contracts\Command;
 use Core\Services\Contracts\PluginManager as PluginManagerContract;
+use InvalidArgumentException;
 use Leafo\ScssPhp\Compiler as SCSSCompiler;
+use RuntimeException;
 
 /**
  * Plugin Management
@@ -48,43 +50,62 @@ class PluginManager implements PluginManagerContract
     private $packages;
 
     /**
-     * @inheritdoc
+     * Path of the Manifest.
+     *
+     * @var string
      */
-    public function __construct($package)
+    private $manifestPath;
+
+    /**
+     * Create a new PluginManager instance.
+     *
+     * @param string $package Name of the plugin with vendor, e.g. foo/bar.
+     * @param string|null $packagePath
+     * @param string|null $manifestPath
+     */
+    public function __construct($package, $packagePath = null, $manifestPath = null)
     {
         if (($pos = strpos($package, '/')) === false) {
-            throw new \InvalidArgumentException('The package name is invalid. Format <vendor>/<plugin> expected.');
+            throw new InvalidArgumentException('The package name is invalid. Format <vendor>/<plugin> expected.');
         }
 
         // search the package
-        $this->vendor = substr($package, 0, $pos);
-        $this->plugin = substr($package, $pos + 1);
-        //$this->path   = plugin_path($package);
-        //if (!is_dir($this->path)) {
-            $this->path = vendor_path($package);
+        $this->path = $packagePath ?: vendor_path($package);
+        if (!is_dir($this->path)) {
+            $this->path = workbench_path($package);
             if (!is_dir($this->path)) {
-                $this->path = workbench_path($package);
-                if (!is_dir($this->path)) {
-                    throw new \InvalidArgumentException('Package "' . $package . '" not found.');
-                }
+                throw new InvalidArgumentException('Package "' . $package . '" not found.');
             }
-        //}
+        } // @codeCoverageIgnore
 
         // read the namespace from composer.json
         $this->namespace = $this->getNamespace($this->path . '/composer.json');
 
-        $manifest = manifest_path('plugins/packages.php');
+        $this->manifestPath = $manifestPath ?: manifest_path('plugins');
 
         // be sure the manifest path is exits
-        $dir = dirname($manifest);
-        if (!@file_exists($dir)) {
-            if (@mkdir($dir, 0755, true) === false) {
-                throw new \RuntimeException('Unable to create directory ' . $dir);
+        if (!@file_exists($this->manifestPath)) {
+            if (!make_dir($this->manifestPath, 0755)) {
+                throw new RuntimeException('Unable to create directory ' . $this->manifestPath); // @codeCoverageIgnore
             }
         }
 
+        $manifest = $this->getManifest('packages');
         /** @noinspection PhpIncludeInspection */
         $this->packages = @file_exists($manifest) ? include $manifest : [];
+        $this->vendor   = substr($package, 0, $pos);
+        $this->plugin   = substr($package, $pos + 1);
+    }
+
+    /**
+     * Get the manifest by given name.
+     *
+     * @param $name
+     * @return string
+     */
+    private function getManifest($name)
+    {
+        return $this->manifestPath . '/' . $name .'.php';
     }
 
     /**
@@ -100,6 +121,8 @@ class PluginManager implements PluginManagerContract
         }
 
         $this->publish(true);
+
+        return $this;
     }
 
     /**
@@ -112,6 +135,8 @@ class PluginManager implements PluginManagerContract
         }
 
         $this->publish(true);
+
+        return $this;
     }
 
     /**
@@ -124,6 +149,8 @@ class PluginManager implements PluginManagerContract
         }
 
         $this->publish(false);
+
+        return $this;
     }
 
     /**
@@ -164,12 +191,12 @@ class PluginManager implements PluginManagerContract
     private function getNamespace($composerJson)
     {
         if (!@file_exists($composerJson)) {
-            throw new \InvalidArgumentException('"' . $composerJson . '" not found.');
+            throw new InvalidArgumentException('"' . $composerJson . '" not found.'); // @codeCoverageIgnore
         }
         $composer = json_decode(file_get_contents($composerJson), true);
         $autoload = isset($composer['autoload']['psr-4']) ? array_flip($composer['autoload']['psr-4']) : [];
         if (!isset($autoload['src/'])) {
-            throw new \InvalidArgumentException('psr-4 autoload directive for folder "src/" is missing in ' . $composerJson . '.');
+            throw new InvalidArgumentException('psr-4 autoload directive for folder "src/" is missing in ' . $composerJson . '.');
         }
 
         return $autoload['src/'];
@@ -195,11 +222,6 @@ class PluginManager implements PluginManagerContract
         if ($register) {
             copy($src, $dest);
         }
-        else {
-            if (@file_exists($dest)) {
-                unlink($dest);
-            }
-        }
     }
 
     /**
@@ -222,10 +244,10 @@ class PluginManager implements PluginManagerContract
         foreach ($files as $file) {
             $destDir = public_path(substr(dirname($file), $publicPathLength));
             if (!@file_exists($destDir)) {
-                if (@mkdir($destDir, 0755, true) === false) {
-                    throw new \RuntimeException('Unable to create directory ' . $destDir);
+                if (!make_dir($destDir, 0755)) {
+                    throw new RuntimeException('Unable to create directory ' . $destDir); //@codeCoverageIgnore
                 }
-            }
+            } //@codeCoverageIgnore
             $dest = $destDir . DIRECTORY_SEPARATOR . basename($file);
             if ($register) {
                 copy($file, $dest);
@@ -251,11 +273,11 @@ class PluginManager implements PluginManagerContract
         }
 
         if (!$register) {
-            asset_manager()->remove(null, $this->plugin);
+            DI::getInstance()->get('asset-manager')->remove(null, $this->plugin);
         }
 
         // update manifest
-        $manifest = manifest_path('plugins/assets.php');
+        $manifest = $this->getManifest('assets');
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
         if ($register) {
@@ -282,7 +304,7 @@ class PluginManager implements PluginManagerContract
         $this->saveArray($manifest, $list);
 
         if ($register) {
-            asset_manager()->publish(null, true, $this->plugin);
+            DI::getInstance()->get('asset-manager')->publish(null, true, $this->plugin);
         }
     }
 
@@ -303,7 +325,7 @@ class PluginManager implements PluginManagerContract
 
         // generate command list
         // todo gleicher Code bei CommandFactory! => Liste vom CommandFactory generieren lassen
-        $manifest = manifest_path('plugins/commands.php');
+        $manifest = $this->getManifest('commands');
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
         foreach ($classes as $class) {
@@ -338,7 +360,7 @@ class PluginManager implements PluginManagerContract
         list_files($files, $migrationPath, ['php']);
 
         // update manifest
-        $manifest = manifest_path('plugins/migrations.php');
+        $manifest = $this->getManifest('migrations');
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
         $basePathLength = strlen(base_path()) + 1;
@@ -370,7 +392,7 @@ class PluginManager implements PluginManagerContract
         list_files($files, $langPath, ['php'], false);
 
         // update manifest
-        $manifest = manifest_path('plugins/languages.php');
+        $manifest = $this->getManifest('languages');
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
         $basePathLength = strlen(base_path()) + 1;
@@ -410,7 +432,7 @@ class PluginManager implements PluginManagerContract
         list_files($files, $visitPath, ['php']);
 
         // update manifest
-        $manifest = manifest_path('plugins/views.php');
+        $manifest = $this->getManifest('views');
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
         $visitPathLength = strlen($visitPath) + 1;
@@ -485,7 +507,7 @@ class PluginManager implements PluginManagerContract
                 $src . PHP_EOL;
         }
 
-        $this->saveContent(manifest_path('plugins/routes.php'), $dest);
+        $this->saveContent($this->getManifest('routes'), $dest);
     }
 
     /**
@@ -505,7 +527,7 @@ class PluginManager implements PluginManagerContract
         list_classes($classes, $path, rtrim($this->namespace, '\\'));
 
         // update manifest
-        $manifest = manifest_path('plugins/classes.php');
+        $manifest = $this->getManifest('classes');
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
         $len = strlen($this->namespace);
@@ -529,7 +551,12 @@ class PluginManager implements PluginManagerContract
                 $list[$group][$name] = $class;
             }
             else {
-                unset($list[$group][$name]);
+                if (isset($list[$group])) {
+                    unset($list[$group][$name]);
+                    if (empty($list[$group])) {
+                        unset($list[$group]);
+                    }
+                }
             }
         }
 
@@ -587,7 +614,7 @@ class PluginManager implements PluginManagerContract
                 $src . PHP_EOL;
         }
 
-        $this->saveContent(manifest_path('plugins/services.php'), $dest);
+        $this->saveContent($this->getManifest('services'), $dest);
     }
 
     /**
@@ -632,7 +659,7 @@ class PluginManager implements PluginManagerContract
             }
         }
 
-        $this->saveContent(manifest_path('plugins/bootstrap.php'), $dest);
+        $this->saveContent($this->getManifest('bootstrap'), $dest);
     }
 
     /**
@@ -642,7 +669,7 @@ class PluginManager implements PluginManagerContract
      */
     private function enablePackage($register)
     {
-        $this->saveArray(manifest_path('plugins/packages.php'), $this->listPackages($register));
+        $this->saveArray($this->getManifest('packages'), $this->listPackages($register));
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -677,7 +704,7 @@ class PluginManager implements PluginManagerContract
     private function saveContent($file, $content)
     {
         if (file_put_contents($file, $content, LOCK_EX) === false) {
-            throw new \RuntimeException('Plugin Manager is not able to save ' . $file . '.');
+            throw new RuntimeException('Plugin Manager is not able to save ' . $file . '.'); // @codeCoverageIgnore
         }
     }
 
@@ -690,7 +717,7 @@ class PluginManager implements PluginManagerContract
     private function saveArray($file, $array)
     {
         if (file_put_contents($file, '<?php return ' . var_export($array, true) . ';' . PHP_EOL, LOCK_EX) === false) {
-            throw new \RuntimeException('Plugin Manager is not able to save ' . $file . '.');
+            throw new RuntimeException('Plugin Manager is not able to save ' . $file . '.'); // @codeCoverageIgnore
         }
     }
 }

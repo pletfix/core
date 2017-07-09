@@ -1,0 +1,11 @@
+<?php
+
+namespace Core\Controllers;
+
+class CoreDummyController
+{
+    public function foo($param = null)
+    {
+        return $param . '!';
+    }
+}

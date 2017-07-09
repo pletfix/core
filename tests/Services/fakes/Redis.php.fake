@@ -1,0 +1,19 @@
+<?php
+
+if (!class_exists('Redis')) {
+    class Redis
+    {
+        const OPT_SERIALIZER = 1;
+        const SERIALIZER_PHP = 1;
+
+        public function connect($host, $port = 6379, $timeout = 0.0)
+        {
+            return true;
+        }
+
+        public function setOption($name, $value)
+        {
+            return true;
+        }
+    }
+}

@@ -2,40 +2,27 @@
 
 namespace Core\Tests\Services;
 
-use App\Models\User;
 use Core\Services\Auth;
 use Core\Services\DI;
-use Core\Services\PDOs\Builder\AbstractBuilder;
-use Core\Services\PDOs\Builder\Contracts\Builder;
-use Core\Services\PDOs\Builder\SQLiteBuilder;
 use Core\Testing\TestCase;
 
 class AuthTest extends TestCase
 {
-    protected function setUp()
+    public static function setUpBeforeClass()
     {
-        $config = DI::getInstance()->get('config');
-        $config->set('database', [
-            'default' => 'test',
-            'stores' => [
-                'test' => [
-                    'driver'   => 'sqlite',
-                    'database' => ':memory:',
-                ],
-            ],
-        ]);
+        self::defineMemoryAsDefaultDatabase();
 
         /** @noinspection SqlDialectInspection */
         database()->exec('
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY NOT NULL,
-                name TEXT NOT NULL,
-                email TEXT,
-                password TEXT,
-                role TEXT,
-                principal TEXT,
-                confirmation_token TEXT,
-                remember_token TEXT
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255),
+                password VARCHAR(255),
+                role VARCHAR(50),
+                principal VARCHAR(255),
+                confirmation_token VARCHAR(60),
+                remember_token VARCHAR(100)
             );
         ');
 
@@ -55,7 +42,7 @@ class AuthTest extends TestCase
               (\'Tiger\', \'test@example.com\', \'$2y$10$xM5BdnPXR8cZ.66zANjx1OAnY9kd9Lp6KyYqRvpfYLhF3Xq7JY11O\', \'admin\');
         ');
 
-        $config->set('auth', [
+        DI::getInstance()->get('config')->set('auth', [
             'roles' => [
                 'user'   => 'User',
                 'admin'  => 'Administrator',
@@ -73,21 +60,16 @@ class AuthTest extends TestCase
         ]);
     }
 
-//    protected function tearDown()
-//    {
-//    }
-
-//    public function testDummy()
-//    {
-//        $this->assertSame('Bad Request', http_status_text(HTTP_STATUS_BAD_REQUEST));
-//    }
-
+    public static function tearDownAfterClass()
+    {
+        database()->disconnect();
+    }
 
     public function testBase()
     {
         $auth = new Auth();
 
-        // logn failed
+        // login failed
         $this->assertFalse($auth->login(['email' => 'test@example.com', 'password' => 'wrong']));
         $this->assertFalse($auth->isLoggedIn());
 

@@ -468,6 +468,28 @@ if (!function_exists('mail_address')) {
     }
 }
 
+if (!function_exists('make_dir')) {
+    /**
+     * Create a folder recursive.
+     *
+     * @param string $path
+     * @param int $mode
+     * @return bool
+     */
+    function make_dir($path, $mode = 0777)
+    {
+        $old = umask(0);
+        try {
+            $result = @mkdir($path, $mode, true);
+        }
+        finally {
+            umask($old);
+        }
+
+        return $result;
+    }
+}
+
 if (! function_exists('message')) {
     /**
      * Retrieve a message from the flash.
@@ -533,17 +555,18 @@ if (!function_exists('remove_dir')) {
     /**
      * Delete a folder (or file).
      *
+     * The folder does not have to be empty.
+     *
      * @param string $path
      * @return bool
      */
-    //
     function remove_dir($path)
     {
-        if (is_file($path) || is_link($path)) {
-            return unlink($path);
+        if (@is_file($path) || @is_link($path)) {
+            return @unlink($path);
         }
 
-        foreach (scandir($path) as $filename) {
+        foreach (@scandir($path) as $filename) {
             if ($filename[0] == '.') {
                 continue;
             }
@@ -552,11 +575,11 @@ if (!function_exists('remove_dir')) {
                 remove_dir($file);
             }
             else {
-                unlink($file);
+                @unlink($file);
             }
         }
 
-        return rmdir($path);
+        return @rmdir($path);
     }
 }
 

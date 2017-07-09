@@ -179,7 +179,7 @@ abstract class AbstractCommand implements CommandContract
         }
 
         if (($match = $this->findOption('verbose', 'v', $argv)) !== false) {
-            if (empty($match[1])) {
+            if (empty($match[1]) && $match[1] !== '0') {
                 throw new InvalidArgumentException('Value for option "verbose" expected.');
             }
             $this->stdio->setVerbosity($match[1]);
@@ -395,12 +395,8 @@ abstract class AbstractCommand implements CommandContract
     public function clear() // toto in eigenständige Terminal Class
     {
         $this->stdio->clear();
-//        if (DIRECTORY_SEPARATOR === '/') {
-//            passthru('clear');
-//        }
-//        else {
-//            passthru('cls');
-//        }
+
+        return $this;
     }
 
     /**
@@ -428,33 +424,37 @@ abstract class AbstractCommand implements CommandContract
      */
     private function getTerminalDimensions()
     {
-        if ($this->terminalDimensions) {
+        if ($this->terminalDimensions !== null) {
             return $this->terminalDimensions;
         }
 
-        if ('\\' === DIRECTORY_SEPARATOR) {
+        $this->terminalDimensions = [null, null];
+
+        // @codeCoverageIgnoreStart
+        if (DIRECTORY_SEPARATOR === '\\') {
             // extract [w, H] from "wxh (WxH)"
             if (preg_match('/^(\d+)x\d+ \(\d+x(\d+)\)$/', trim(getenv('ANSICON')), $matches)) {
-                return [(int) $matches[1], (int) $matches[2]];
+                $this->terminalDimensions = [(int)$matches[1], (int)$matches[2]];
             }
             // extract [w, h] from "wxh"
-            if (preg_match('/^(\d+)x(\d+)$/', $this->getConsoleMode(), $matches)) {
-                return [(int) $matches[1], (int) $matches[2]];
+            else if (preg_match('/^(\d+)x(\d+)$/', $this->getConsoleMode(), $matches)) {
+                $this->terminalDimensions = [(int)$matches[1], (int)$matches[2]];
             }
         }
+        // @codeCoverageIgnoreEnd
 
-        if ($sttyString = $this->getSttyColumns()) {
+        else if ($sttyString = $this->getSttyColumns()) {
             // extract [w, h] from "rows h; columns w;"
             if (preg_match('/rows.(\d+);.columns.(\d+);/i', $sttyString, $matches)) {
-                return [(int) $matches[2], (int) $matches[1]];
-            }
+                $this->terminalDimensions = [(int)$matches[2], (int)$matches[1]]; // @codeCoverageIgnore
+            } // @codeCoverageIgnore
             // extract [w, h] from "; h rows; w columns"
-            if (preg_match('/;.(\d+).rows;.(\d+).columns/i', $sttyString, $matches)) {
-                return [(int) $matches[2], (int) $matches[1]];
-            }
+            else if (preg_match('/;.(\d+).rows;.(\d+).columns/i', $sttyString, $matches)) {
+                $this->terminalDimensions = [(int)$matches[2], (int)$matches[1]]; // @codeCoverageIgnore
+            } // @codeCoverageIgnore
         }
 
-        return [null, null];
+        return $this->terminalDimensions;
     }
 
     /**
@@ -465,21 +465,21 @@ abstract class AbstractCommand implements CommandContract
     private function getSttyColumns()
     {
         if (!function_exists('proc_open')) {
-            return null;
+            return null; // @codeCoverageIgnore
         }
 
         $descriptorspec = [1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
         $process = proc_open('stty -a | grep columns', $descriptorspec, $pipes, null, null, ['suppress_errors' => true]);
-        if (is_resource($process)) {
-            $info = stream_get_contents($pipes[1]);
-            fclose($pipes[1]);
-            fclose($pipes[2]);
-            proc_close($process);
-
-            return $info;
+        if (is_resource($process) === false) {
+            return null; // @codeCoverageIgnore
         }
 
-        return null;
+        $info = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+
+        return $info;
     }
 
     /**
@@ -490,23 +490,25 @@ abstract class AbstractCommand implements CommandContract
     private function getConsoleMode()
     {
         if (!function_exists('proc_open')) {
-            return null;
+            return null; // @codeCoverageIgnore
         }
 
         $descriptorspec = [1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
         $process = proc_open('mode CON', $descriptorspec, $pipes, null, null, ['suppress_errors' => true]);
-        if (is_resource($process)) {
-            $info = stream_get_contents($pipes[1]);
-            fclose($pipes[1]);
-            fclose($pipes[2]);
-            proc_close($process);
-
-            if (preg_match('/--------+\r?\n.+?(\d+)\r?\n.+?(\d+)\r?\n/', $info, $matches)) {
-                return $matches[2].'x'.$matches[1];
-            }
+        if (is_resource($process) === false) {
+            return null; // @codeCoverageIgnore
         }
 
-        return null;
+        $info = stream_get_contents($pipes[1]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+
+        if (!preg_match('/--------+\r?\n.+?(\d+)\r?\n.+?(\d+)\r?\n/', $info, $matches)) {
+            return null;
+        }
+
+        return $matches[2] . 'x' . $matches[1]; // @codeCoverageIgnore
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -517,7 +519,7 @@ abstract class AbstractCommand implements CommandContract
      */
     public function canRead($timeout = 0)
     {
-        return $this->stdio->read($timeout);
+        return $this->stdio->canRead($timeout);
     }
 
     /**

@@ -36,18 +36,27 @@ class Delegate implements DelegateContract
     private $parameters = [];
 
     /**
-     * PLugin's middleware.
+     * Plugin's middleware.
      *
      * @var array|null
      */
     private $pluginMiddleware;
 
-//    /**
-//     * Create a new delegate instance.
-//     */
-//    public function __construct()
-//    {
-//    }
+    /**
+     * Manifest file of classes.
+     *
+     * @var string
+     */
+    private $pluginManifestOfClasses;
+
+    /**
+     * Create a new Delegate instance.
+     * @param string|null $pluginManifestOfClasses
+     */
+    public function __construct($pluginManifestOfClasses = null)
+    {
+        $this->pluginManifestOfClasses = $pluginManifestOfClasses ?: manifest_path('plugins/classes.php');
+    }
 
     /**
      * @inheritdoc
@@ -101,8 +110,8 @@ class Delegate implements DelegateContract
                     $class = '\\App\\Middleware\\' . $class; // @codeCoverageIgnore
                 } // @codeCoverageIgnore
                 else if (($pluginMiddleware = $this->getPluginMiddleware($class)) !== null) {
-                    $class = $pluginMiddleware; // @codeCoverageIgnore
-                } // @codeCoverageIgnore
+                    $class = $pluginMiddleware;
+                }
                 else {
                     $class = '\\Core\\Middleware\\' . $class;
                 }
@@ -137,14 +146,13 @@ class Delegate implements DelegateContract
     private function getPluginMiddleware($class)
     {
         if ($this->pluginMiddleware === null) {
-            $manifest = manifest_path('plugins/classes.php');
-            if (file_exists($manifest)) {
+            if (file_exists($this->pluginManifestOfClasses)) {
                 /** @noinspection PhpIncludeInspection */
-                $classes = include $manifest;
+                $classes = include $this->pluginManifestOfClasses;
                 $this->pluginMiddleware = isset($classes['Middleware']) ? $classes['Middleware'] : [];
             }
             else {
-                $this->pluginMiddleware = []; // @codeCoverageIgnore
+                $this->pluginMiddleware = [];
             }
         }
 

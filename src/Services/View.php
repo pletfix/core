@@ -5,6 +5,7 @@ namespace Core\Services;
 use Core\Services\Contracts\Collection as CollectionContract;
 use Core\Services\Contracts\View as ViewContract;
 use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * View Template Engine
@@ -22,6 +23,27 @@ use InvalidArgumentException;
 class View implements ViewContract
 {
     /**
+     * Plugin's Views
+     *
+     * @var array
+     */
+    private static $manifest;
+
+    /**
+     * Path of the views.
+     *
+     * @var string
+     */
+    private $viewPath;
+
+    /**
+     * Manifest file of views.
+     *
+     * @var string
+     */
+    private $pluginManifestOfViews;
+
+    /**
      * The global scope.
      *
      * The scope is shared by another views during executing.
@@ -31,24 +53,19 @@ class View implements ViewContract
     private $scope = [];
 
     /**
-     * Plugin's Views
-     *
-     * @var array
-     */
-    private static $manifest;
-
-    /**
      * View constructor.
      *
+     * @param string|null $viewPath
+     * @param string|null $pluginManifestOfViews
      * @param object|null &$scope
      */
-    public function __construct(&$scope = null)
+    public function __construct($viewPath = null, $pluginManifestOfViews = null, &$scope = null)
     {
-        if (is_null($scope)) {
-            $this->scope = (object)[
-                'sections'     => [],
-                'sectionStack' => [],
-            ];
+        $this->viewPath = $viewPath ?: view_path();
+        $this->pluginManifestOfViews = $pluginManifestOfViews ?: manifest_path('plugins/views.php');
+
+        if ($scope === null) {
+            $this->scope = (object)['sections' => [], 'sectionStack' => []];
         }
         else {
             $this->scope = &$scope;
@@ -58,7 +75,7 @@ class View implements ViewContract
     /**
      * @inheritdoc
      */
-    public function render($name, array $variables = [])
+    public function render($name, $variables = [])
     {
         if ($variables instanceof CollectionContract) {
             $variables = $variables->all();
@@ -95,16 +112,15 @@ class View implements ViewContract
      */
     private function templateFile($name)
     {
-        $filename = view_path(str_replace('.', DIRECTORY_SEPARATOR, $name) . '.blade.php');
+        $filename = $this->viewPath . '/' . str_replace('.', DIRECTORY_SEPARATOR, $name) . '.blade.php';
         if (@file_exists($filename)) {
             return $filename;
         }
 
         if (self::$manifest === null) {
-            $pluginManifest = manifest_path('plugins/views.php');
-            if (@file_exists($pluginManifest)) {
+            if (@file_exists($this->pluginManifestOfViews)) {
                 /** @noinspection PhpIncludeInspection */
-                self::$manifest = include $pluginManifest;
+                self::$manifest = include $this->pluginManifestOfViews;
             }
         }
 
@@ -141,23 +157,25 @@ class View implements ViewContract
     {
         // create directory if not exists
         if (!is_dir($dir = dirname($file))) {
-            if (!@mkdir($dir, 0775, true) && !is_dir($dir)) {
-                throw new \RuntimeException(sprintf('View Template Engine was not able to create directory "%s"', $dir));
+            // @codeCoverageIgnoreStart
+            if (!make_dir($dir, 0775)) {
+                throw new RuntimeException(sprintf('View Template Engine was not able to create directory "%s"', $dir)); // @codeCoverageIgnore
             }
-        }
+            // @codeCoverageIgnoreEnd
+        } // @codeCoverageIgnore
 
         // save file
         if (@file_exists($file)) {
             unlink($file); // so we will to be the owner at the new file
         }
         if (file_put_contents($file, $content, LOCK_EX) === false) {
-            throw new \RuntimeException(sprintf('View Template Engine was not able to save file "%s"', $file));
+            throw new RuntimeException(sprintf('View Template Engine was not able to save file "%s"', $file)); // @codeCoverageIgnore
         }
         //@chmod($file, 0664); // not necessary, because only the application need to have access
 
         // set file modification time
         if (!touch($file, $time)) {
-            throw new \RuntimeException(sprintf('View Template Engine was not able to modify time of file "%s"', $file));
+            throw new RuntimeException(sprintf('View Template Engine was not able to modify time of file "%s"', $file)); // @codeCoverageIgnore
         }
     }
 
@@ -172,24 +190,28 @@ class View implements ViewContract
     private function execute(/*$cachedFile, $variables*/)
     {
         ob_start();
+        try {
+            // extracting $variables into the scope
+            extract(func_get_args()[1]);
 
-        // extracting $variables into the scope
-        extract(func_get_args()[1]);
+            // including $cachedFile
+            /** @noinspection PhpIncludeInspection */
+            include func_get_args()[0];
+        }
+        finally {
+            $out = ob_get_clean();
+        }
 
-        // including $cachedFile
-        /** @noinspection PhpIncludeInspection */
-        include func_get_args()[0];
-
-        return ob_get_clean();
+        return $out;
     }
 
-    /*
-     * --------------------------------------------------------------------------------------------------------------
+    /**
+     * ----------------------------------------------------------------
      * Rendering Helpers
+     * ----------------------------------------------------------------
      *
      * This methods will be called by the template during executing.
      * The code based on Laravel's View Factory.
-     * --------------------------------------------------------------------------------------------------------------
      */
 
     /**
@@ -201,7 +223,7 @@ class View implements ViewContract
      */
     protected function make($name, $variables = [])
     {
-        $view = new self($this->scope);
+        $view = new self($this->viewPath, $this->pluginManifestOfViews, $this->scope);
 
         return $view->render($name, $variables);
     }
@@ -217,9 +239,9 @@ class View implements ViewContract
     {
         $content = isset($this->scope->sections[$section]) ? $this->scope->sections[$section] : $default;
 
-        $content = str_replace('@@parent', '--parent--holder--', $content);
-        $content = str_replace('@parent', '', $content);
-        $content = str_replace('--parent--holder--', '@parent', $content);
+        //$content = str_replace('@@parent', '--parent--holder--', $content);
+        //$content = str_replace('@parent', '', $content);
+        //$content = str_replace('--parent--holder--', '@parent', $content);
 
         return $content;
     }
@@ -265,10 +287,14 @@ class View implements ViewContract
      */
     private function storeSection($section, $content)
     {
-        if (isset($this->scope->sections[$section])) {
-            $content = str_replace('@parent', $content, $this->scope->sections[$section]);
-        }
+//        if (isset($this->scope->sections[$section])) {
+//            $content = str_replace('@parent', $content, $this->scope->sections[$section]);
+//        }
+//
+//        $this->scope->sections[$section] = $content;
 
-        $this->scope->sections[$section] = $content;
+        if (!isset($this->scope->sections[$section])) {
+            $this->scope->sections[$section] = $content;
+        }
     }
 }

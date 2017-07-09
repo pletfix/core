@@ -24,15 +24,24 @@ class Migrator implements MigratorContract
     private $migrationPath;
 
     /**
+     * Manifest file of migrations.
+     *
+     * @var string
+     */
+    private $pluginManifestOfMigrations;
+
+    /**
      * Create a new instance.
      *
      * @param string|null $store Name of the database store
-     * @param string|null $path Subfolder in the migration directory
+     * @param string|null $migrationPath Migration directory
+     * @param string|null $pluginManifestOfMigrations
      */
-    public function __construct($store = null, $path = null)
+    public function __construct($store = null, $migrationPath = null, $pluginManifestOfMigrations = null)
     {
-        $this->db = database($store);
-        $this->migrationPath = migration_path($path);
+        $this->db = DI::getInstance()->get('database-factory')->store($store);
+        $this->migrationPath = $migrationPath ?: migration_path();
+        $this->pluginManifestOfMigrations = $pluginManifestOfMigrations ?: manifest_path('plugins/migrations.php');
 
         $tables = $this->db->schema()->tables();
         if (!isset($tables['_migrations'])) {
@@ -62,6 +71,8 @@ class Migrator implements MigratorContract
                 ]);
             });
         }
+
+        return $this;
     }
 
     /**
@@ -79,6 +90,8 @@ class Migrator implements MigratorContract
                 $db->table('_migrations')->where('name=?', [$name])->delete();
             });
         }
+
+        return $this;
     }
 
     /**
@@ -90,6 +103,8 @@ class Migrator implements MigratorContract
         while ($this->db->table('_migrations')->count() > 0) {
             $this->rollback();
         }
+
+        return $this;
     }
 
     /**
@@ -176,11 +191,10 @@ class Migrator implements MigratorContract
     {
         $files = [];
 
-        $pluginManifest = manifest_path('plugins/migrations.php');
-        if (file_exists($pluginManifest)) {
+        if (file_exists($this->pluginManifestOfMigrations)) {
             $basePath = base_path();
             /** @noinspection PhpIncludeInspection */
-            $migrations = include $pluginManifest;
+            $migrations = include $this->pluginManifestOfMigrations;
             foreach ($migrations as $name => $file) {
                 $files[$name] = $basePath . DIRECTORY_SEPARATOR . $file;
             }
@@ -200,21 +214,23 @@ class Migrator implements MigratorContract
     private function makeMigrationClass($name, $file)
     {
         if (($pos = strpos($name, '_')) === false) {
-            throw new MigrationException('Migration file "' . $name . '.php" is invalid. Format "<timestamp>_<classname>.php" expected.');
+            throw new MigrationException('Name of the migration file "' . $name . '.php" is invalid. Format "<timestamp>_<classname>.php" expected.');
         }
         $class = substr($name, $pos + 1);
 
         /** @noinspection PhpIncludeInspection */
-        require $file;
+        require_once $file;
 
         if (!class_exists($class, false)) {
             throw new MigrationException('Migration class "' . $class . '" is not defined in file "' . $name . '.php".');
         }
 
-        if ($class instanceof Migration) {
-            throw new MigrationException('Migration "' . $name . '" is invalid. The Class have to implements the interface \Services\Contracts\Migration.');
+        $instance = new $class;
+
+        if (!($instance instanceof Migration)) {
+            throw new MigrationException('Migration "' . $name . '" is invalid. The Class have to implements the interface \Core\Services\Contracts\Migration.');
         }
 
-        return new $class;
+        return $instance;
     }
 }

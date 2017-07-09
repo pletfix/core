@@ -408,10 +408,9 @@ interface Collection extends ArrayAccess, Arrayable, Countable, IteratorAggregat
     /**
      * Shuffle the items in the collection.
      *
-     * @param int $seed
      * @return static
      */
-    public function shuffle($seed = null);
+    public function shuffle();
 
     /**
      * Slice the underlying collection array.

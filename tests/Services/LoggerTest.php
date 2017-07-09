@@ -5,7 +5,9 @@ namespace Core\Tests\Services;
 use Core\Services\DI;
 use Core\Services\Logger;
 use Core\Testing\TestCase;
+use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 class LoggerTest extends TestCase
 {
@@ -17,15 +19,14 @@ class LoggerTest extends TestCase
         $today = strftime('%Y-%m-%d', time());
         $this->dailyFile = storage_path("logs/~test-$today.log");
         $this->singleFile = storage_path("logs/~test.log");
-        DI::getInstance()->get('config')
-            ->set('logger', [
-                'type' => 'daily',
-                'level' => 'debug',
-                'max_files' => 5,
-                'app_file' => '~test.log',
-                'cli_file' => '~test.log',
-                'permission' => 0664,
-            ]);
+        DI::getInstance()->get('config')->set('logger', [
+            'type' => 'daily',
+            'level' => 'debug',
+            'max_files' => 5,
+            'app_file' => '~test.log',
+            'cli_file' => '~test.log',
+            'permission' => 0664,
+        ]);
     }
 
     protected function tearDown()
@@ -94,7 +95,7 @@ class LoggerTest extends TestCase
         $l->log('ERROR', 'foo {a} and {b}!', ['a' => 'A', 'b' => 'B']);
         $this->assertStringEndsWith('ERROR: foo A and B! {"a":"A","b":"B"}', $this->getDailyLog());
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $l->log('wrong', 'foo {a} and {b}!', ['a' => 'A', 'b' => 'B']);
     }
 
@@ -129,7 +130,7 @@ class LoggerTest extends TestCase
     {
         DI::getInstance()->get('config')->set('logger.type', 'wrong');
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         new Logger;
     }
 }

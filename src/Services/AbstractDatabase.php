@@ -148,12 +148,14 @@ abstract class AbstractDatabase implements DatabaseContract
         try {
             return $this->pdo->getAttribute(\PDO::ATTR_SERVER_VERSION);
         }
+        // @codeCoverageIgnoreStart
         catch (PDOException $e) {
             if ($e->getCode() == 'IM001') { // driver does not support getting attributes (sql server)
                 return false;
             }
             throw $e;
         }
+        // @codeCoverageIgnoreEnd
     }
 
     /**
@@ -186,7 +188,7 @@ abstract class AbstractDatabase implements DatabaseContract
     public function connect()
     {
         if (isset($this->pdo)) {
-            return;
+            return $this;
         }
 
         $this->transactions = 0;
@@ -205,6 +207,8 @@ abstract class AbstractDatabase implements DatabaseContract
         }
 
         $this->pdo = $this->makePDO($this->config, $options);
+
+        return $this;
     }
 
     /**
@@ -225,11 +229,13 @@ abstract class AbstractDatabase implements DatabaseContract
     public function disconnect()
     {
         if (!isset($this->pdo)) {
-            return;
+            return $this;
         }
 
         $this->transactions = 0;
         $this->pdo = null;
+
+        return $this;
     }
 
     /**
@@ -239,6 +245,8 @@ abstract class AbstractDatabase implements DatabaseContract
     {
         $this->disconnect();
         $this->connect();
+
+        return $this;
     }
 
     /*
@@ -318,12 +326,12 @@ abstract class AbstractDatabase implements DatabaseContract
             $this->commit();
         }
         catch (Throwable $e) { // Error or Exception (executed only in PHP 7, will not match in PHP 5)
-            $this->rollBack();
-            throw $e;
+            $this->rollBack(); // @codeCoverageIgnore
+            throw $e;          // @codeCoverageIgnore
         }
         catch (Exception $e) { // Once PHP 5 support is no longer needed, this block can be removed.
-            $this->rollBack();
-            throw $e;
+            $this->rollBack(); // @codeCoverageIgnore
+            throw $e;          // @codeCoverageIgnore
         }
 
         return $result;

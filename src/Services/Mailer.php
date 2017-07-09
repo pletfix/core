@@ -4,6 +4,7 @@ namespace Core\Services;
 
 use Core\Exceptions\MailException;
 use Core\Services\Contracts\Mailer as MailerContract;
+use Exception;
 
 /**
  * Mailer
@@ -140,11 +141,27 @@ class Mailer implements MailerContract
     /**
      * @inheritdoc
      */
+    public function getSubject()
+    {
+        return $this->subject;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function body($body)
     {
         $this->body = $body;
 
         return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getBody()
+    {
+        return $this->body;
     }
 
     /**
@@ -160,9 +177,19 @@ class Mailer implements MailerContract
     /**
      * @inheritdoc
      */
+    public function getAltBody()
+    {
+        return $this->altBody;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function view($name, array $variables = [])
     {
-        return $this->body(DI::getInstance()->get('view')->render($name, $variables));
+        $body = DI::getInstance()->get('view')->render($name, $variables);
+
+        return $this->body($body);
     }
 
     /**
@@ -170,7 +197,7 @@ class Mailer implements MailerContract
      */
     public function to($to, $name = null)
     {
-        if (!$this->findAddress($to, $this->to) !== false) {
+        if ($this->findAddress($to, $this->to) === false) {
             $this->to[] = $name !== null ? "$name <$to>" : $to;
         }
 
@@ -202,12 +229,24 @@ class Mailer implements MailerContract
     /**
      * @inheritdoc
      */
+    public function getTo()
+    {
+        return $this->to;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function cc($cc, $name = null)
     {
         if (is_array($cc)) {
-            $this->cc = $cc;
+            foreach ($cc as $address) {
+                if ($this->findAddress($address, $this->cc) === false) {
+                    $this->cc[] = $address;
+                }
+            }
         }
-        else if (!$this->findAddress($cc, $this->cc) !== false) {
+        else if ($this->findAddress($cc, $this->cc) === false) {
             $this->cc[] = $name !== null ? "$name <$cc>" : $cc;
         }
 
@@ -241,12 +280,24 @@ class Mailer implements MailerContract
     /**
      * @inheritdoc
      */
+    public function getCC()
+    {
+        return $this->cc;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function bcc($bcc, $name = null)
     {
         if (is_array($bcc)) {
-            $this->bcc = $bcc;
+            foreach ($bcc as $address) {
+                if ($this->findAddress($address, $this->bcc) === false) {
+                    $this->bcc[] = $address;
+                }
+            }
         }
-        if (!$this->findAddress($bcc, $this->bcc) !== false) {
+        else if ($this->findAddress($bcc, $this->bcc) === false) {
             $this->bcc[] = $name !== null ? "$name <$bcc>" : $bcc;
         }
 
@@ -280,12 +331,24 @@ class Mailer implements MailerContract
     /**
      * @inheritdoc
      */
+    public function getBCC()
+    {
+        return $this->bcc;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function replyTo($replyTo, $name = null)
     {
         if (is_array($replyTo)) {
-            $this->replyTo = $replyTo;
+            foreach ($replyTo as $address) {
+                if ($this->findAddress($address, $this->replyTo) === false) {
+                    $this->replyTo[] = $address;
+                }
+            }
         }
-        else if (!$this->findAddress($replyTo, $this->replyTo) !== false) {
+        else if ($this->findAddress($replyTo, $this->replyTo) === false) {
             $this->replyTo[] = $name !== null ? "$name <$replyTo>" : $replyTo;
         }
 
@@ -319,6 +382,14 @@ class Mailer implements MailerContract
     /**
      * @inheritdoc
      */
+    public function getReplyTo()
+    {
+        return $this->replyTo;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function from($from, $name = null)
     {
         $this->from = $name !== null ? "$name <$from>" : $from;
@@ -334,6 +405,14 @@ class Mailer implements MailerContract
         $this->from = config('mail.from');
 
         return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getFrom()
+    {
+        return $this->from;
     }
 
     /**
@@ -355,7 +434,7 @@ class Mailer implements MailerContract
     public function attachData($data, $name, $mimeType)
     {
         // todo!
-        throw new \Exception('Not implemented yet!');
+        throw new Exception('Not implemented yet!');
 
         //return $this;
     }
@@ -383,6 +462,14 @@ class Mailer implements MailerContract
     /**
      * @inheritdoc
      */
+    public function getAttachments()
+    {
+        return $this->attachments;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function embed($file)
     {
         if (isset($this->cids[$file])) {
@@ -402,7 +489,7 @@ class Mailer implements MailerContract
     public function embedData($data, $name, $mimeType)
     {
         // todo!
-        throw new \Exception('Not implemented yet!');
+        throw new Exception('Not implemented yet!');
 //        $cid = 0;
 //        return 'cid:' . $cid;
     }
@@ -420,11 +507,19 @@ class Mailer implements MailerContract
     /**
      * @inheritdoc
      */
-    public function clearEmbeddedFile()
+    public function clearEmbeddedFiles()
     {
         $this->cids = [];
 
         return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getEmbeddedFiles()
+    {
+        return $this->cids;
     }
 
     /**
@@ -535,12 +630,14 @@ class Mailer implements MailerContract
 
         if ($this->pretend) {
             DI::getInstance()->get('logger')->debug('mail', compact('to', 'subject', 'content', 'header'));
-            return;
+            return $this;
         }
 
         if (mail($to, $subject, $content, $header) === false) {
-            throw new MailException('The mail was not accepted for delivery.');
+            throw new MailException('The mail was not accepted for delivery.');  // @codeCoverageIgnore
         }
+
+        return $this;
     }
 
     /**
@@ -555,7 +652,7 @@ class Mailer implements MailerContract
         foreach ($this->cids as $image => $cid) {
             $name = basename($image);
             if (($data = @file_get_contents($image)) === false) {
-                throw new MailException('Image could bot be read: ' . $image);
+                throw new MailException('Image could bot be read: ' . $image);  // @codeCoverageIgnore
             }
             $data = chunk_split(base64_encode($data));
             $type = self::getMimeTypeOfImage($image);
@@ -582,7 +679,7 @@ class Mailer implements MailerContract
     {
         foreach($this->attachments as $file => $name) {
             if (($data = @file_get_contents($file)) === false) {
-                throw new MailException('File could bot be read: ' . $file);
+                throw new MailException('File could bot be read: ' . $file); // @codeCoverageIgnore
             }
             $data = chunk_split(base64_encode($data));
             $type = mime_content_type($file);
@@ -733,7 +830,7 @@ class Mailer implements MailerContract
         }
 
         $n = strlen($address);
-        if ($address[$n - 1] != '>') {
+        if ($address[$n - 1] == '>') {
             $address = substr($address, $pos + 1, -1);
         }
 
@@ -757,6 +854,24 @@ class Mailer implements MailerContract
         }
 
         return false;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getPretend()
+    {
+        return $this->pretend;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function setPretend($pretend)
+    {
+        $this->pretend = $pretend;
+
+        return $this;
     }
 
     /**

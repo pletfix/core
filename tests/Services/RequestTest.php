@@ -15,8 +15,6 @@ class RequestTest extends TestCase
 
     protected function setUp()
     {
-        $this->r = new \Core\Services\Request();
-
         $_SERVER['HTTP_HOST']    = 'myhost';
         $_SERVER['SERVER_PORT']  = 443;
         $_SERVER['HTTPS']        = 'on';
@@ -29,16 +27,19 @@ class RequestTest extends TestCase
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_POST = ['post1' => 'POST1', 'post2' => 'POST2'];
         $_GET  = ['foo' => 'bar'];
+
+        $this->r = new \Core\Services\Request();
     }
 
     public function testFullUrl()
     {
+        $this->assertSame('https://myhost/myapp/mypath?foo=bar', $this->r->fullUrl());
+    }
+
+    public function testFullUrlWithCustomPort()
+    {
         $_SERVER['SERVER_PORT'] = 4430;
         $this->assertSame('https://myhost:4430/myapp/mypath?foo=bar', $this->r->fullUrl());
-        $this->r = new \Core\Services\Request();
-
-        $_SERVER['SERVER_PORT'] = 443;
-        $this->assertSame('https://myhost/myapp/mypath?foo=bar', $this->r->fullUrl());
     }
 
     public function testUrl()
@@ -49,23 +50,18 @@ class RequestTest extends TestCase
     public function testBaseUrl()
     {
         $this->assertSame('https://myhost/myapp', $this->r->baseUrl());
-        $this->r = new \Core\Services\Request();
+    }
 
+    public function testInvalidBaseUrl()
+    {
         $_SERVER['HTTP_HOST'] = 'hack:pss@myhost';
         $this->expectException(\UnexpectedValueException::class);
-        try {
-            $this->r->baseUrl();
-        }
-        finally {
-            $_SERVER['HTTP_HOST'] = 'myhost';
-            $this->r = new \Core\Services\Request();
-        }
+        $this->r->baseUrl();
     }
 
     public function testCanonicalUrl()
     {
         DI::getInstance()->get('config')->set('app.url', 'http://mycanonical.com');
-
         $this->assertSame('http://mycanonical.com/mypath', $this->r->canonicalUrl());
     }
 
@@ -74,18 +70,16 @@ class RequestTest extends TestCase
         $this->assertSame('mypath', $this->r->path());
     }
 
-    public function testInput()
+    public function testFormInput()
     {
-        // json
-        $_SERVER['CONTENT_TYPE'] = 'application/json';
-        $this->r = new \Core\Services\Request();
-        $this->assertSame(['foo' => 'bar'], $this->r->input());
-
-        // form
-        $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded; charset=UTF-8';
-        $this->r = new \Core\Services\Request();
         $this->assertSame(['post1' => 'POST1', 'post2' => 'POST2', 'foo' => 'bar'], $this->r->input());
         $this->assertSame('bar', $this->r->input('foo'));
+    }
+
+    public function testJsonInput()
+    {
+        $_SERVER['CONTENT_TYPE'] = 'application/json';
+        $this->assertSame(['foo' => 'bar'], $this->r->input());
     }
 
     public function testCookie()
@@ -109,17 +103,18 @@ class RequestTest extends TestCase
         $this->assertSame('', $this->r->body());
     }
 
-    public function testMethod()
+    public function testGetMethod()
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $this->r = new \Core\Services\Request();
         $this->assertSame('GET', $this->r->method());
+    }
 
+    public function testPostMethod()
+    {
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_GET['_method'] = 'PUT';
         $_POST['_method'] = 'PATCH';
         $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] = 'DELETE';
-        $this->r = new \Core\Services\Request();
         $this->assertSame('DELETE', $this->r->method());
 
         unset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']);

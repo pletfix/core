@@ -23,13 +23,6 @@ class ViewCompiler implements ViewCompilerContract
      */
     private $footer = [];
 
-//    /**
-//     * ViewCompiler constructor.
-//     */
-//    public function __construct()
-//    {
-//    }
-
     /**
      * Compile the given template content to the corresponding valid PHP.
      *
@@ -71,9 +64,9 @@ class ViewCompiler implements ViewCompilerContract
     }
 
     /*
-     * --------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      * Comments
-     * --------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      */
 
     /**
@@ -91,9 +84,9 @@ class ViewCompiler implements ViewCompilerContract
     }
 
     /*
-     * --------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      * Echos
-     * --------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      */
 
     /**
@@ -166,9 +159,9 @@ class ViewCompiler implements ViewCompilerContract
     }
 
     /*
-     * --------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      * Statements
-     * --------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      */
 
     /**
@@ -449,7 +442,7 @@ class ViewCompiler implements ViewCompilerContract
      */
     protected function compileCan($expr)
     {
-        return "<?php if (auth()->can{$expr}): ?>";
+        return "<?php if(auth()->can{$expr}): ?>";
     }
 
     /**
@@ -464,7 +457,7 @@ class ViewCompiler implements ViewCompilerContract
             return '<?php else: ?>';
         }
 
-        return "<?php elseif (auth()->can{$expr}): ?>";
+        return "<?php elseif(auth()->can{$expr}): ?>";
     }
 
     /**
@@ -486,7 +479,7 @@ class ViewCompiler implements ViewCompilerContract
      */
     protected function compileCannot($expr)
     {
-        return "<?php if (!auth()->can{$expr}): ?>";
+        return "<?php if(!auth()->can{$expr}): ?>";
     }
 
     /**
@@ -501,7 +494,7 @@ class ViewCompiler implements ViewCompilerContract
             return '<?php else: ?>';
         }
 
-        return "<?php elseif (!auth()->can{$expr}): ?>";
+        return "<?php elseif(!auth()->can{$expr}): ?>";
     }
 
     /**
@@ -523,7 +516,7 @@ class ViewCompiler implements ViewCompilerContract
      */
     protected function compileIs($expr)
     {
-        return "<?php if (auth()->is{$expr}): ?>";
+        return "<?php if(auth()->is{$expr}): ?>";
     }
 
     /**
@@ -538,7 +531,7 @@ class ViewCompiler implements ViewCompilerContract
             return '<?php else: ?>';
         }
 
-        return "<?php elseif (auth()->is{$expr}): ?>";
+        return "<?php elseif(auth()->is{$expr}): ?>";
     }
 
     /**
@@ -560,7 +553,7 @@ class ViewCompiler implements ViewCompilerContract
      */
     protected function compileIsnot($expr)
     {
-        return "<?php if (!auth()->is{$expr}): ?>";
+        return "<?php if(!auth()->is{$expr}): ?>";
     }
 
     /**
@@ -575,7 +568,7 @@ class ViewCompiler implements ViewCompilerContract
             return '<?php else: ?>';
         }
 
-        return "<?php elseif (!auth()->is{$expr}): ?>";
+        return "<?php elseif(!auth()->is{$expr}): ?>";
     }
 
     /**
@@ -602,7 +595,7 @@ class ViewCompiler implements ViewCompilerContract
      */
     protected function compilePhp($expr)
     {
-        return !is_null($expr) ? "<?php {$expr}; ?>" : '<?php ';
+        return $expr !== null ? "<?php {$expr}; ?>" : '<?php ';
     }
 
     /**

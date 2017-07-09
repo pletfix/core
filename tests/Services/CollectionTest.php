@@ -27,6 +27,18 @@ class CollectionTest extends TestCase
         $this->assertEquals($items, iterator_to_array($collection));
     }
 
+    public function testHasKey()
+    {
+        $c = new Collection(['foo' => 'bar']);
+        $this->assertTrue($c->has('foo'));
+    }
+
+    public function testDoesNotHasKey()
+    {
+        $c = new Collection(['foo' => 'bar']);
+        $this->assertFalse($c->has('baz'));
+    }
+
     public function testFirstReturnsFirstItemInCollection()
     {
         $c = new Collection(['foo', 'bar']);
@@ -245,6 +257,13 @@ class CollectionTest extends TestCase
 
         $c->offsetUnset(1);
         $c[1];
+    }
+
+    public function testForget()
+    {
+        $c = new Collection(['foo', 'bar']);
+        $this->assertInstanceOf(Collection::class, $c->forget());
+        $this->assertSame([], $c->all());
     }
 
     public function testForgetSingleKey()
@@ -618,16 +637,22 @@ class CollectionTest extends TestCase
         ], $c->unique('id', true)->all());
     }
 
-    public function testCollapse()
+    public function testCollapseArrays()
     {
-        $data = new Collection([[$object1 = new stdClass], [$object2 = new stdClass]]);
-        $this->assertEquals([$object1, $object2], $data->collapse()->all());
+        $data = new Collection([[1, 2, 3], [4, 5, 6]]);
+        $this->assertEquals([1, 2, 3, 4, 5, 6], $data->collapse()->all());
     }
 
-    public function testCollapseWithNestedCollactions()
+    public function testCollapseCollactions()
     {
         $data = new Collection([new Collection([1, 2, 3]), new Collection([4, 5, 6])]);
         $this->assertEquals([1, 2, 3, 4, 5, 6], $data->collapse()->all());
+    }
+
+    public function testCollapseObjects()
+    {
+        $data = new Collection([[$object1 = new stdClass], [$object2 = new stdClass]]);
+        $this->assertEquals([$object1, $object2], $data->collapse()->all());
     }
 
     public function testSort()
@@ -764,20 +789,26 @@ class CollectionTest extends TestCase
         $this->assertEquals(['first' => 'Taylor', 'email' => 'taylorotwell@gmail.com'], $data->except('last')->all());
     }
 
+    // $data = new Collection([[$object1 = new stdClass], [$object2 = new stdClass]]);
+    
     public function testPluckWithArrayAndObjectValues()
     {
-        $data = new Collection([(object) ['name' => 'taylor', 'email' => 'foo'], ['name' => 'dayle', 'email' => 'bar']]);
+        $data = new Collection([(object)['name' => 'taylor', 'email' => 'foo'], ['name' => 'dayle', 'email' => 'bar']]);
         $this->assertEquals(['taylor' => 'foo', 'dayle' => 'bar'], $data->pluck('email', 'name')->all());
         $this->assertEquals(['foo', 'bar'], $data->pluck('email')->all());
     }
 
+    //TestJsonableObject
+    public function testPluckWithStringAndCollection()
+    {
+        $data = new Collection(['foo', new Collection(['name' => 'dayle', 'email' => 'bar'])]);
+        $this->assertEquals(['' => null, 'dayle' => 'bar'], $data->pluck('email', 'name')->all());
+        $this->assertEquals([null, 'bar'], $data->pluck('email')->all());
+    }
+
     public function testPluckWithArrayAccessValues()
     {
-        $data = new Collection([
-            new TestArrayAccessImplementation(['name' => 'taylor', 'email' => 'foo']),
-            new TestArrayAccessImplementation(['name' => 'dayle', 'email' => 'bar']),
-        ]);
-
+        $data = new Collection([new TestArrayAccess(['name' => 'taylor', 'email' => 'foo']), new TestArrayAccess(['name' => 'dayle', 'email' => 'bar'])]);
         $this->assertEquals(['taylor' => 'foo', 'dayle' => 'bar'], $data->pluck('email', 'name')->all());
         $this->assertEquals(['foo', 'bar'], $data->pluck('email')->all());
     }
@@ -798,6 +829,16 @@ class CollectionTest extends TestCase
         $data = new Collection(['taylor', 'dayle', 'shawn']);
         $data = $data->take(2);
         $this->assertEquals(['taylor', 'dayle'], $data->all());
+    }
+
+    public function testShuffle()
+    {
+        $data = new Collection([1, 2, 3, 4, 5, 6]);
+        $shuffle = $data->shuffle();
+        $this->assertInstanceOf(Collection::class, $shuffle);
+        $data = $shuffle->all();
+        sort($data);
+        $this->assertEquals([1, 2, 3, 4, 5, 6], $data);
     }
 
     public function testRandom()
@@ -1267,6 +1308,20 @@ class CollectionTest extends TestCase
         $this->assertEquals('foo', $value);
     }
 
+    public function testPush()
+    {
+        $c = new Collection(['foo', 'bar']);
+        $this->assertInstanceOf(Collection::class, $c->push('baz'));
+        $this->assertSame(['foo', 'bar', 'baz'], $c->all());
+    }
+
+    public function testPut()
+    {
+        $c = new Collection(['foo', 'bar', 'baz']);
+        $this->assertInstanceOf(Collection::class, $c->put(1, 'buz'));
+        $this->assertSame(['foo', 'buz', 'baz'], $c->all());
+    }
+
     public function testSearchReturnsIndexOfFirstFoundItem()
     {
         $c = new Collection([1, 2, 3, 4, 5, 2, 5, 'foo' => 'bar']);
@@ -1657,7 +1712,7 @@ class TestAccessorEloquentTestStub
     }
 }
 
-class TestArrayAccessImplementation implements ArrayAccess
+class TestArrayAccess implements ArrayAccess
 {
     private $arr;
 

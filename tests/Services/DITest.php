@@ -22,6 +22,7 @@ class DITest extends TestCase
     {
         // callable, not shared
         $i = 1;
+        /** @noinspection PhpUnusedParameterInspection */
         $this->di->set('callable-not-shared', function($a, $b) use (&$i) { return 2 * 3 * (++$i); });
         $this->assertSame(12, $this->di->get('callable-not-shared', [2, 3]));
         $this->assertSame(18, $this->di->get('callable-not-shared', [2, 3]));

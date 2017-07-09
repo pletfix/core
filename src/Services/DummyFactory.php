@@ -32,10 +32,19 @@ class DummyFactory implements FactoryContract
     private $pluginDrivers;
 
     /**
-     * Create a new factory instance.
+     * Manifest file of classes.
+     *
+     * @var string
      */
-    public function __construct()
+    private $pluginManifestOfClasses;
+
+    /**
+     * Create a new factory instance.
+     * @param string|null $pluginManifestOfClasses
+     */
+    public function __construct($pluginManifestOfClasses = null)
     {
+        $this->pluginManifestOfClasses = $pluginManifestOfClasses ?: manifest_path('plugins/classes.php');
         $this->defaultStore = config('dummy.default');
     }
 
@@ -86,10 +95,9 @@ class DummyFactory implements FactoryContract
     private function getPluginDriver($class)
     {
         if ($this->pluginDrivers === null) {
-            $manifest = manifest_path('plugins/classes.php');
-            if (file_exists($manifest)) {
+            if (file_exists($this->pluginManifestOfClasses)) {
                 /** @noinspection PhpIncludeInspection */
-                $classes = include $manifest;
+                $classes = include $this->pluginManifestOfClasses;
                 $this->pluginDrivers = isset($classes['Dummy']) ? $classes['Dummy'] : [];
             }
             else {

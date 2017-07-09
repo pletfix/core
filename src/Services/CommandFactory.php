@@ -5,6 +5,7 @@ namespace Core\Services;
 use Core\Commands\HelpCommand;
 use Core\Services\Contracts\Command;
 use Core\Services\Contracts\CommandFactory as CommandFactoryContract;
+use RuntimeException;
 
 /**
  * Command Factory is the container for a collection of commands.
@@ -19,13 +20,23 @@ class CommandFactory implements CommandFactoryContract
     private $cachedFile;
 
     /**
+     * Manifest file of commands.
+     *
+     * @var string
+     */
+    private $pluginManifestOfCommands;
+
+    /**
      * Create a new factory instance.
      *
      * @param string|null $cachedFile
+     * @param string|null $pluginManifestOfCommands
      */
-    public function __construct($cachedFile = null)
+    public function __construct($cachedFile = null, $pluginManifestOfCommands = null)
     {
         $this->cachedFile = $cachedFile ?: storage_path('cache/commands.php');
+        $this->pluginManifestOfCommands = $pluginManifestOfCommands ?: manifest_path('plugins/commands.php');
+
     }
 
     /**
@@ -87,10 +98,9 @@ class CommandFactory implements CommandFactoryContract
             $list[$name] = compact('class', 'name', 'description');
         }
 
-        $pluginManifest = manifest_path('plugins/commands.php');
-        if (file_exists($pluginManifest)) {
+        if (file_exists($this->pluginManifestOfCommands)) {
             /** @noinspection PhpIncludeInspection */
-            $list = array_merge(include $pluginManifest, $list);
+            $list = array_merge(include $this->pluginManifestOfCommands, $list);
         }
 
         ksort($list);
@@ -136,8 +146,8 @@ class CommandFactory implements CommandFactoryContract
     private function saveCommandListToCache($list)
     {
         if (!is_dir($cacheDir = dirname($this->cachedFile))) {
-            if (!@mkdir($cacheDir, 0775, true) && !is_dir($cacheDir)) {
-                throw new \RuntimeException(sprintf('Command factory was not able to create directory "%s"', $cacheDir)); // @codeCoverageIgnore
+            if (!make_dir($cacheDir, 0775)) {
+                throw new RuntimeException(sprintf('Command factory was not able to create directory "%s"', $cacheDir)); // @codeCoverageIgnore
             }
         }
 
@@ -146,7 +156,7 @@ class CommandFactory implements CommandFactoryContract
         }
 
         if (file_put_contents($this->cachedFile, '<?php return ' . var_export($list, true) . ';' . PHP_EOL, LOCK_EX) === false) {
-            throw new \RuntimeException(sprintf('Command factory was not able to save cached file "%s"', $this->cachedFile)); // @codeCoverageIgnore
+            throw new RuntimeException(sprintf('Command factory was not able to save cached file "%s"', $this->cachedFile)); // @codeCoverageIgnore
         }
 
         //@chmod($this->cachedFile, 0664); // not necessary, because only the cli need to have access
@@ -154,7 +164,7 @@ class CommandFactory implements CommandFactoryContract
         $time = $this->modificationTime();
 
         if (!touch($this->cachedFile, $time)) {
-            throw new \RuntimeException(sprintf('Command factory was not able to modify time of cached file "%s"', $this->cachedFile)); // @codeCoverageIgnore
+            throw new RuntimeException(sprintf('Command factory was not able to modify time of cached file "%s"', $this->cachedFile)); // @codeCoverageIgnore
         }
     }
 
@@ -165,10 +175,8 @@ class CommandFactory implements CommandFactoryContract
      */
     private function modificationTime()
     {
-        $pluginManifest = manifest_path('plugins/commands.php');
-
         return max(
-            file_exists($pluginManifest) ? filemtime($pluginManifest) : 0,
+            file_exists($this->pluginManifestOfCommands) ? filemtime($this->pluginManifestOfCommands) : 0,
             filemtime(__DIR__ . '/../Commands'),
             filemtime(app_path('Commands'))
         );

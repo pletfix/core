@@ -54,13 +54,11 @@ class SqlServer extends AbstractDatabase
     }
 
     /**
-     * Version
-     *
      * @inheritdoc
      */
     public function version()
     {
-        return 2008;
+        return false;
     }
 
     /**

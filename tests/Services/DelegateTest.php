@@ -2,59 +2,74 @@
 
 namespace Core\Tests\Services;
 
-use Core\Middleware\Contracts\Middleware;
+use Core\Exceptions\FatalErrorException;
 use Core\Services\Contracts\Response;
-use Core\Services\Contracts\Delegate;
-use Core\Services\Contracts\Request;
+use Core\Services\Delegate;
+use Core\Services\Request;
 use Core\Testing\TestCase;
+
+require_once __DIR__ . '/../Middleware/fakes/AppMiddlewareWithoutParams.php.fake';
+require_once __DIR__ . '/../Middleware/fakes/CoreMiddlewareWithParams.php.fake';
+require_once __DIR__ . '/../Middleware/fakes/PluginDummyMiddleware.php.fake';
 
 class DelegateTest extends TestCase
 {
-    public function testBase()
+    /**
+     * @var Delegate
+     */
+    private $d;
+
+    protected function setUp()
     {
-        $d = new \Core\Services\Delegate;;
-        $this->assertInstanceOf(Delegate::class, $d->setMiddleware(['Csrf', '\Core\Tests\Services\Middleware1', '\Core\Tests\Services\Middleware2:X,Y']));
-        $this->assertInstanceOf(Delegate::class, $d->setAction(function($a, $b) {
+        $this->d = new Delegate(__DIR__ . '/plugin_manifest/classes.php');
+    }
+
+    public function testAbsoluteMiddlewarePathAndProcessReturnsString()
+    {
+        $this->assertInstanceOf(Delegate::class, $this->d->setMiddleware(['\App\Middleware\MiddlewareWithoutParams', '\Core\Middleware\MiddlewareWithParams:X,Y']));
+        $this->assertInstanceOf(Delegate::class, $this->d->setAction(function ($a, $b) {
             return $a . $b;
         }, ['A', 'B']));
-        $response = $d->process(new \Core\Services\Request());
+        $response = $this->d->process(new Request());
         $this->assertInstanceOf(Response::class, $response);
         $content = $response->getContent();
         $this->assertSame('M1M2XYzAB', $content);
+    }
 
-        $d = new \Core\Services\Delegate;;
-        $this->assertInstanceOf(Delegate::class, $d->setMiddleware(['Csrf', '\Core\Tests\Services\Middleware1', '\Core\Tests\Services\Middleware2:X,Y']));
-        $d->setAction(function($a, $b) {
+    public function testRelativeMiddlewarePathAndProcessReturnsResponse()
+    {
+        $this->d->setMiddleware(['\App\Middleware\MiddlewareWithoutParams', 'MiddlewareWithParams:X,Y']);
+        $this->d->setAction(function($a, $b) {
             $r = new \Core\Services\Response();
             $r->output($a . $b);
             return $r;
         }, ['A', 'B']);
-        $response = $d->process(new \Core\Services\Request());
-        $this->assertInstanceOf(Response::class, $response);
+        $response = $this->d->process(new Request());
         $content = $response->getContent();
         $this->assertSame('M1M2XYzAB', $content);
-
     }
-}
 
-class Middleware1 implements Middleware
-{
-    public function process(Request $request, Delegate $delegate)
+    public function testMiddlewareProvidedByPlugin()
     {
-        $response = $delegate->process($request);
-        $response->output('M1' . $response->getContent());
-
-        return $response;
+        $this->d->setMiddleware(['DummyMiddleware']);
+        $this->d->setAction(function() {
+            return 'Z';
+        }, []);
+        $response = $this->d->process(new Request());
+        $content = $response->getContent();
+        $this->assertSame('XZ', $content);
     }
-}
 
-class Middleware2 implements Middleware
-{
-    public function process(Request $request, Delegate $delegate, $x = 'x', $y = 'y', $z = 'z')
+    public function testPluginManifestNotExists()
     {
-        $response = $delegate->process($request);
-        $response->output('M2' . $x . $y . $z . $response->getContent());
+        $d = new Delegate(__DIR__ . '/plugin_manifest/classes2.php');
+        $d->setMiddleware(['MiddlewareWithParams:X,Y']);
+        $this->assertInstanceOf(Delegate::class, $d->setAction(function() {
+            return 'Z';
+        }, []));
 
-        return $response;
+        $response = $d->process(new Request());
+        $content = $response->getContent();
+        $this->assertSame('M2XYzZ', $content);
     }
 }

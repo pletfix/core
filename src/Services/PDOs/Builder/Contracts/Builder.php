@@ -694,7 +694,7 @@ interface Builder extends Countable
      * Calculates the maximum value of a given column.
      *
      * @param string|null $column
-     * @return int
+     * @return float
      */
     public function max($column = null);
 
@@ -702,7 +702,7 @@ interface Builder extends Countable
      * Calculates the minimum value of a given column.
      *
      * @param string|null $column
-     * @return int
+     * @return float
      */
     public function min($column = null);
 

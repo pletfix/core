@@ -66,7 +66,7 @@ class CacheFactory implements CacheFactoryContract
         }
 
         $config = config('cache.stores.' . $name);
-        if (is_null($config)) {
+        if ($config === null) {
             throw new InvalidArgumentException('Cache store "' . $name . '" is not defined.');
         }
 
@@ -86,7 +86,7 @@ class CacheFactory implements CacheFactoryContract
                 $provider = new FilesystemCache($config['path']);
                 break;
             case 'memcached':
-                $memcached = new Memcached;
+                $memcached = new Memcached();
                 $memcached->addServer($config['host'], $config['port'], $config['weight']);
                 $provider = new MemcachedCache();
                 $provider->setMemcached($memcached);

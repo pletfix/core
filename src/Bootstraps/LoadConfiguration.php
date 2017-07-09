@@ -142,7 +142,7 @@ class LoadConfiguration implements Bootable
     private function saveConfigToCache($config)
     {
         if (!is_dir($cacheDir = dirname($this->cachedFile))) {
-            if (!@mkdir($cacheDir, 0775, true) && !is_dir($cacheDir)) {
+            if (!make_dir($cacheDir, 0775)) {
                 throw new \RuntimeException(sprintf('Configuration Loader was not able to create directory "%s"', $cacheDir));
             }
         }

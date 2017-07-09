@@ -71,7 +71,7 @@ interface Stdio
      * @param string|null $default Default input value. Pass null to omit.
      * @return string Either the default value, or the user-provided input.
      */
-    public function read($prompt, $options = null, $default = null);
+    public function read($prompt, array $options = null, $default = null);
 
     /**
      * Prompts the user for input, and returns it.
@@ -89,8 +89,8 @@ interface Stdio
      * will return false. However, if the user enters y or yes in response to the prompt, the method will return true.
      *
      * @param string $prompt Prompt text.
-     * @param boolean $default Default input value, true or false.
-     * @return mixed Either the default value, or the user-provided input.
+     * @param bool $default Default input value, true or false.
+     * @return bool Either the default value, or the user-provided input.
      */
     public function confirm($prompt, $default = false);
 
@@ -102,7 +102,7 @@ interface Stdio
      * @param string|null $default Default input value.
      * @return mixed Either the default value, or the user-provided input.
      */
-    public function choice($prompt, $options, $default = null);
+    public function choice($prompt, array $options, $default = null);
 
     /**
      * Asks a question with the user input hidden.

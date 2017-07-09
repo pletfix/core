@@ -1,0 +1,11 @@
+<?php
+
+namespace Pletfix\Test\Controllers;
+
+class DummyController
+{
+    public function foo($param = null)
+    {
+        return $param . '!!';
+    }
+}

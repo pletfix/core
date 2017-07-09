@@ -936,7 +936,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      */
     public function count()
     {
-        return $this->aggregate('COUNT');
+        return $this->aggregate('COUNT'); // todo als int umwandeln
     }
 
     /**

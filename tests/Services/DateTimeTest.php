@@ -11,16 +11,12 @@ use InvalidArgumentException;
 
 class DateTimeTest extends TestCase
 {
-    protected function setUp()
+    public static function setUpBeforeClass()
     {
         DI::getInstance()->get('config')
             ->set('app.timezone', 'Europe/Berlin')
             ->set('app.first_dow', DateTime::MONDAY);
     }
-
-//    protected function tearDown()
-//    {
-//    }
 
     public function testConstruct()
     {
@@ -342,6 +338,7 @@ class DateTimeTest extends TestCase
         DI::getInstance()->get('config')
             ->set('app.locale', '~testlocale')
             ->set('app.fallback_locale', '~testfallback');
+        DateTime::setLocale(null);
 
         $path1 = resource_path('lang/~testlocale');
         $path2 = resource_path('lang/~testfallback');

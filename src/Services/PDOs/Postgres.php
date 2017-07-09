@@ -155,7 +155,7 @@ class Postgres extends AbstractDatabase
      */
     public function lastInsertId()
     {
-        if (is_null($this->lastInsertTo)) {
+        if ($this->lastInsertTo === null) {
             return 0;
         }
 

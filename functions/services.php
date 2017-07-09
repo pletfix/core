@@ -196,12 +196,11 @@ if (!function_exists('migrator')) {
      * Get the Migrator for the given store.
      *
      * @param string|null $store Name of the database store
-     * @param string|null $path Subfolder in the migration directory
      * @return \Core\Services\Contracts\Migrator
      */
-    function migrator($store = null, $path = null)
+    function migrator($store = null)
     {
-        return DI::getInstance()->get('migrator', [$store, $path]);
+        return DI::getInstance()->get('migrator', [$store]);
     }
 }
 
@@ -294,7 +293,7 @@ if (!function_exists('view')) {
      * Get the evaluated view contents for the given view.
      *
      * @param string|null $name Name of the view
-     * @param array $variables
+     * @param array|\Core\Services\Contracts\Collection $variables
      * @return string|\Core\Services\Contracts\View
      */
     function view($name = null, $variables = [])
