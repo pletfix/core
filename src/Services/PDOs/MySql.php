@@ -67,19 +67,19 @@ class MySql extends AbstractDatabase
         $dsn = "mysql:host={$config['host']};port={$config['port']};dbname={$config['database']}";
         $username = $config['username'];
         $password = $config['password'];
-        $pdo = new PDO($dsn, $username, $password, $options);
+        $pdo      = $this->createPDO($dsn, $username, $password, $options);
 
         $statement = "USE `{$config['database']}`;";
         $pdo->exec($statement);
 
         if (isset($config['charset'])) {
             $statement = "SET NAMES '{$config['charset']}'" . (isset($config['collation']) ? " COLLATE '{$config['collation']}'" : '');
-            $pdo->prepare($statement)->execute();
+            $pdo->exec($statement);
         }
 
         if (isset($config['timezone'])) {
             $statement = "SET time_zone='{$config['timezone']}'";
-            $pdo->prepare($statement)->execute();
+            $pdo->exec($statement);
         }
 
         if (isset($config['strict'])) {
@@ -88,7 +88,7 @@ class MySql extends AbstractDatabase
             } else {
                 $statement = "SET SESSION sql_mode='NO_ENGINE_SUBSTITUTION'";
             }
-            $pdo->prepare($statement)->execute();
+            $pdo->exec($statement);
         }
 
         return $pdo;

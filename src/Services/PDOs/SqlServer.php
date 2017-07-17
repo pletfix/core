@@ -92,7 +92,7 @@ class SqlServer extends AbstractDatabase
     {
         //$options[PDO::ATTR_EMULATE_PREPARES] = false; // driver does not support this attribute
 
-        $drivers = PDO::getAvailableDrivers();
+        $drivers = $this->getAvailableDrivers();
         if (in_array('dblib', $drivers)) {
             $dsn = $this->getDblibDsn($config);
         }
@@ -105,9 +105,18 @@ class SqlServer extends AbstractDatabase
 
         $username = $config['username'];
         $password = $config['password'];
-        $pdo      = new PDO($dsn, $username, $password, $options);
 
-        return $pdo;
+        return $this->createPDO($dsn, $username, $password, $options);
+    }
+
+    /**
+     * Return an array of available PDO drivers.
+     *
+     * @return array
+     */
+    protected function getAvailableDrivers()
+    {
+        return PDO::getAvailableDrivers();
     }
 
     /**
@@ -119,7 +128,7 @@ class SqlServer extends AbstractDatabase
     private function getDblibDsn(array $config)
     {
         $arguments = [
-            'host'   => $this->buildHostString($config, ':'),
+            'host'   => $config['host'] . ':' . $config['port'],
             'dbname' => $config['database'],
         ];
 
@@ -154,7 +163,7 @@ class SqlServer extends AbstractDatabase
     private function getSqlSrvDsn(array $config)
     {
         $arguments = [
-            'Server' => $this->buildHostString($config, ','),
+            'Server' => $config['host'] . ',' . $config['port'],
         ];
 
         $arguments['Database'] = $config['database'];
@@ -188,21 +197,5 @@ class SqlServer extends AbstractDatabase
         }, array_keys($arguments));
 
         return $driver.':'.implode(';', $options);
-    }
-
-    /**
-     * Build a host string from the given configuration.
-     *
-     * @param  array  $config
-     * @param  string  $separator
-     * @return string
-     */
-    private function buildHostString(array $config, $separator)
-    {
-        if (isset($config['port'])) {
-            return $config['host'].$separator.$config['port'];
-        } else {
-            return $config['host'];
-        }
     }
 }

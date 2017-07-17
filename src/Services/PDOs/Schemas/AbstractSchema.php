@@ -52,28 +52,6 @@ abstract class AbstractSchema implements SchemaContract
     abstract public function indexes($table);
 
     /**
-     * Extract a given database field type into field type, size, scale and unsigned flag.
-     *
-     * This function could be used by columns().
-     *
-     * @param string $spec The database field specification; for example, "VARCHAR(255)" or "NUMERIC(10,2) UNSIGNED".
-     * @return array
-     */
-    protected function extractFieldType($spec)
-    {
-        if (!preg_match('/(\w+)(?:\s*\(\s*([0-9]+)(?:\,\s*([0-9]+))?\s*\))?(?:\s*(\w+))?/s', strtoupper($spec), $match)) {
-            return [null, null, null, null];
-        }
-
-        $dbType   = isset($match[1]) ? $match[1] : null;
-        $size     = isset($match[2]) && $match[2] != '' ? (int)$match[2] : null;
-        $scale    = isset($match[3]) && $match[2] != '' ? (int)$match[3] : null;
-        $unsigned = isset($match[4]) && $match[4] == 'UNSIGNED';
-
-        return [$dbType, $size, $scale, $unsigned];
-    }
-
-    /**
      * Split a type-hint for Database Access Layer from comment.
      *
      * The type-hint is compatible with Doctrine 2.
@@ -117,6 +95,8 @@ abstract class AbstractSchema implements SchemaContract
         $table = $this->db->quoteName($table);
 
         $this->db->exec("DROP TABLE {$table}");
+
+        return $this;
     }
 
     /**
@@ -128,6 +108,8 @@ abstract class AbstractSchema implements SchemaContract
         $to   = $this->db->quoteName($to);
 
         $this->db->exec("ALTER TABLE {$from} RENAME TO {$to}");
+
+        return $this;
     }
 
     /**
@@ -140,6 +122,8 @@ abstract class AbstractSchema implements SchemaContract
         $column = $this->db->quoteName($column);
 
         $this->db->exec("ALTER TABLE {$table} ADD COLUMN {$column} {$definition}");
+
+        return $this;
     }
 
     /**
@@ -151,6 +135,8 @@ abstract class AbstractSchema implements SchemaContract
         $column = $this->db->quoteName($column);
 
         $this->db->exec("ALTER TABLE {$table} DROP COLUMN {$column}");
+
+        return $this;
     }
 
     /**
@@ -163,19 +149,22 @@ abstract class AbstractSchema implements SchemaContract
         $to    = $this->db->quoteName($to);
 
         $this->db->exec("ALTER TABLE {$table} RENAME COLUMN {$from} TO {$to}");
+
+        return $this;
     }
 
     /**
      * @inheritdoc
      */
-    public function addIndex($table, $name, array $options)
+    public function addIndex($table, $name, array $options) // todo name zu den optins packen, da nicht zwingend erforderlich
     {
-        $columns = $options['columns'];
-        if (empty($columns)) {
+        if (empty($options['columns'])) {
             throw new InvalidArgumentException("Cannot add index without columns.");
         }
 
         $quotedTable = $this->db->quoteName($table);
+
+        $columns = $options['columns'];
         $quotedColumns = [];
         foreach ($columns as $column) {
             $quotedColumns[] = $this->db->quoteName($column);
@@ -189,18 +178,20 @@ abstract class AbstractSchema implements SchemaContract
         else {
             $unique = isset($options['unique']) ? $options['unique'] : false;
             $index  = $unique ? 'UNIQUE' : 'INDEX';
-            if (is_null($name)) {
+            if ($name === null) {
                 $name = $this->createIndexName($table, $columns, $unique);
             }
             $name = $this->db->quoteName($name);
             $this->db->exec("ALTER TABLE {$quotedTable} ADD {$index} {$name} ($quotedColumns)");
         }
+
+        return $this;
     }
 
     /**
      * @inheritdoc
      */
-    public function dropIndex($table, $name, array $options = [])
+    public function dropIndex($table, $name, array $options = []) // todo name zu den optins packen, da nicht zwingend erforderlich
     {
         $quotedTable = $this->db->quoteName($table);
 
@@ -209,7 +200,7 @@ abstract class AbstractSchema implements SchemaContract
             $this->db->exec("ALTER TABLE {$quotedTable} DROP PRIMARY KEY");
         }
         else {
-            if (is_null($name)) {
+            if ($name === null) {
                 if (empty($options['columns'])) {
                     throw new InvalidArgumentException("Cannot find index without name and columns.");
                 }
@@ -219,9 +210,11 @@ abstract class AbstractSchema implements SchemaContract
                 // todo der Name sollte besser aus der Indexliste gesucht werden.
                 // Momentan wird einfach angenommen, dass der Index wie vom Access Layer vorgegeben heißt.
             }
-
+            $name = $this->db->quoteName($name);
             $this->db->exec("ALTER TABLE {$quotedTable} DROP INDEX {$name}");
         }
+
+        return $this;
     }
 
     /**
@@ -270,7 +263,7 @@ abstract class AbstractSchema implements SchemaContract
                 $sql .= ' NOT NULL';
             }
 
-            if (!is_null($options['default'])) {
+            if ($options['default'] !== null) {
                 $default = $options['default'];
                 if (is_string($default) && $default != 'CURRENT_TIMESTAMP') {
                     $default = $this->db->quote($options['default']);
@@ -287,7 +280,7 @@ abstract class AbstractSchema implements SchemaContract
 
         $comment = $options['comment'];
         if ($this->needATypeHint($type)) {
-            $comment = (!is_null($comment) ? $comment . ' ' : '') . '(DC2Type:' . $type . ')';
+            $comment = ($comment !== null ? $comment . ' ' : '') . '(DC2Type:' . $type . ')';
         }
 
         if (!is_null($comment)) {

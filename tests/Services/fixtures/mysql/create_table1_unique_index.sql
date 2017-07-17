@@ -1,0 +1,1 @@
+ALTER TABLE `table1` ADD UNIQUE `table1_integer1_unique` (`integer1`);

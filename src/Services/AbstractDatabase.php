@@ -183,6 +183,32 @@ abstract class AbstractDatabase implements DatabaseContract
      */
 
     /**
+     * Make the connection DSN and create a new PDO instance.
+     *
+     * @param array $config
+     * @param array $options
+     * @return PDO
+     */
+    abstract protected function makePDO(array $config, array $options);
+
+    /**
+     * Create a new PDO instance.
+     *
+     * This method creates the internal PDO instance.
+     * @see http://php.net/manual/en/pdo.construct.php
+     *
+     * @param string $dsn
+     * @param string $username
+     * @param string $password
+     * @param array $options
+     * @return PDO
+     */
+    protected function createPDO($dsn, $username, $password, array $options)
+    {
+        return new PDO($dsn, $username, $password, $options);
+    }
+
+    /**
      * @inheritdoc
      */
     public function connect()
@@ -210,18 +236,6 @@ abstract class AbstractDatabase implements DatabaseContract
 
         return $this;
     }
-
-    /**
-     * Make a new PDO instance.
-     *
-     * This method creates the internal PDO instance.
-     * @see http://php.net/manual/en/pdo.construct.php
-     *
-     * @param array $config
-     * @param array $options
-     * @return PDO
-     */
-    abstract protected function makePDO(array $config, array $options);
 
     /**
      * @inheritdoc

@@ -155,6 +155,28 @@ class SQLiteSchema extends AbstractSchema
     }
 
     /**
+     * Extract a given database field type into field type, size, scale and unsigned flag.
+     *
+     * This function could be used by columns().
+     *
+     * @param string $spec The database field specification; for example, "VARCHAR(255)" or "NUMERIC(10,2) UNSIGNED".
+     * @return array
+     */
+    private function extractFieldType($spec)
+    {
+        if (!preg_match('/(\w+)(?:\s*\(\s*([0-9]+)(?:\,\s*([0-9]+))?\s*\))?(?:\s*(\w+))?/s', strtoupper($spec), $match)) {
+            return [null, null, null, null];
+        }
+
+        $dbType   = isset($match[1]) ? $match[1] : null;
+        $size     = isset($match[2]) && $match[2] != '' ? (int)$match[2] : null;
+        $scale    = isset($match[3]) && $match[2] != '' ? (int)$match[3] : null;
+        $unsigned = isset($match[4]) && $match[4] == 'UNSIGNED';
+
+        return [$dbType, $size, $scale, $unsigned];
+    }
+
+    /**
      * @inheritdoc
      */
     public function indexes($table)
@@ -263,6 +285,8 @@ class SQLiteSchema extends AbstractSchema
                 }
             }
         });
+
+        return $this;
     }
 
     /**
@@ -279,6 +303,8 @@ class SQLiteSchema extends AbstractSchema
             /** @noinspection SqlDialectInspection */
             $this->db->exec('DELETE FROM _comments WHERE table_name = ?', [$table]);
         });
+
+        return $this;
     }
 
     /**
@@ -296,6 +322,8 @@ class SQLiteSchema extends AbstractSchema
             /** @noinspection SqlDialectInspection */
             $this->db->exec('UPDATE _comments SET table_name = ? WHERE table_name = ?', [$to, $from]);
         });
+
+        return $this;
     }
 
     /**
@@ -338,6 +366,8 @@ class SQLiteSchema extends AbstractSchema
                 }
             });
         }
+
+        return $this;
     }
 
     /**
@@ -346,6 +376,8 @@ class SQLiteSchema extends AbstractSchema
     public function dropColumn($table, $column)
     {
         $this->recreateTable($table, 'dropColumn', ['column' => $column]);
+
+        return $this;
     }
 
     /**
@@ -354,6 +386,8 @@ class SQLiteSchema extends AbstractSchema
     public function renameColumn($table, $from, $to)
     {
         $this->recreateTable($table, 'renameColumn', ['from' => $from, 'to' => $to]);
+
+        return $this;
     }
 
     /**
@@ -383,6 +417,8 @@ class SQLiteSchema extends AbstractSchema
             /** @noinspection SqlNoDataSourceInspection */
             $this->db->exec("CREATE {$index} {$name} ON {$quotedTable} ($quotedColumns)");
         }
+
+        return $this;
     }
 
     /**
@@ -413,6 +449,8 @@ class SQLiteSchema extends AbstractSchema
                 $this->db->exec("DROP INDEX {$name}");
             }
         }
+
+        return $this;
     }
 
     /**

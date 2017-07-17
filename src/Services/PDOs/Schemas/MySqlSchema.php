@@ -30,7 +30,7 @@ class MySqlSchema extends AbstractSchema
             $tables[$name] = [
                 'name'      => $name,
                 'collation' => $val['Collation'],
-                'comment'   => $val['Comment'],
+                'comment'   => $val['Comment'] ?: null,
             ];
         }
 
@@ -57,7 +57,7 @@ class MySqlSchema extends AbstractSchema
             list($dbType, $size, $scale, $unsigned) = $this->extractFieldType($val['Type']);
             list($type, $comment) = $this->extractTypeHintFromComment($val['Comment']);
 
-            if (is_null($type)) {
+            if ($type === null) {
                 $autoinc = strpos($val['Extra'], 'auto_increment') !== false;
                 if ($autoinc) {
                     $type = $dbType == 'BIGINT' ? 'bigidentity' : 'identity';
@@ -78,7 +78,7 @@ class MySqlSchema extends AbstractSchema
                 $scale = null; // 0 -> null
             }
 
-            if (!is_null($default)) {
+            if ($default !== null) {
                 if (in_array($type, ['smallint', 'integer', 'unsigned', 'bigint'])) {
                     $default = (int)$default;
                 }
@@ -107,6 +107,28 @@ class MySqlSchema extends AbstractSchema
         }
 
         return $columns;
+    }
+
+    /**
+     * Extract a given database field type into field type, size, scale and unsigned flag.
+     *
+     * This function could be used by columns().
+     *
+     * @param string $spec The database field specification; for example, "VARCHAR(255)" or "NUMERIC(10,2) UNSIGNED".
+     * @return array
+     */
+    private function extractFieldType($spec)
+    {
+        if (!preg_match('/(\w+)(?:\s*\(\s*([0-9]+)(?:\,\s*([0-9]+))?\s*\))?(?:\s*(\w+))?/s', strtoupper($spec), $match)) {
+            return [null, null, null, null];
+        }
+
+        $dbType   = isset($match[1]) ? $match[1] : null;
+        $size     = isset($match[2]) && $match[2] != '' ? (int)$match[2] : null;
+        $scale    = isset($match[3]) && $match[2] != '' ? (int)$match[3] : null;
+        $unsigned = isset($match[4]) && $match[4] == 'UNSIGNED';
+
+        return [$dbType, $size, $scale, $unsigned];
     }
 
     /**
@@ -193,6 +215,8 @@ class MySqlSchema extends AbstractSchema
         }
 
         $this->db->exec($sql);
+
+        return $this;
     }
 
     /**
@@ -206,6 +230,8 @@ class MySqlSchema extends AbstractSchema
         /** @noinspection SqlNoDataSourceInspection */
         $sql = "RENAME TABLE {$from} TO {$to}";
         $this->db->exec($sql);
+
+        return $this;
     }
 
     /**
@@ -227,6 +253,8 @@ class MySqlSchema extends AbstractSchema
         $sql = "ALTER TABLE {$table} CHANGE COLUMN {$from} {$to} {$definition}";
 
         $this->db->exec($sql);
+
+        return $this;
     }
 
     /*
@@ -270,7 +298,7 @@ class MySqlSchema extends AbstractSchema
     {
         $version = $this->db->version();
         if ($version >= '5.7.8') {
-            return in_array($type, ['array', 'object', 'guid']);
+            return in_array($type, ['array', 'object', 'guid']); // @codeCoverageIgnore
         }
 
         return in_array($type, ['array', 'json', 'object', 'guid']);
@@ -293,6 +321,8 @@ class MySqlSchema extends AbstractSchema
                 return 'smallint';
 
             case 'INT':
+            case 'INTEGER':
+            case 'MEDIUMINT':
                 return 'integer';
 
             case 'BIGINT':
@@ -303,9 +333,13 @@ class MySqlSchema extends AbstractSchema
                 return 'numeric';
 
             case 'DOUBLE':
+            case 'FLOAT':
+            case 'REAL':
                 return 'float';
 
             case 'VARCHAR':
+            case 'STRING':
+            case 'CHAR':
                 return 'string';
 
             case 'TEXT':
@@ -315,6 +349,7 @@ class MySqlSchema extends AbstractSchema
                 return 'text';
 
             case 'VARBINARY':
+            case 'BINARY':
                 return 'binary';
 
             case 'BLOB':
@@ -327,6 +362,7 @@ class MySqlSchema extends AbstractSchema
                 return 'boolean';
 
             case 'DATE':
+            case 'YEAR':
                 return 'date';
 
             case 'DATETIME':
@@ -342,41 +378,7 @@ class MySqlSchema extends AbstractSchema
                 return 'json';
 
             default:
-
-                $mapping = [ // todo vergleichen und sortieren
-                    'tinyint'       => 'boolean',
-                    'smallint'      => 'smallint',
-                    'mediumint'     => 'integer',
-                    'int'           => 'integer',
-                    'integer'       => 'integer',
-                    'bigint'        => 'bigint',
-                    'tinytext'      => 'text',
-                    'mediumtext'    => 'text',
-                    'longtext'      => 'text',
-                    'text'          => 'text',
-                    'varchar'       => 'string',
-                    'string'        => 'string',
-                    'char'          => 'string',
-                    'date'          => 'date',
-                    'datetime'      => 'datetime',
-                    'timestamp'     => 'datetime',
-                    'time'          => 'time',
-                    'float'         => 'float',
-                    'double'        => 'float',
-                    'real'          => 'float',
-                    'decimal'       => 'numeric',
-                    'numeric'       => 'numeric',
-                    'year'          => 'date',
-                    'longblob'      => 'blob',
-                    'blob'          => 'blob',
-                    'mediumblob'    => 'blob',
-                    'tinyblob'      => 'blob',
-                    'binary'        => 'binary',
-                    'varbinary'     => 'binary',
-                    'set'           => 'simple_array',
-                ];
-
-                return isset($mapping[$dbType]) ? $mapping[$dbType] : 'string'; // Fallback Type
+                return 'string'; // fallback Type
         }
     }
 }

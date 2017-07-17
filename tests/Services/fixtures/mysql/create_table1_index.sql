@@ -1,0 +1,1 @@
+ALTER TABLE `table1` ADD INDEX `table1_string1_string2_index` (`string1`, `string2`);

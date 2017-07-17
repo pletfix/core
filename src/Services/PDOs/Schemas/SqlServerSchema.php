@@ -26,11 +26,11 @@ class SqlServerSchema extends AbstractSchema
 
         /** @noinspection SqlDialectInspection */
         $info = $this->db->query("
-          SELECT name 
-          FROM sysobjects 
-          WHERE type = 'U' 
-          AND name != 'sysdiagrams' 
-          ORDER BY name
+            SELECT name 
+            FROM sysobjects 
+            WHERE type = 'U' 
+            AND name != 'sysdiagrams' 
+            ORDER BY name
         ");
 
         foreach ($info as $val) {
@@ -78,7 +78,7 @@ class SqlServerSchema extends AbstractSchema
         $info = $this->db->query("
             SELECT c.name AS column_name, CAST(cd.value AS VARCHAR(255)) AS description
             FROM sysobjects AS t
-            INNER JOIN  syscolumns AS c ON c.id = t.id
+            INNER JOIN syscolumns AS c ON c.id = t.id
             INNER JOIN sys.extended_properties AS cd ON (cd.major_id = c.id AND cd.minor_id = c.colid)
             WHERE cd.name = 'MS_Description'
             AND t.type = 'u'
@@ -120,7 +120,7 @@ class SqlServerSchema extends AbstractSchema
 
             list($type, $comment) = $this->extractTypeHintFromComment(isset($comments[$name]) ? $comments[$name] : null);
 
-            if (is_null($type)) {
+            if ($type === null) {
                 if ($dbType == 'BIGINT IDENTITY') {
                     $type = 'bigidentity';
                     $default = null;
@@ -134,7 +134,7 @@ class SqlServerSchema extends AbstractSchema
                 }
             }
 
-            if (!is_null($default)) {
+            if ($default !== null) {
                 if ($default == '(getdate())') {
                     $default = 'CURRENT_TIMESTAMP';
                 }
@@ -205,7 +205,7 @@ class SqlServerSchema extends AbstractSchema
             INNER JOIN sys.tables t ON t.object_id = i.object_id
             WHERE t.is_ms_shipped = 0 AND t.[name] = ?
             ORDER BY i.[name], ic.is_included_column, ic.key_ordinal
-            ", [$table]);
+        ", [$table]);
 
         foreach ($info as $val) {
             $name    = $val['name'];
@@ -253,7 +253,6 @@ class SqlServerSchema extends AbstractSchema
 
             $this->db->exec($sql);
 
-
             // save comments
             $comment = isset($options['comment']) ? $options['comment'] : null;
             if (!is_null($comment)) {
@@ -282,6 +281,8 @@ class SqlServerSchema extends AbstractSchema
                 }
             }
         });
+
+        return $this;
     }
 
     /**
@@ -293,6 +294,8 @@ class SqlServerSchema extends AbstractSchema
         $to   = $this->db->quote($to);
 
         $this->db->exec("EXEC sp_rename {$from}, {$to}");
+
+        return $this;
     }
 
     /**
@@ -337,6 +340,8 @@ class SqlServerSchema extends AbstractSchema
                 }
             });
         }
+
+        return $this;
     }
 
     /**
@@ -348,6 +353,8 @@ class SqlServerSchema extends AbstractSchema
         $to    = $this->db->quote($to);
 
         $this->db->exec("EXEC sp_rename {$from}, {$to}, 'COLUMN'");
+
+        return $this;
     }
 
     /**
@@ -357,13 +364,14 @@ class SqlServerSchema extends AbstractSchema
     {
         // mit Postgres identisch
 
-        $columns = $options['columns'];
-        if (empty($columns)) {
+        if (empty($options['columns'])) {
             throw new InvalidArgumentException("Cannot add index without columns.");
         }
 
         $quotedTable   = $this->db->quoteName($table);
-        $quotedColumns = '"' . str_replace(',', '","', str_replace('"', '""', implode(',', $columns))) . '"';
+
+        $columns = $options['columns'];
+        $quotedColumns = '[' . str_replace(',', '],[', str_replace(']', ']]', implode(',', $columns))) . ']';
 
         $primary = isset($options['primary']) ? $options['primary'] : false;
         if ($primary) {
@@ -380,6 +388,8 @@ class SqlServerSchema extends AbstractSchema
             // case sensitive
             $this->db->exec("CREATE {$index} {$name} ON {$quotedTable} ($quotedColumns)");
         }
+
+        return $this;
     }
 
     /**
@@ -417,6 +427,8 @@ class SqlServerSchema extends AbstractSchema
             /** @noinspection SqlNoDataSourceInspection */
             $this->db->exec("DROP INDEX {$name} ON {$quotedTable}");
         }
+
+        return $this;
     }
 
     /**
@@ -431,10 +443,8 @@ class SqlServerSchema extends AbstractSchema
         // (Browser meldet "Server antowrtet nicht"). Muss fehler vom Trieber sein.
         $this->db->transaction(function() use($table, $params) {
             $quotedTable = $this->db->quoteName($table);
-            //$qTable  = $this->db->quote($table);
             $columns = $this->columns($table);
             $indexes = $this->indexes($table);
-            //$oldColumns = '"' . str_replace(',', '","', str_replace('"', '""', implode(',', array_keys($columns)))) . '"';
             $oldColumns = '[' . str_replace(',', '],[', str_replace(']', ']]', implode(',', array_keys($columns)))) . ']';
             $column  = $params['column'];
             $options = $params['options'];
@@ -577,15 +587,15 @@ class SqlServerSchema extends AbstractSchema
                 return 'BIT';
 
             case 'date':
-                $version = $this->db->version();
+                $version = $this->db->version() ?: '2008';
                 return $version >= '2008' ? 'DATE' : 'DATETIME';
 
             case 'timestamp':  // datetime with time zone
-                $version = $this->db->version();
+                $version = $this->db->version() ?: '2008';
                 return $version >= '2008' ? 'DATETIMEOFFSET' : 'DATETIME';
 
             case 'time':
-                $version = $this->db->version();
+                $version = $this->db->version() ?: '2008';
                 return $version >= '2008' ? 'TIME' : 'DATETIME';
 
             default:
@@ -598,12 +608,12 @@ class SqlServerSchema extends AbstractSchema
      */
     protected function needATypeHint($type)
     {
-        $version = $this->db->version();
+        $version = $this->db->version() ?: '2008';
         if ($version >= '2008') {
             return in_array($type, ['unsigned', 'array', 'json', 'object']);
         }
 
-        return in_array($type, ['unsigned', 'array', 'json', 'object', 'date', 'time', 'timestamp']);
+        return in_array($type, ['unsigned', 'array', 'json', 'object', 'date', 'time', 'timestamp']); // @codeCoverageIgnore
     }
 
     /**
@@ -616,9 +626,12 @@ class SqlServerSchema extends AbstractSchema
     {
         switch (strtoupper($dbType)) {
             case 'SMALLINT':
+            case 'TINYINT':
                 return 'smallint';
 
             case 'INT':
+            case 'MONEY':
+            case 'SMALLMONEY':
                 return 'integer';
 
             case 'BIGINT':
@@ -629,20 +642,26 @@ class SqlServerSchema extends AbstractSchema
                 return 'numeric';
 
             case 'FLOAT':
-            //case 'DOUBLE PRECISION':
+            case 'REAL':
+            case 'DOUBLE':
+            case 'DOUBLE PRECISION':
                 return 'float';
 
             case 'NVARCHAR':
             case 'VARCHAR':
+            case 'NCHAR':
+            case 'CHAR':
                 return 'string';
 
             case 'TEXT':
+            case 'NTEXT':
                 return 'text';
 
             case 'UNIQUEIDENTIFIER':
                 return 'guid';
 
             case 'VARBINARY':
+            case 'BINARY':
                 return 'binary';
 
             case 'IMAGE':
@@ -655,6 +674,7 @@ class SqlServerSchema extends AbstractSchema
                 return 'date';
 
             case 'DATETIME':
+            case 'SMALLDATETIME':
                 return 'datetime';
 
             case 'TIME':
@@ -664,38 +684,7 @@ class SqlServerSchema extends AbstractSchema
                 return 'timestamp';
 
             default:
-                $mapping = [
-                    'smallint' => 'smallint',
-                    'tinyint' => 'smallint',
-                    'int' => 'integer',
-                    'money' => 'integer',
-                    'smallmoney' => 'integer',
-                    'bigint' => 'bigint',
-                    'numeric' => 'numeric',
-                    'decimal' => 'numeric',
-                    'float' => 'float',
-                    'real' => 'float',
-                    'double' => 'float',
-                    'double precision' => 'float',
-                    'char' => 'string',
-                    'nchar' => 'string',
-                    'VARCHAR' => 'string',
-                    'NVARCHAR' => 'string',
-                    'text' => 'text',
-                    'ntext' => 'text',
-                    'UNIQUEIDENTIFIER' => 'guid',
-                    'VARBINARY' => 'binary',
-                    'binary' => 'binary',
-                    'image' => 'blob',
-                    'BIT' => 'boolean',
-                    'datetime' => 'datetime',
-                    'date'              => 'date',
-                    'time'              => 'time',
-                    'smalldatetime'     => 'datetime',
-                    'DATETIMEOFFSET'    => 'timestamp'
-                ];
-
-                return isset($mapping[$dbType]) ? $mapping[$dbType] : 'string';  // Fallback Type
+                return 'string';  // fallback Type
         }
     }
 
@@ -705,12 +694,13 @@ class SqlServerSchema extends AbstractSchema
     public function zero($type)
     {
         if (in_array($type, ['date'])) {
-            return '0000-00-00';
+            return '0001-01-01';
         }
+
         if (in_array($type, ['datetime', 'timestamp'])) {
             return '0001-01-01 00:00:00';
-        } else {
-            return parent::zero($type);
         }
+
+        return parent::zero($type);
     }
 }

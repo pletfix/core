@@ -23,7 +23,7 @@ class SQLite extends AbstractDatabase
      *
      * @var string|null
      */
-    private $lastInsertTo;
+    protected $lastInsertTo;
 
 //    /**
 //     * Case Insensitive Collation (default by database access layer)
@@ -86,9 +86,8 @@ class SQLite extends AbstractDatabase
 
         $username = null; //$config['username'];
         $password = null; //$config['password'];
-        $pdo      = new PDO($dsn, $username, $password, $options);
 
-        return $pdo;
+        return $this->createPDO($dsn, $username, $password, $options);
     }
 
     /**

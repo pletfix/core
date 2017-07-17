@@ -122,9 +122,9 @@ class PostgresSchema extends AbstractSchema
 
             list($type, $comment) = $this->extractTypeHintFromComment(isset($comments[$name]) ? $comments[$name] : null);
 
-            if (is_null($type)) {
+            if ($type === null) {
                 // $identity = $val['is_identity'] == 'YES'; // always NO :-(
-                $autoinc = !is_null($default) && substr($default, 0, 8) == 'nextval(';
+                $autoinc = $default !== null && substr($default, 0, 8) == 'nextval(';
                 if ($autoinc) {
                     $type = $dbType == 'BIGINT' ? 'bigidentity' : 'identity';
                     $default = null;
@@ -134,7 +134,7 @@ class PostgresSchema extends AbstractSchema
                 }
             }
 
-            if (!is_null($default)) {
+            if ($default !== null) {
                 if ($default == 'now()') {
                     $default = 'CURRENT_TIMESTAMP';
                 }
@@ -264,7 +264,7 @@ class PostgresSchema extends AbstractSchema
 
             // save comments
             $comment = isset($options['comment']) ? $options['comment'] : null;
-            if (!is_null($comment)) {
+            if ($comment !== null) {
                 $comment = $this->db->quote($comment);
                 /** @noinspection SqlDialectInspection */
                 $this->db->exec("COMMENT ON TABLE {$quotedTable} IS {$comment}");
@@ -274,9 +274,9 @@ class PostgresSchema extends AbstractSchema
                 $type = $attr['type'];
                 $comment = isset($attr['comment']) ? $attr['comment'] : null;
                 if ($this->needATypeHint($type)) {
-                    $comment = (!is_null($comment) ? $comment . ' ' : '') . '(DC2Type:' . $type . ')';
+                    $comment = ($comment !== null ? $comment . ' ' : '') . '(DC2Type:' . $type . ')';
                 }
-                if (!is_null($comment)) {
+                if ($comment !== null) {
                     $quotedColumn = $this->db->quoteName($column);
                     $comment = $this->db->quote($comment);
                     /** @noinspection SqlDialectInspection */
@@ -284,6 +284,8 @@ class PostgresSchema extends AbstractSchema
                 }
             }
         });
+
+        return $this;
     }
 
     /**
@@ -294,7 +296,7 @@ class PostgresSchema extends AbstractSchema
         $default  = isset($options['default'])  ? $options['default']  : null;
         $nullable = isset($options['nullable']) ? $options['nullable'] : false;
 
-        if (!$nullable && is_null($default) && !$this->isEmpty($table)) { // cannot add a NOT NULL column without default value to a non-empty table
+        if (!$nullable && $default === null && !$this->isEmpty($table)) { // cannot add a NOT NULL column without default value to a non-empty table
             // We have to recreate the table...
             $this->recreateTable($table, ['column' => $column, 'options' => $options]);
         }
@@ -310,15 +312,17 @@ class PostgresSchema extends AbstractSchema
                 $type = $options['type'];
                 $comment = isset($options['comment']) ? $options['comment'] : null;
                 if ($this->needATypeHint($type)) {
-                    $comment = (!is_null($comment) ? $comment . ' ' : '') . '(DC2Type:' . $type . ')';
+                    $comment = ($comment !== null ? $comment . ' ' : '') . '(DC2Type:' . $type . ')';
                 }
-                if (!is_null($comment)) {
+                if ($comment !== null) {
                     $comment = $this->db->quote($comment);
                     /** @noinspection SqlDialectInspection */
-                    $this->db->exec("COMMENT ON COLUMN {$table}.{$column} IS {$comment}");
+                    $this->db->exec("COMMENT ON COLUMN {$quotedTable}.{$quotedColumn} IS {$comment}");
                 }
             });
         }
+
+        return $this;
     }
 
     /**
@@ -328,12 +332,13 @@ class PostgresSchema extends AbstractSchema
     {
         // todo bei NOT NULL ohne default neuen Tabele anlegen
 
-        $columns = $options['columns'];
-        if (empty($columns)) {
+        if (empty($options['columns'])) {
             throw new InvalidArgumentException("Cannot add index without columns.");
         }
 
-        $quotedTable   = $this->db->quoteName($table);
+        $quotedTable = $this->db->quoteName($table);
+
+        $columns = $options['columns'];
         $quotedColumns = '"' . str_replace(',', '","', str_replace('"', '""', implode(',', $columns))) . '"';
 
 //        /** @noinspection SqlDialectInspection */
@@ -364,13 +369,15 @@ class PostgresSchema extends AbstractSchema
             // We can add the index on the regularly way.
             $unique = isset($options['unique']) ? $options['unique'] : false;
             $index  = $unique ? 'UNIQUE INDEX' : 'INDEX';
-            if (is_null($name)) {
+            if ($name === null) {
                 $name = $this->createIndexName($table, $columns, $unique);
             }
 
             // case sensitive
             $this->db->exec("CREATE {$index} {$name} ON {$quotedTable} ($quotedColumns)");
         }
+
+        return $this;
     }
 
     /**
@@ -385,7 +392,7 @@ class PostgresSchema extends AbstractSchema
             $this->db->exec("ALTER TABLE {$quotedTable} DROP CONSTRAINT {$name}");
         }
         else {
-            if (is_null($name)) {
+            if ($name === null) {
                 if (empty($options['columns'])) {
                     throw new InvalidArgumentException("Cannot find index without name and columns.");
                 }
@@ -399,6 +406,8 @@ class PostgresSchema extends AbstractSchema
             /** @noinspection SqlNoDataSourceInspection */
             $this->db->exec("DROP INDEX {$name}");
         }
+
+        return $this;
     }
 
     /**
@@ -409,8 +418,8 @@ class PostgresSchema extends AbstractSchema
      */
     private function recreateTable($table, $params)
     {
-        // Bei einem fehlerhaften INSERT-Statement und mit aktiven Transaction wird ständig die App neu aufgerufen!!
-        // (Browser meldet "Server antowrtet nicht"). Muss fehler vom Trieber sein.
+        // todo Bei einem fehlerhaften INSERT-Statement und mit aktiven Transaction wird ständig die App neu aufgerufen!!
+        // (Browser meldet "Server antowrtet nicht"). Muss Fehler vom Treiber sein.
       //  $this->transaction(function() use($table, $params) {
             $quotedTable = $this->db->quoteName($table);
             //$qTable  = $this->db->quote($table);
@@ -493,7 +502,7 @@ class PostgresSchema extends AbstractSchema
                 $sql .= ' NOT NULL';
             }
 
-            if (!is_null($options['default'])) {
+            if ($options['default'] !== null) {
                 $default = $options['default'];
                 if (is_string($default) && $default != 'CURRENT_TIMESTAMP') {
                     $default = $this->db->quote($options['default']);
@@ -506,8 +515,8 @@ class PostgresSchema extends AbstractSchema
 
             if (in_array($type, ['string', 'text'])) {
                 $collation = !empty($options['collation']) ? $options['collation'] : $this->db->config('collation');
-                if (!empty($options['collation'])) {
-                    $sql .= ' COLLATE ' . $collation;
+                if (!empty($collation)) {
+                    $sql .= ' COLLATE ' . $this->db->quoteName($collation);
                 }
             }
         }
@@ -569,7 +578,7 @@ class PostgresSchema extends AbstractSchema
             return in_array($type, ['unsigned', 'array', 'object', 'blob']);
         }
 
-        return in_array($type, ['unsigned', 'array', 'json', 'object', 'blob']);
+        return in_array($type, ['unsigned', 'array', 'json', 'object', 'blob']); // @codeCoverageIgnore
     }
 
     /**
@@ -585,25 +594,40 @@ class PostgresSchema extends AbstractSchema
     {
         switch (strtoupper($dbType)) {
             case 'SMALLINT':
+            case 'INT2':
                 return 'smallint';
 
             case 'INTEGER':
             case 'INT':
+            case 'INT4':
             case 'SERIAL':
+            case 'SERIAL4':
                 return 'integer';
 
             case 'BIGINT':
             case 'BIGSERIAL':
+            case 'SERIAL8':
+            case 'INT8':
                 return 'bigint';
 
             case 'NUMERIC':
+            case 'DECIMAL':
+            case 'MONEY':
                 return 'numeric';
 
             case 'DOUBLE PRECISION':
+            case 'FLOAT':
+            case 'FLOAT4':
+            case 'FLOAT8':
+            case 'REAL':
                 return 'float';
 
             case 'VARCHAR':
             case 'CHARACTER VARYING':
+            case 'INTERVAL':
+            case 'INET':
+            case 'CHAR':
+            case 'BPCHAR':
                 return 'string';
 
             case 'TEXT':
@@ -617,15 +641,19 @@ class PostgresSchema extends AbstractSchema
                 return 'binary';
 
             case 'BOOLEAN':
+            case 'BOOL':
                 return 'boolean';
 
             case 'DATE':
+            case 'YEAR':
                 return 'date';
 
             case 'TIMESTAMP WITHOUT TIME ZONE':
+            case 'DATETIME':
                 return 'datetime';
 
             case 'TIMESTAMP WITH TIME ZONE':
+            case 'TIMESTAMPTZ':
             case 'TIMESTAMP':
                 return 'timestamp';
 
@@ -638,47 +666,7 @@ class PostgresSchema extends AbstractSchema
                 return 'json';
 
             default:
-                $mapping = [ // todo vergleichen und sortieren
-                    'smallint'      => 'smallint',
-                    'int2'          => 'smallint',
-                    'serial'        => 'integer',
-                    'serial4'       => 'integer',
-                    'int'           => 'integer',
-                    'int4'          => 'integer',
-                    'integer'       => 'integer',
-                    'bigserial'     => 'bigint',
-                    'serial8'       => 'bigint',
-                    'bigint'        => 'bigint',
-                    'int8'          => 'bigint',
-                    'bool'          => 'boolean',
-                    'boolean'       => 'boolean',
-                    'text'          => 'text',
-                    'varchar'       => 'string',
-                    'interval'      => 'string',
-                    '_varchar'      => 'string',
-                    'char'          => 'string',
-                    'bpchar'        => 'string',
-                    'inet'          => 'string',
-                    'date'          => 'date',
-                    'datetime'      => 'datetime',
-                    'timestamp'     => 'datetime',
-                    'timestamptz'   => 'datetimetz',
-                    'time'          => 'time',
-                    'timetz'        => 'time',
-                    'float'         => 'float',
-                    'float4'        => 'float',
-                    'float8'        => 'float',
-                    'double precision' => 'float',
-                    'real'          => 'float',
-                    'decimal'       => 'numeric',
-                    'money'         => 'numeric',
-                    'numeric'       => 'numeric',
-                    'year'          => 'date',
-                    'uuid'          => 'guid',
-                    'bytea'         => 'blob',
-                ];
-
-                return isset($mapping[$dbType]) ? $mapping[$dbType] : 'string'; // Fallback Type
+                return 'string'; // fallback Type
         }
     }
 }

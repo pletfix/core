@@ -66,12 +66,13 @@ interface Schema
      *
      * Options have following values:
      * - temporary: (bool)   The table is temporary.  todo kann raus!
-     * - collation: (string) The default collation of the table.
+     * - collation: (string) The default collation of the table (supported only by MySql). todo anders beahndeln (z.B. CS und CI)
      * - comment:   (string) A hidden comment.
      *
      * @param  string $table
      * @param array $columns
      * @param array $options
+     * @return $this
      */
     public function createTable($table, array $columns, array $options = []); // todo $this zurückgeben
 
@@ -79,6 +80,7 @@ interface Schema
      * Drop a table from the schema.
      *
      * @param string $table
+     * @return $this;
      */
     public function dropTable($table);
 
@@ -87,6 +89,7 @@ interface Schema
      *
      * @param string $from old table name
      * @param string $to new table name
+     * @return $this
      */
     public function renameTable($from, $to);
 
@@ -105,6 +108,7 @@ interface Schema
      * @param string $table
      * @param string $column
      * @param array $options
+     * @return $this
      */
     public function addColumn($table, $column, array $options);
 
@@ -113,6 +117,7 @@ interface Schema
      *
      * @param string $table
      * @param string $column
+     * @return $this
      */
     public function dropColumn($table, $column);
 
@@ -122,6 +127,7 @@ interface Schema
      * @param string $table
      * @param string $from
      * @param string $to
+     * @return $this
      */
     public function renameColumn($table, $from, $to);
 
@@ -134,8 +140,9 @@ interface Schema
      * - primary:   (bool)      The index is the primary key.
      *
      * @param string $table Name of the table which the index is for.
-     * @param string|null $name The name of the index. It will be generated automatically if not set and will be ignored by a primary key.
+     * @param string|null $name The name of the index. It will be generated automatically if not set. It will be ignored by a primary key.
      * @param array $options
+     * @return $this
      */
     public function addIndex($table, $name, array $options); // todo name in options aufnehmen oder als letzten Parameter
 
@@ -150,13 +157,14 @@ interface Schema
      * @param string $table
      * @param string|null $name The name of the index. It will be generated automatically if not set.
      * @param array $options
+     * @return $this
      */
     public function dropIndex($table, $name, array $options = []);
 
     /**
      * Get a Zero-Value by given column type.
      * @param string $type Column Type supported by Database Access Layer
-     * @return string
+     * @return string|int
      */
     public function zero($type);
 }

@@ -5,7 +5,6 @@ namespace Core\Services\PDOs;
 use Core\Services\AbstractDatabase;
 use Core\Services\PDOs\Builder\PostgresBuilder;
 use Core\Services\PDOs\Schemas\PostgresSchema;
-use PDO;
 
 /**
  * PostgreSQL Access Layer
@@ -22,7 +21,7 @@ class Postgres extends AbstractDatabase
      *
      * @var string|null
      */
-    private $lastInsertTo;
+    protected $lastInsertTo;
 
     /**
      * @inheritdoc
@@ -62,24 +61,24 @@ class Postgres extends AbstractDatabase
         $dsn      = $this->getDsn($config);
         $username = $config['username'];
         $password = $config['password'];
-        $pdo      = new PDO($dsn, $username, $password, $options);
+        $pdo      = $this->createPDO($dsn, $username, $password, $options);
 
         $schema = $this->formatSchema(isset($config['schema']) ? $config['schema'] : 'public');
         $statement = "SET search_path to {$schema}";
-        $pdo->prepare($statement)->execute();
+        $pdo->exec($statement);
 
         $charset = isset($config['charset']) ? $config['charset'] : 'utf8';
         $statement = "SET names '{$charset}'";
-        $pdo->prepare($statement)->execute();
+        $pdo->exec($statement);
 
         if (isset($config['timezone'])) {
             $statement = "SET time_zone='{$config['timezone']}'";
-            $pdo->prepare($statement)->execute();
+            $pdo->exec($statement);
         }
 
         if (isset($config['application_name'])) {
             $statement = "SET application_name to '{$config['application_name']}'";
-            $pdo->prepare($statement)->execute();
+            $pdo->exec($statement);
         }
 
         return $pdo;
@@ -124,10 +123,10 @@ class Postgres extends AbstractDatabase
     private function formatSchema($schema)
     {
         if (is_array($schema)) {
-            return '"'.implode('", "', $schema).'"';
+            return '"' . implode('", "', $schema) . '"';
         }
         else {
-            return '"'.$schema.'"';
+            return '"' . $schema . '"';
         }
     }
 
@@ -159,21 +158,19 @@ class Postgres extends AbstractDatabase
             return 0;
         }
 
-        $schema = $this->config['schema'];
-
         // Get the name of the sequence to check; typically it takes the form of `<table>_<column>_seq`.
-        /** @noinspection SqlDialectInspection */
 
+        /** @noinspection SqlDialectInspection */
         $default = $this->scalar("
             SELECT column_default
             FROM information_schema.columns
             WHERE table_schema = ?
             AND table_name = ?
             AND column_default LIKE 'nextval(%'
-        ", [$schema, $this->lastInsertTo]);
+        ", [$this->config['schema'], $this->lastInsertTo]);
 
         if (!preg_match('/^nextval\(\'(\w+)\'::regclass\)$/s', $default, $match)) {
-            return 0;
+            return 0; // @codeCoverageIgnore
         }
 
         return (int)$this->pdo->lastInsertId($match[1]);
