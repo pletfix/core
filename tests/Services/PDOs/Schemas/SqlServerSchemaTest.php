@@ -200,7 +200,6 @@ class SqlServerSchemaTest extends TestCase
         ], $this->schema->columns('table1'));
     }
 
-
     public function testIndexes()
     {
         $this->expectsQueryFile('show_table1_indexes');

@@ -135,7 +135,8 @@ class SQLiteSchema extends AbstractSchema
                     $collation = $matches[1];
                 }
                 else {
-                    $collation = $this->collateCS; // sqlite's default
+                    // sqlite's default
+                    $collation = $this->collateCS; // @codeCoverageIgnore
                 }
             }
 
@@ -197,7 +198,7 @@ class SQLiteSchema extends AbstractSchema
         foreach ($info as $val) {
             $name    = $val['name'];
             $unique  = (bool)($val['unique']);
-            $info2 = $this->db->query('PRAGMA INDEX_INFO(' . $this->db->quoteName($name) . ')');
+            $info2 = $this->db->query('PRAGMA INDEX_INFO(' . $this->db->quote($name) . ')');
             $columns = [];
             //$primary = $val['origin'] == 'pk'; // not available by sqlite 3.7.17
             $primary = true;
@@ -281,7 +282,6 @@ class SQLiteSchema extends AbstractSchema
                 if (!is_null($comment)) {
                     /** @noinspection SqlDialectInspection */
                     $this->db->exec('INSERT INTO _comments (table_name, column_name, content) VALUES (?, ?, ?)', [$table, $column, $comment]);
-
                 }
             }
         });
@@ -340,7 +340,7 @@ class SQLiteSchema extends AbstractSchema
             (!$nullable && is_null($default)) || // sqlite cannot add a NOT NULL column without default value
             $default == 'CURRENT_TIMESTAMP'      // sqlite cannot add a column with non-constant default
         ) {
-            // We have to recreate the table...
+            // the table have to been recreated...
             $this->recreateTable($table, 'addColumn', ['column' => $column, 'options' => $options]);
         }
         else {
@@ -383,7 +383,7 @@ class SQLiteSchema extends AbstractSchema
     /**
      * @inheritdoc
      */
-    public function renameColumn($table, $from, $to)
+    public function renameColumn($table, $from, $to) // todo from und to müssen unterschiedlich sein
     {
         $this->recreateTable($table, 'renameColumn', ['from' => $from, 'to' => $to]);
 
@@ -395,10 +395,11 @@ class SQLiteSchema extends AbstractSchema
      */
     public function addIndex($table, $name, array $options)
     {
-        $columns = $options['columns'];
-        if (empty($columns)) {
+        if (empty($options['columns'])) {
             throw new InvalidArgumentException("Cannot add index without columns.");
         }
+
+        $columns = $options['columns'];
 
         $primary = isset($options['primary']) ? $options['primary'] : false;
         if ($primary) {
@@ -496,11 +497,15 @@ class SQLiteSchema extends AbstractSchema
                 $newColumns = '"' . str_replace(',', '","', str_replace('"', '""', implode(',', array_keys($columns)))) . '"';
 
                 /** @noinspection SqlDialectInspection */
-                $this->db->exec('DELETE FROM _comments WHERE table_name = ? AND column_name = ?', [$table, $column]);
+                //$this->db->exec('DELETE FROM _comments WHERE table_name = ? AND column_name = ?', [$table, $column]);
 
                 // 3. copy the contents across from the original table
                 /** @noinspection SqlNoDataSourceInspection */
                 $this->db->exec("INSERT INTO {$quotedTable} ({$newColumns}) SELECT {$newColumns} FROM {$oldTable}");
+
+                $indexes = array_filter($indexes, function($index) use ($column) {
+                    return !in_array($column, $index['columns']);
+                });
             }
             else if ($action == 'renameColumn') {
                 $from = $params['from'];
@@ -516,11 +521,24 @@ class SQLiteSchema extends AbstractSchema
                 $newColumns = '"' . str_replace(',', '","', str_replace('"', '""', implode(',', array_keys($newColumns)))) . '"';
 
                 /** @noinspection SqlDialectInspection */
-                $this->db->exec('DELETE FROM _comments WHERE table_name = ? AND column_name = ?', [$table, $from]);
+                //$this->db->exec('DELETE FROM _comments WHERE table_name = ? AND column_name = ?', [$table, $from]);
 
                 // 3. copy the contents across from the original table
                 /** @noinspection SqlNoDataSourceInspection */
                 $this->db->exec("INSERT INTO {$quotedTable} ({$newColumns}) SELECT {$oldColumns} FROM {$oldTable}");
+
+                foreach ($indexes as $name => $index) {
+                    $pos = array_search($from, $index['columns']);
+                    if ($pos !== false) {
+                        $indexes[$name]['columns'][$pos] = $to;
+                        $newName = str_replace('_' . $from . '_', '_' . $to . '_', $name);
+                        if ($newName != $name) {
+                            $indexes[$name]['name'] = $newName;
+                            $indexes[$newName] = $indexes[$name];
+                            unset($indexes[$name]);
+                        }
+                    }
+                }
             }
             else if ($action == 'addPrimary') {
                 $idxColumns = $params['columns'];
@@ -709,23 +727,23 @@ class SQLiteSchema extends AbstractSchema
 
             default:
                 // Determination Of Column Affinity, see https://www.sqlite.org/datatype3.html
-                if (stripos($dbType, 'INT') !== false) {
-                    return 'integer';
-                }
-                if (stripos($dbType, 'CHAR') !== false) {
-                    return 'string';
-                }
-                if (stripos($dbType, 'TEXT') !== false || stripos($dbType, 'CLOB') !== false) {
-                    return 'text';
-                }
-                if (stripos($dbType, 'BLOB') !== false) {
-                    return 'blob';
-                }
-                if (stripos($dbType, 'REAL') !== false || stripos($dbType, 'FLOA') !== false || stripos($dbType, 'DOUB') !== false) {
-                    return 'float';
-                }
+//                if (stripos($dbType, 'INT') !== false) {
+//                    return 'integer';
+//                }
+//                if (stripos($dbType, 'CHAR') !== false) {
+//                    return 'string';
+//                }
+//                if (stripos($dbType, 'TEXT') !== false || stripos($dbType, 'CLOB') !== false) {
+//                    return 'text';
+//                }
+//                if (stripos($dbType, 'BLOB') !== false) {
+//                    return 'blob';
+//                }
+//                if (stripos($dbType, 'REAL') !== false || stripos($dbType, 'FLOA') !== false || stripos($dbType, 'DOUB') !== false) {
+//                    return 'float';
+//                }
 
-                return 'string';  // Fallback Type
+                return 'string';  // fallback Type
         }
     }
 
