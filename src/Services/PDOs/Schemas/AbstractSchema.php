@@ -94,7 +94,7 @@ abstract class AbstractSchema implements SchemaContract
     {
         $table = $this->db->quoteName($table);
 
-        $this->db->exec("DROP TABLE {$table}");
+        $this->db->exec("DROP TABLE {$table}"); // todo geschweifte Klammern müssen nicht sein
 
         return $this;
     }
@@ -111,6 +111,18 @@ abstract class AbstractSchema implements SchemaContract
 
         return $this;
     }
+
+//    /**
+//     * @inheritdoc
+//     */
+//    public function truncateTable($table)
+//    {
+//        $table = $this->db->quoteName($table);
+//
+//        $this->db->exec("TRUNCATE TABLE $table");
+//
+//        return $this;
+//    }
 
     /**
      * @inheritdoc

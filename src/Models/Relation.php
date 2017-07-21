@@ -5,7 +5,7 @@ namespace Core\Models;
 use Closure;
 use Core\Models\Contracts\Model as ModelContract;
 use Core\Models\Contracts\Relation as RelationContract;
-use Core\Services\PDOs\Builder\Contracts\Builder;
+use Core\Services\PDOs\Builders\Contracts\Builder;
 
 abstract class Relation implements RelationContract
 {

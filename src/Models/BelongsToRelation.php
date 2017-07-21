@@ -4,7 +4,7 @@ namespace Core\Models;
 
 use Core\Models\Contracts\Model as ModelContract;
 use Core\Services\Contracts\Database;
-use Core\Services\PDOs\Builder\Contracts\Builder;
+use Core\Services\PDOs\Builders\Contracts\Builder;
 
 class BelongsToRelation extends Relation
 {
@@ -154,7 +154,8 @@ class BelongsToRelation extends Relation
             $foreignId = $this->model->getAttribute($this->foreignKey);
             $otherId = $model->getAttribute($this->otherKey);
 
-            $model->delete()->clearRelationCache();
+            $model->delete();
+            $model->clearRelationCache();
 
             $db->table($this->model->getTable())
                 ->whereIs($this->foreignKey, $otherId)

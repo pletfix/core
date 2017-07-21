@@ -3,7 +3,7 @@
 namespace Core\Tests\Services\PDOs;
 
 use Core\Services\AbstractDatabase;
-use Core\Services\PDOs\Builder\MySqlBuilder;
+use Core\Services\PDOs\Builders\MySqlBuilder;
 use Core\Services\PDOs\MySql;
 use Core\Services\PDOs\Schemas\MySqlSchema;
 use Core\Testing\TestCase;

@@ -1,14 +1,14 @@
 <?php
 
-namespace Core\Services\PDOs\Builder;
+namespace Core\Services\PDOs\Builders;
 
 use Closure;
 use Core\Models\Contracts\Model;
 use Core\Models\Contracts\Relation;
 use Core\Services\Contracts\Database;
-use Core\Services\PDOs\Builder\Contracts\Builder as BuilderContract;
-use Core\Services\PDOs\Builder\Contracts\Builder;
-use Core\Services\PDOs\Builder\Contracts\Hookable;
+use Core\Services\PDOs\Builders\Contracts\Builder as BuilderContract;
+use Core\Services\PDOs\Builders\Contracts\Builder;
+use Core\Services\PDOs\Builders\Contracts\Hookable;
 use InvalidArgumentException;
 use LogicException;
 
@@ -23,7 +23,7 @@ use LogicException;
  * @see https://github.com/illuminate/database/blob/5.3/Query/Builder.php Laravel's Query Builder on GitHub
  * @see https://github.com/cakephp/database/tree/3.2 CakePHP's Database Library
  */
-abstract class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilder!
+class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilder!
 {
     /**
      * Database Access Layer.
@@ -522,7 +522,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         }
 
         $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
-        $this->where[] = $op . 'EXISTS (' . $query . ')';
+        $this->where[] = $op . ($not ? 'NOT ' : '') . 'EXISTS (' . $query . ')';
         $this->putBindings('where', $bindings);
 
         return $this;
@@ -788,7 +788,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         /** @noinspection SqlDialectInspection */
         $entity = $this->db->single("SELECT $columns FROM $table WHERE $key = ?", [$id], $this->class);
 
-        if (!empty($this->with)) {
+        if ($entity !== null && !empty($this->with)) {
             $this->eagerLoadRelations([$entity]);
         }
 
@@ -826,7 +826,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
     {
         $entity = $this->db->single($this->toSql(), $this->bindings(), $this->class);
 
-        if (!empty($this->with)) {
+        if ($entity !== null && !empty($this->with)) {
             $this->eagerLoadRelations([$entity]);
         }
 
@@ -936,7 +936,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      */
     public function count()
     {
-        return $this->aggregate('COUNT'); // todo als int umwandeln
+        return (int)$this->aggregate('COUNT');
     }
 
     /**
@@ -1084,7 +1084,7 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
      * @param array $data Values to be updated
      * @return int|false
      */
-    public function doInsert(array $data = [])
+    protected function doInsert(array $data = [])
     {
         $table = implode(', ', $this->from);
 
@@ -1122,6 +1122,18 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         return $this->db->lastInsertId();
     }
 
+//    /**
+//     * Determine if the new and old attribute values are numerically equivalent.
+//     *
+//     * @param mixed $v1
+//     * @param mixed $v2
+//     * @return bool
+//     */
+//    private function isNumericallyEquivalent($v1, $v2)
+//    {
+//        return is_numeric($v1) && is_numeric($v2) && strcmp((string)$v1, (string)$v2) === 0;
+//    }
+
     /**
      * @inheritdoc
      */
@@ -1137,13 +1149,15 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
             $hook = 'beforeUpdate';
             if (method_exists($this->class, $hook)) {
                 foreach ($instances as $i => $instance) {
-                    $instance->setAttributes(array_merge($instance->getAttributes(), $data));
+                    $original = $instance->getAttributes();
+                    $instance->setAttributes(array_merge($original, $data));
                     if ($instance->$hook() === false) {
                         return false;
                     }
-                    $attributes = $instance->getAttributes();
-                    foreach ($data as $name => $value) {
-                        $data[$name] = $attributes[$name];
+                    foreach ($instance->getAttributes() as $name => $value) {
+                        if (!array_key_exists($name, $original) || ($value !== $original[$name] /*&& !$this->isNumericallyEquivalent($value, $original[$name])*/)) {
+                            $data[$name] = $value;
+                        }
                     }
                 }
             }
@@ -1309,6 +1323,9 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
         return $this->db->exec($query, $bindings);
     }
 
+    // @codeCoverageIgnoreStart
+    // todo Truncate is DDL and not DML - hier rauswerfen und statt dessen in Schema einfügen
+
     /**
      * @inheritdoc
      */
@@ -1378,6 +1395,9 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
 
         return $this->db->exec("TRUNCATE TABLE $table");
     }
+
+    // todo ENDE - Truncate is DDL and not DML - hier rauswerfen und statt dessen in Schema einfügen
+    // @codeCoverageIgnoreEnd
 
     /**
      * Determine whether the class you specified by asClass() implements the Hookable contract and provides hooks for
@@ -1555,6 +1575,10 @@ abstract class AbstractBuilder implements BuilderContract // todo ist kein Abstr
                         }
                     }
                 }
+            }
+            else if ($ch == ':') { // named placeholder
+                while (++$i < $n && stripos('abcdefghijklmnopqrstuvwxyz0123456789$_', $expr[$i]) !== false);
+                ++$i;
             }
             else if ($ch == '"' || $ch == "'" || $ch == '`' || $ch == '[') { // masked literal
                 $c = $ch == '[' ? ']' : $ch;

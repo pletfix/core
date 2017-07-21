@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Services\PDOs\Builder\Contracts;
+namespace Core\Services\PDOs\Builders\Contracts;
 
 interface Hookable
 {

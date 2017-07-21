@@ -3,7 +3,7 @@
 namespace Core\Services\PDOs;
 
 use Core\Services\AbstractDatabase;
-use Core\Services\PDOs\Builder\PostgresBuilder;
+use Core\Services\PDOs\Builders\PostgresBuilder;
 use Core\Services\PDOs\Schemas\PostgresSchema;
 
 /**

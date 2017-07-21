@@ -4,7 +4,7 @@ namespace Core\Models;
 
 use Core\Models\Contracts\Model as ModelContract;
 use Core\Services\Contracts\Database;
-use Core\Services\PDOs\Builder\Contracts\Builder;
+use Core\Services\PDOs\Builders\Contracts\Builder;
 
 class MorphToRelation extends BelongsToRelation
 {
@@ -108,7 +108,8 @@ class MorphToRelation extends BelongsToRelation
             $otherId   = $model->getAttribute($this->otherKey);
             $foreignId = $this->model->getAttribute($this->foreignKey);
 
-            $model->delete()->clearRelationCache();
+            $model->delete();
+            $model->clearRelationCache();
 
             $db->table($this->model->getTable())
                 ->whereIs($this->typeAttribute, $type)

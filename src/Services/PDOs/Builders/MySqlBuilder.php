@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Services\PDOs\Builder;
+namespace Core\Services\PDOs\Builders;
 
 /**
  * MySql Query Builder
@@ -10,7 +10,7 @@ class MySqlBuilder extends AbstractBuilder
     /**
      * @inheritdoc
      */
-    public function doDelete()
+    protected function doDelete()
     {
         $bindings = array_merge($this->bindings['join'], $this->bindings['where'], $this->bindings['order']);
 

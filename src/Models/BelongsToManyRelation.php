@@ -4,7 +4,7 @@ namespace Core\Models;
 
 use Core\Models\Contracts\Model as ModelContract;
 use Core\Services\Contracts\Database;
-use Core\Services\PDOs\Builder\Contracts\Builder;
+use Core\Services\PDOs\Builders\Contracts\Builder;
 
 class BelongsToManyRelation extends Relation
 {
@@ -207,7 +207,8 @@ class BelongsToManyRelation extends Relation
     {
         $this->model->database()->transaction(function(Database $db) use($model) {
             $foreignId = $model->getAttribute($this->otherKey);
-            $model->delete()->clearRelationCache();
+            $model->delete();
+            $model->clearRelationCache();
             $db->table($this->joinTable)
                 ->whereIs($this->otherForeignKey, $foreignId)
                 ->delete();

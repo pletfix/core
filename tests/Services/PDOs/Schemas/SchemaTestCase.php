@@ -24,7 +24,6 @@ class SchemaTestCase extends TestCase
      */
     protected $db;
 
-
     private function replaceFirstMatch($search, $replace, $subject)
     {
         $pos = strpos($subject, $search);
@@ -82,5 +81,4 @@ class SchemaTestCase extends TestCase
         $fixture = include static::$fixturePath . '/' . $name . '.php';
         $this->expectsQuery($fixture['query'], $fixture['bindings'], $fixture['result'], $index);
     }
-
 }

@@ -3,7 +3,7 @@
 namespace Core\Tests\Services\PDOs;
 
 use Core\Services\AbstractDatabase;
-use Core\Services\PDOs\Builder\PostgresBuilder;
+use Core\Services\PDOs\Builders\PostgresBuilder;
 use Core\Services\PDOs\Postgres;
 use Core\Services\PDOs\Schemas\PostgresSchema;
 use Core\Testing\TestCase;

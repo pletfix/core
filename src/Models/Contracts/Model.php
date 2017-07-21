@@ -13,8 +13,8 @@ use Core\Models\MorphOneRelation;
 use Core\Services\Contracts\Arrayable;
 use Core\Services\Contracts\Database;
 use Core\Services\Contracts\Jsonable;
-use Core\Services\PDOs\Builder\Contracts\Builder;
-use Core\Services\PDOs\Builder\Contracts\Hookable;
+use Core\Services\PDOs\Builders\Contracts\Builder;
+use Core\Services\PDOs\Builders\Contracts\Hookable;
 use JsonSerializable;
 
 interface Model extends Arrayable, ArrayAccess, Hookable, Jsonable, JsonSerializable

@@ -3,7 +3,7 @@
 namespace Core\Models\Contracts;
 
 use Closure;
-use Core\Services\PDOs\Builder\Contracts\Builder;
+use Core\Services\PDOs\Builders\Contracts\Builder;
 use Countable;
 
 /**

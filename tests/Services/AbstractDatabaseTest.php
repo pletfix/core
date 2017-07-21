@@ -5,7 +5,7 @@ namespace Core\Tests\Services;
 use Core\Exceptions\QueryException;
 use Core\Services\AbstractDatabase;
 use Core\Services\Contracts\Database;
-use Core\Services\PDOs\Builder\Contracts\Builder;
+use Core\Services\PDOs\Builders\Contracts\Builder;
 use Core\Services\PDOs\Schemas\Contracts\Schema;
 use Core\Services\PDOs\SQLite;
 use Core\Testing\TestCase;

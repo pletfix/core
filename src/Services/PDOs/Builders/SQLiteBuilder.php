@@ -1,12 +1,15 @@
 <?php
 
-namespace Core\Services\PDOs\Builder;
+namespace Core\Services\PDOs\Builders;
 
 /**
  * SQLite Query Builder
  */
 class SQLiteBuilder extends AbstractBuilder
 {
+    // @codeCoverageIgnoreStart
+    // todo gehört zum Schema!
+
     /**
      * @inheritdoc
      */
@@ -21,4 +24,6 @@ class SQLiteBuilder extends AbstractBuilder
             return $result;
         });
     }
+
+    // @codeCoverageIgnoreEnd
 }

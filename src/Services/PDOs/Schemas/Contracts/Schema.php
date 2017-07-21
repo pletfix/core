@@ -93,6 +93,21 @@ interface Schema
      */
     public function renameTable($from, $to);
 
+    // todo im Builder rauswerfen und hier aktievieren
+//    /**
+//     * Truncate the table.
+//     *
+//     * Note, that TRUNCATE TABLE is DDL and not DML like DELETE. That's why this method is member of Shema and not of
+//     * Builder.
+//     *
+//     * This means that TRUNCATE TABLE will cause an implicit COMMIT in a transaction block, see also
+//     * https://dev.mysql.com/doc/refman/5.7/en/truncate-table.html!
+//     *
+//     * @param string $table
+//     * @return $this
+//     */
+//    public function truncateTable($table);
+
     /**
      * Add a new column to the table.
      *

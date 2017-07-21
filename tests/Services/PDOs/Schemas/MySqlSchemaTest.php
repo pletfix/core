@@ -2,72 +2,17 @@
 
 namespace Core\Tests\Services\PDOs\Schemas;
 
-use Core\Services\Contracts\Database;
 use Core\Services\PDOs\MySql;
-use Core\Services\PDOs\Schemas\Contracts\Schema;
 use Core\Services\PDOs\Schemas\MySqlSchema;
-use Core\Testing\TestCase;
 use InvalidArgumentException;
-use PHPUnit_Framework_MockObject_MockObject;
 
-class MySqlSchemaTest extends TestCase
+require_once 'SchemaTestCase.php';
+
+class MySqlSchemaTest extends SchemaTestCase
 {
-    /**
-     * @var Schema
-     */
-    private $schema;
-
-    /**
-     * @var Database|PHPUnit_Framework_MockObject_MockObject
-     */
-    private $db;
-
-    private function expectsExec(array $statements, $same = true)
+    public static function setUpBeforeClass()
     {
-        foreach ($statements as $i => $statement) {
-            $statements[$i] = trim(preg_replace('/\s+/', ' ', str_replace("\n", '', $statement)));
-        }
-
-        $sequence = 0;
-        $this->db->expects($this->any())
-            ->method('exec')
-            ->willReturnCallback(function($statement) use ($statements, &$sequence, $same) {
-                $statement = trim(preg_replace('/\s+/', ' ', str_replace("\n", '', $statement)), '; ');
-                if ($same) {
-                    $this->assertSame($statements[$sequence], $statement);
-                }
-                else {
-                    $this->assertStringStartsWith($statements[$sequence], $statement);
-                }
-                $sequence++;
-                $this->returnValue(0);
-            });
-    }
-
-    private function expectsExecFile($name)
-    {
-        $statements = explode(';', file_get_contents(__DIR__  . '/../../fixtures/mysql/' . $name . '.sql'));
-        $this->expectsExec($statements);
-    }
-
-    private function expectsQuery($expectedQuery, $expectedBindings, $result, $index = null)
-    {
-        $this->db->expects($index === null ? $this->once() : $this->at($index))
-            ->method('query')
-            ->willReturnCallback(function($actualQuery, $actualBindings) use ($expectedQuery, $expectedBindings, $result) {
-                $actualQuery   = trim(preg_replace('/\s+/', ' ', str_replace("\n", '', $actualQuery)), '; ');
-                $expectedQuery = trim(preg_replace('/\s+/', ' ', str_replace("\n", '', $expectedQuery)), '; ');
-                $this->assertSame($expectedQuery, $actualQuery);
-                $this->assertSame($expectedBindings, $actualBindings);
-                return $result;
-            });
-    }
-
-    private function expectsQueryFile($name, $index = null)
-    {
-        /** @noinspection PhpIncludeInspection */
-        $fixture = include __DIR__  . '/../../fixtures/mysql/' . $name . '.php';
-        $this->expectsQuery($fixture['query'], $fixture['bindings'], $fixture['result'], $index);
+        self::$fixturePath = __DIR__  . '/../../fixtures/mysql';
     }
 
     protected function setUp()

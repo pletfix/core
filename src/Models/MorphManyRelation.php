@@ -3,7 +3,7 @@
 namespace Core\Models;
 
 use Core\Models\Contracts\Model as ModelContract;
-use Core\Services\PDOs\Builder\Contracts\Builder;
+use Core\Services\PDOs\Builders\Contracts\Builder;
 
 class MorphManyRelation extends Relation
 {

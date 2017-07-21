@@ -3,7 +3,7 @@
 namespace Core\Services\Contracts;
 
 use Closure;
-use Core\Services\PDOs\Builder\Contracts\Builder;
+use Core\Services\PDOs\Builders\Contracts\Builder;
 use Core\Services\PDOs\Schemas\Contracts\Schema;
 use Exception;
 use Generator;

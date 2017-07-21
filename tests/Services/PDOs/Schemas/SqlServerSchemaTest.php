@@ -2,72 +2,17 @@
 
 namespace Core\Tests\Services\PDOs\Schemas;
 
-use Core\Services\Contracts\Database;
 use Core\Services\PDOs\SqlServer;
-use Core\Services\PDOs\Schemas\Contracts\Schema;
 use Core\Services\PDOs\Schemas\SqlServerSchema;
-use Core\Testing\TestCase;
 use InvalidArgumentException;
-use PHPUnit_Framework_MockObject_MockObject;
 
-class SqlServerSchemaTest extends TestCase
+require_once 'SchemaTestCase.php';
+
+class SqlServerSchemaTest extends SchemaTestCase
 {
-    /**
-     * @var Schema
-     */
-    private $schema;
-
-    /**
-     * @var Database|PHPUnit_Framework_MockObject_MockObject
-     */
-    private $db;
-
-    private function expectsExec(array $statements, $same = true)
+    public static function setUpBeforeClass()
     {
-        foreach ($statements as $i => $statement) {
-            $statements[$i] = trim(preg_replace('/\s+/', ' ', str_replace("\n", '', $statement)));
-        }
-
-        $sequence = 0;
-        $this->db->expects($this->any())
-            ->method('exec')
-            ->willReturnCallback(function($statement) use ($statements, &$sequence, $same) {
-                $statement = trim(preg_replace('/\s+/', ' ', str_replace("\n", '', $statement)), '; ');
-                if ($same) {
-                    $this->assertSame($statements[$sequence], $statement);
-                }
-                else {
-                    $this->assertStringStartsWith($statements[$sequence], $statement);
-                }
-                $sequence++;
-                $this->returnValue(0);
-            });
-    }
-
-    private function expectsExecFile($name)
-    {
-        $statements = explode(';', file_get_contents(__DIR__  . '/../../fixtures/sqlserver/' . $name . '.sql'));
-        $this->expectsExec($statements);
-    }
-
-    private function expectsQuery($expectedQuery, $expectedBindings, $result, $index = null)
-    {
-        $this->db->expects($index === null ? $this->once() : $this->at($index))
-            ->method('query')
-            ->willReturnCallback(function($actualQuery, $actualBindings) use ($expectedQuery, $expectedBindings, $result) {
-                $actualQuery   = trim(preg_replace('/\s+/', ' ', str_replace("\n", '', $actualQuery)), '; ');
-                $expectedQuery = trim(preg_replace('/\s+/', ' ', str_replace("\n", '', $expectedQuery)), '; ');
-                $this->assertSame($expectedQuery, $actualQuery);
-                $this->assertSame($expectedBindings, $actualBindings);
-                return $result;
-            });
-    }
-
-    private function expectsQueryFile($name, $index = null)
-    {
-        /** @noinspection PhpIncludeInspection */
-        $fixture = include __DIR__  . '/../../fixtures/sqlserver/' . $name . '.php';
-        $this->expectsQuery($fixture['query'], $fixture['bindings'], $fixture['result'], $index);
+        self::$fixturePath = __DIR__  . '/../../fixtures/sqlserver';
     }
 
     protected function setUp()
@@ -359,7 +304,7 @@ class SqlServerSchemaTest extends TestCase
         $this->expectsExec([
             "EXEC sp_rename 'table1', 't",
             'CREATE TABLE [table1] ([string1] NVARCHAR(255) COLLATE Latin1_General_CI_AS NOT NULL, [column1] NVARCHAR(255) NOT NULL)',
-            'INSERT INTO [table1] ([string1],[column1]) SELECT [string1], ? AS [column1] FROM t',
+            'INSERT INTO [table1] ([string1],[column1]) SELECT [string1], \'\' AS [column1] FROM t',
             'DROP TABLE t',
             'CREATE INDEX table1_string1_index ON [table1] ([string1])',
         ], false);

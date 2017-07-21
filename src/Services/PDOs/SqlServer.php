@@ -3,7 +3,7 @@
 namespace Core\Services\PDOs;
 
 use Core\Services\AbstractDatabase;
-use Core\Services\PDOs\Builder\SqlServerBuilder;
+use Core\Services\PDOs\Builders\SqlServerBuilder;
 use Core\Services\PDOs\Schemas\SqlServerSchema;
 use PDO;
 

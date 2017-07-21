@@ -3,7 +3,7 @@
 namespace Core\Tests\Services\PDOs;
 
 use Core\Services\AbstractDatabase;
-use Core\Services\PDOs\Builder\SQLiteBuilder;
+use Core\Services\PDOs\Builders\SQLiteBuilder;
 use Core\Services\PDOs\Schemas\SQLiteSchema;
 use Core\Services\PDOs\SQLite;
 use Core\Testing\TestCase;

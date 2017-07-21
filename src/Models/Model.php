@@ -6,7 +6,7 @@ use Core\Exceptions\MassAssignmentException;
 use Core\Models\Contracts\Model as ModelContract;
 use Core\Services\Contracts\Database;
 use Core\Services\DI;
-use Core\Services\PDOs\Builder\Contracts\Builder;
+use Core\Services\PDOs\Builders\Contracts\Builder;
 use LogicException;
 
 /**

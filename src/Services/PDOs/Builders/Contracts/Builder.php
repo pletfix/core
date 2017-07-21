@@ -1,8 +1,9 @@
 <?php
 
-namespace Core\Services\PDOs\Builder\Contracts;
+namespace Core\Services\PDOs\Builders\Contracts;
 
 use Countable;
+use Generator;
 
 /**
  * Query Builder
@@ -339,9 +340,9 @@ interface Builder extends Countable
      *
      * Examples:
      * <pre>
-     * whereSubQuery('column1', 'SELECT MAX(i) FROM table2 WHERE c1 = ?', [$foo])
-     * whereSubQuery('column1', database()->createBuilder()->select('MAX(i)')->from('table2')->where('c1 = ?'), [$foo])
-     * whereSubQuery('column1', function(Builder $builder) { return $builder->select('MAX(i)')->from('table2')->where('c1 = ?'); }, [$foo])
+     * whereExists('column1', 'SELECT MAX(i) FROM table2 WHERE c1 = ?', [$foo])
+     * whereExists('column1', database()->createBuilder()->select('MAX(i)')->from('table2')->where('c1 = ?'), [$foo])
+     * whereExists('column1', function(Builder $builder) { return $builder->select('MAX(i)')->from('table2')->where('c1 = ?'); }, [$foo])
      * </pre>
      *
      * @param string|Builder|\Closure $query
@@ -661,7 +662,7 @@ interface Builder extends Countable
      *
      * Note, this method ignores the "with" clause, because the data could not be eager loaded.
      *
-     * @return mixed
+     * @return Generator
      */
     public function cursor();
 

@@ -5,7 +5,7 @@ namespace Core\Services;
 use Closure;
 use Core\Exceptions\QueryException;
 use Core\Services\Contracts\Database as DatabaseContract;
-use Core\Services\PDOs\Builder\Contracts\Builder;
+use Core\Services\PDOs\Builders\Contracts\Builder;
 use Core\Services\PDOs\Schemas\Contracts\Schema;
 use DateTimeInterface;
 use Exception;

@@ -3,7 +3,7 @@
 namespace Core\Services\PDOs;
 
 use Core\Services\AbstractDatabase;
-use Core\Services\PDOs\Builder\MySqlBuilder;
+use Core\Services\PDOs\Builders\MySqlBuilder;
 use Core\Services\PDOs\Schemas\MySqlSchema;
 use PDO;
 
