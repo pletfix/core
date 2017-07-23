@@ -17,7 +17,7 @@ class Csrf implements MiddlewareContract
             $token = $request->input('_token') ?: (isset($_SERVER['HTTP_X_CSRF_TOKEN']) ? $_SERVER['HTTP_X_CSRF_TOKEN'] : null);
             if ($token !== csrf_token()) {
                 abort(HTTP_STATUS_FORBIDDEN);
-            }
+            } // @codeCoverageIgnore
         }
 
         return $delegate->process($request);

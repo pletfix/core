@@ -41,9 +41,9 @@ class AssetCommand extends AbstractCommand
     ];
 
     /**
-     * Execute the console command.
+     * @inheritdoc
      */
-    public function handle()
+    protected function handle()
     {
         $dest   = $this->input('dest');
         $minify = !$this->input('no-minify');

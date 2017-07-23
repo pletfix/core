@@ -11,8 +11,17 @@ use InvalidArgumentException;
 
 class PluginManagerTest extends TestCase
 {
+    private static $origManager;
+
+    public static function setUpBeforeClass()
+    {
+        self::$origManager = DI::getInstance()->get('asset-manager');
+    }
+
     public static function tearDownAfterClass()
     {
+        DI::getInstance()->set('asset-manager', self::$origManager, true);
+
         $manifestPath = manifest_path('~plugins');
         if (file_exists($manifestPath)) {
             @unlink($manifestPath . '/assets.php');

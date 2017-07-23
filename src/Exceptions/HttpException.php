@@ -13,12 +13,24 @@ use Core\Exceptions\Contracts\HttpException as HttpExceptionContract;
  */
 class HttpException extends \RuntimeException implements HttpExceptionContract
 {
+    /**
+     * HTTP response status code
+     *
+     * @var int
+     */
     private $statusCode;
+
+    /**
+     * Response headers.
+     *
+     * @var array
+     */
     private $headers;
 
     /**
      * Construct the exception.
-     * @param string $statusCode
+     *
+     * @param int $statusCode
      * @param string $message
      * @param \Exception $previous
      * @param array $headers
@@ -46,15 +58,5 @@ class HttpException extends \RuntimeException implements HttpExceptionContract
     public function getHeaders()
     {
         return $this->headers;
-    }
-
-    /**
-     * Set response headers.
-     *
-     * @param array $headers Response headers
-     */
-    public function setHeaders(array $headers)
-    {
-        $this->headers = $headers;
     }
 }

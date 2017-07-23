@@ -16,6 +16,18 @@ class ResponseTest extends TestCase
      */
     private $r;
 
+    private static $origView;
+
+    public static function setUpBeforeClass()
+    {
+        self::$origView = DI::getInstance()->get('view');
+    }
+
+    public static function tearDownAfterClass()
+    {
+        DI::getInstance()->set('view', get_class(self::$origView), false); // Note, that a view is not shared!
+    }
+
     protected function setUp()
     {
         $this->r = new \Core\Services\Response();

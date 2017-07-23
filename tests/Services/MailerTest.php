@@ -14,6 +14,9 @@ require_once 'fakes/mail.php.fake'; // todo oder stub? Begriffsdefinition kläre
 
 class MailerTest extends TestCase
 {
+    private static $origLogger;
+    private static $origView;
+
     /**
      * @var Mailer
      */
@@ -21,6 +24,9 @@ class MailerTest extends TestCase
 
     public static function setUpBeforeClass()
     {
+        self::$origLogger = DI::getInstance()->get('logger');
+        self::$origView   = DI::getInstance()->get('view');
+
         $config = DI::getInstance()->get('config');
 
         $config->set('mail', [
@@ -45,6 +51,9 @@ class MailerTest extends TestCase
 
     public static function tearDownAfterClass()
     {
+        DI::getInstance()->set('logger', self::$origLogger, true);
+        DI::getInstance()->set('view', get_class(self::$origView), false); // Note, that a view is not shared!
+
         @unlink(storage_path('temp/~foo.txt'));
         @unlink(storage_path('temp/~foo.png'));
         @unlink(storage_path('logs/~test.log'));

@@ -271,7 +271,7 @@ abstract class AbstractCommand implements CommandContract
     private function findOption($key, $short, $argv)
     {
         foreach ($argv as $i => $arg) {
-            if (preg_match('/^-(-)?(\w+)(?:=(.*))?$/s', $arg, $match)) {
+            if (preg_match('/^-(-)?([\w-]+)(?:=(.*))?$/s', $arg, $match)) {
                 if ((!empty($match[1]) && $match[2] === $key) || (empty($match[1]) && $match[2] === $short)) {
                     $value = isset($match[3]) ? $match[3] : null;
                     return [$i, $value];

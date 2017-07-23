@@ -24,6 +24,18 @@ class RouteTest extends TestCase
      */
     private $route;
 
+    private static $origDelegate;
+
+    public static function setUpBeforeClass()
+    {
+        self::$origDelegate = DI::getInstance()->get('delegate');
+    }
+
+    public static function tearDownAfterClass()
+    {
+        DI::getInstance()->set('delegate', self::$origDelegate, true);
+    }
+
     protected function setUp()
     {
         $this->route = new Route(__DIR__ . '/plugin_manifest/classes.php');

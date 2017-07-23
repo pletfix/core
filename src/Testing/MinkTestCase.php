@@ -26,6 +26,8 @@ class MinkTestCase extends TestCase
      * Setup the test environment.
      *
      * This method is called before a test is executed.
+     *
+     * @codeCoverageIgnore
      */
     protected function setUp()
     {
@@ -37,7 +39,9 @@ class MinkTestCase extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * This method is called after a test is executed.
+     *
+     * @codeCoverageIgnore
      */
     protected function tearDown()
     {

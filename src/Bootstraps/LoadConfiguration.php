@@ -5,6 +5,7 @@ namespace Core\Bootstraps;
 use Core\Services\DI;
 use Core\Bootstraps\Contracts\Bootable;
 use Dotenv\Dotenv;
+use RuntimeException;
 
 /**
  * Configuration Loader.
@@ -32,16 +33,22 @@ class LoadConfiguration implements Bootable
 
     /**
      * Create a new instance.
+     *
+     * @param string|null $envFile
+     * @param string|null $configPath
+     * @param string|null $cachedFile
      */
-    public function __construct()
+    public function __construct($envFile = null, $configPath = null, $cachedFile = null)
     {
-        $this->envFile    = environment_file();
-        $this->configPath = config_path();
-        $this->cachedFile = storage_path('cache/config.php');
+        $this->envFile    = $envFile ?: environment_file();
+        $this->configPath = $configPath ?: config_path();
+        $this->cachedFile = $cachedFile ?: storage_path('cache/config.php');
     }
 
     /**
      * Bootstrap
+     *
+     * @codeCoverageIgnore
      */
     public function boot()
     {
@@ -143,23 +150,23 @@ class LoadConfiguration implements Bootable
     {
         if (!is_dir($cacheDir = dirname($this->cachedFile))) {
             if (!make_dir($cacheDir, 0775)) {
-                throw new \RuntimeException(sprintf('Configuration Loader was not able to create directory "%s"', $cacheDir));
+                throw new RuntimeException(sprintf('Configuration Loader was not able to create directory "%s"', $cacheDir)); // @codeCoverageIgnore
             }
         }
 
         if (file_exists($this->cachedFile)) {
-            unlink($this->cachedFile); // so we will to be the owner at the new file
+            @unlink($this->cachedFile); // so we will to be the owner at the new file
         }
 
         if (file_put_contents($this->cachedFile, '<?php return ' . var_export($config->get(), true) . ';' . PHP_EOL, LOCK_EX) === false) {
-            throw new \RuntimeException(sprintf('Configuration Loader was not able to save cached file "%s"', $this->cachedFile));
+            throw new RuntimeException(sprintf('Configuration Loader was not able to save cached file "%s"', $this->cachedFile)); // @codeCoverageIgnore
         }
 
         @chmod($this->cachedFile, 0664);
 
         $time = max(filemtime($this->configPath), filemtime($this->envFile));
         if (!touch($this->cachedFile, $time)) {
-            throw new \RuntimeException(sprintf('Configuration Loader was not able to modify time of cached file "%s"', $this->cachedFile));
+            throw new RuntimeException(sprintf('Configuration Loader was not able to modify time of cached file "%s"', $this->cachedFile)); // @codeCoverageIgnore
         }
     }
 }

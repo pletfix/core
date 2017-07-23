@@ -14,6 +14,13 @@ class Application
     const VERSION = '0.6.1';
 
     /**
+     * Base path of the application.
+     *
+     * @var string
+     */
+    protected static $basePath = BASE_PATH;
+
+    /**
      * Get the version number of the framework.
      *
      * @return string
@@ -32,24 +39,30 @@ class Application
          * Push the Services into the Dependency Injector.
          */
         call_user_func(function() {
-            @include __DIR__ . '/../../../../.manifest/plugins/services.php';
-            require __DIR__ . '/../../../../config/boot/services.php';
+            /** @noinspection PhpIncludeInspection */
+            @include self::$basePath . '/.manifest/plugins/services.php';
+            /** @noinspection PhpIncludeInspection */
+            require self::$basePath . '/config/boot/services.php';
         });
 
         /*
          * Bootstrap the framework
          */
         call_user_func(function() {
-            require __DIR__ . '/../../../../config/boot/bootstrap.php';
-            @include __DIR__ . '/../../../../.manifest/plugins/bootstrap.php';
+            /** @noinspection PhpIncludeInspection */
+            require self::$basePath . '/config/boot/bootstrap.php';
+            /** @noinspection PhpIncludeInspection */
+            @include self::$basePath . '/.manifest/plugins/bootstrap.php';
         });
 
         /*
          * Register routes.
          */
         call_user_func(function() {
-            require __DIR__ . '/../../../../config/boot/routes.php';
-            @include __DIR__ . '/../../../../.manifest/plugins/routes.php';
+            /** @noinspection PhpIncludeInspection */
+            require self::$basePath . '/config/boot/routes.php';
+            /** @noinspection PhpIncludeInspection */
+            @include self::$basePath . '/.manifest/plugins/routes.php';
         });
 
         /*
@@ -67,6 +80,7 @@ class Application
      */
     public static function route()
     {
-        return DI::getInstance()->get('route');
+        $r = DI::getInstance()->get('route');
+        return $r;
     }
 }

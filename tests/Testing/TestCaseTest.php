@@ -2,10 +2,60 @@
 
 namespace Core\Tests\Testing;
 
+use Core\Services\DI;
+use Core\Services\PDOs\SQLite;
+use Core\Services\Response;
 use Core\Testing\TestCase;
 
 class TestCaseTest extends TestCase
 {
+    private static $origResponse;
+    private static $origDBFactory;
+
+    public static function setUpBeforeClass()
+    {
+        self::$origResponse = DI::getInstance()->get('response');
+        self::$origDBFactory = DI::getInstance()->get('database-factory');
+    }
+
+    public static function tearDownAfterClass()
+    {
+        DI::getInstance()->set('response', self::$origResponse, true);
+        DI::getInstance()->set('database-factory', self::$origDBFactory, true);
+    }
+
+    public function testDefineMemoryAsDefaultDatabase()
+    {
+        $this->defineMemoryAsDefaultDatabase();
+        $db = database();
+        $this->assertInstanceOf(SQLite::class, $db);
+        $this->assertSame(':memory:', $db->config('database'));
+    }
+
+    public function testAssertRedirectedTo()
+    {
+        // positive case
+        $response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getHeader'])->getMock();
+        $response->expects($this->any())->method('getStatusCode')->willReturn(302);
+        $response->expects($this->any())->method('getHeader')->with('location')->willReturn('https://example.com');
+        DI::getInstance()->set('response', $response, true);
+        $this->assertRedirectedTo('https://example.com');
+
+        // negative case
+        $response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getHeader'])->getMock();
+        $response->expects($this->any())->method('getStatusCode')->willReturn(200);
+        $response->expects($this->any())->method('getHeader')->with('location')->willReturn(null);
+        DI::getInstance()->set('response', $response, true);
+        try {
+            $this->assertRedirectedTo('https://example.com');
+            $redirectTo = true;
+        }
+        catch(\PHPUnit_Framework_ExpectationFailedException $e) {
+            $redirectTo = false;
+        }
+        $this->assertFalse($redirectTo, 'should not redirect');
+    }
+
     public function testGetAndSetPrivateMethod()
     {
         $foo = new Foo();

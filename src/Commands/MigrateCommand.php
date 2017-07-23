@@ -40,9 +40,9 @@ class MigrateCommand extends AbstractCommand
     ];
 
     /**
-     * Execute the console command.
+     * @inheritdoc
      */
-    public function handle()
+    protected function handle()
     {
         if ($this->input('reset')) {
             migrator()->reset();

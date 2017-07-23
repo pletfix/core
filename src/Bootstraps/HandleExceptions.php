@@ -18,6 +18,8 @@ class HandleExceptions implements Bootable
 {
     /**
      * Bootstrap
+     *
+     * @codeCoverageIgnore
      */
     public function boot()
     {
@@ -43,8 +45,8 @@ class HandleExceptions implements Bootable
     {
         if (!$e instanceof Exception) { // Since PHP 7, in addition to an Exception, an internal Error may occur.
             // Convert the Error to ErrorException
-            $e = new ErrorException($e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine());
-        }
+            $e = new ErrorException($e->getMessage(), $e->getCode(), E_ERROR, $e->getFile(), $e->getLine()); // @codeCoverageIgnore
+        } // @codeCoverageIgnore
 
         $this->getExceptionHandler()->handle($e);
     }
@@ -75,7 +77,7 @@ class HandleExceptions implements Bootable
         if (error_reporting() & $level) {
             throw new ErrorException($message, 0, $level, $file, $line);
         }
-    }
+    } // @codeCoverageIgnore
 
     /**
      * Convert an fatal Error to an FatalErrorException.
@@ -89,8 +91,8 @@ class HandleExceptions implements Bootable
     {
         $error = error_get_last();
         if ($error !== null && $this->isFatal($error['type'])) {
-            $this->handleException(new FatalErrorException($error['message'], $error['type'], 0, $error['file'], $error['line']));
-        }
+            $this->handleException(new FatalErrorException($error['message'], $error['type'], 0, $error['file'], $error['line'])); // @codeCoverageIgnore
+        } // @codeCoverageIgnore
     }
 
     /**

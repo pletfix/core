@@ -18,6 +18,21 @@ use InvalidArgumentException;
  */
 class HelpersTest extends TestCase
 {
+    private static $origRequest;
+    private static $origDBFactory;
+
+    public static function setUpBeforeClass()
+    {
+        self::$origRequest = DI::getInstance()->get('request');
+        self::$origDBFactory = DI::getInstance()->get('database-factory');
+    }
+
+    public static function tearDownAfterClass()
+    {
+        DI::getInstance()->set('request', self::$origRequest, true);
+        DI::getInstance()->set('database-factory', self::$origDBFactory, true);
+    }
+
     public function testHttpStatus()
     {
         $this->assertSame('Bad Request', http_status_text(HTTP_STATUS_BAD_REQUEST));

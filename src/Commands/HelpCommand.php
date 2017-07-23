@@ -50,9 +50,9 @@ class HelpCommand extends AbstractCommand
     ];
 
     /**
-     * Execute the console command.
+     * @inheritdoc
      */
-    public function handle()
+    protected function handle()
     {
         // Has the "version" option been entered?
         if ($this->input('version')) {
@@ -74,7 +74,7 @@ class HelpCommand extends AbstractCommand
                 $message = 'Command "' . $name . '" is not defined.';
                 if ($alternatives = $this->findAlternatives($name, $list)) {
                     $message .= PHP_EOL . (count($alternatives) == 1 ? 'Did you mean this?' : 'Did you mean one of these?') .
-                        PHP_EOL . '  ' . implode(PHP_EOL . '    ', $alternatives);
+                        PHP_EOL . '  - ' . implode(PHP_EOL . '  - ', $alternatives);
                 }
                 $this->error($message);
 
@@ -85,7 +85,7 @@ class HelpCommand extends AbstractCommand
 
             /** @var Command $command */
             $class = $list[$name]['class'];
-            $command = new $class;
+            $command = new $class(null, $this->stdio());
             $command->printHelp();
 
             return self::EXIT_SUCCESS;
@@ -94,7 +94,7 @@ class HelpCommand extends AbstractCommand
         // No name was given, so list all available commands!
 
         $this->notice('Help:');
-        $this->line('  Command tool for Pletfix');
+        $this->line('  Command tool for Pletfix.');
         $this->line('');
 
         $this->notice('Usage:');
@@ -149,11 +149,10 @@ class HelpCommand extends AbstractCommand
         foreach (explode(':', $search) as $i => $subname) {
             foreach ($collectionParts as $name => $parts) {
                 $exists = isset($alternatives[$name]);
-                if (!isset($parts[$i]) && $exists) {
-                    $alternatives[$name] += $threshold;
-                    continue;
-                }
-                else if (!isset($parts[$i])) {
+                if (!isset($parts[$i])) {
+                    if ($exists) {
+                        $alternatives[$name] += $threshold;
+                    }
                     continue;
                 }
                 $lev = levenshtein($subname, $parts[$i]);

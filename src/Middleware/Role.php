@@ -30,7 +30,7 @@ class Role implements MiddlewareContract
 
         if (!$pass) {
             abort(HTTP_STATUS_FORBIDDEN);
-        }
+        } // @codeCoverageIgnore
 
         return $delegate->process($request);
     }

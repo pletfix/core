@@ -41,9 +41,9 @@ class PluginCommand extends AbstractCommand
     ];
 
     /**
-     * Execute the console command.
+     * @inheritdoc
      */
-    public function handle()
+    protected function handle()
     {
         $package = $this->input('package');
 
@@ -64,13 +64,13 @@ class PluginCommand extends AbstractCommand
     /**
      * @inheritdoc
      */
-    public function printHelp()
+    public function printHelp($pluginManifestOfPackages = null)
     {
         parent::printHelp();
 
         $this->notice('Path of enabled packages:');
 
-        $pluginManifest = manifest_path('plugins/packages.php');
+        $pluginManifest = $pluginManifestOfPackages ?: manifest_path('plugins/packages.php');
         /** @noinspection PhpIncludeInspection */
         $packages = @file_exists($pluginManifest) ? include $pluginManifest : [];
 
