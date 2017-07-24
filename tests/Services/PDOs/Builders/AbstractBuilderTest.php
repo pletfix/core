@@ -928,24 +928,19 @@ class AbstractBuilderTest extends TestCase
         $db->table('table1')->insert(['str' => 'a']);
         $builder = $db->table('table1')->asClass(ModelHooksCancelBefore::class);
 
-        // cancel operation, before insert, update and delete
+        // insert
         $builder->insert(['str' => 'a1']);
         $builder->insert([['str' => 'a2'], ['str' => 'a3']]);
         $this->assertSame(1, $db->table('table1')->count());
-        $row = $db->table('table1')->first();
-        $this->assertSame('a', $row['str']);
         
         // update
         $builder->update(['str' => 'b']);
-        $this->assertSame(1, $db->table('table1')->count());
         $row = $db->table('table1')->first();
         $this->assertSame('a', $row['str']);
         
         // delete
         $builder->delete();
         $this->assertSame(1, $db->table('table1')->count());
-        $row = $db->table('table1')->first();
-        $this->assertSame('a', $row['str']);
     }
 
     public function testHooksCancelAfter()
@@ -1004,7 +999,7 @@ class AbstractBuilderTest extends TestCase
         $this->assertSame('5', $row['x']);
     }
 
-    public function testModifyTableWithHooks()
+    public function testModifyTableWithHooksBeforeAndAfter()
     {
         self::defineMemoryAsDefaultDatabase();
         $db = database();
@@ -1096,8 +1091,8 @@ class ModelWithHooksBefore extends Model
     public function beforeDelete()
     {
         if ($this->id !== null && $this->original['id'] !== null) {
-            $this->x = 5;
             database()->table('table1')->update(['x' => 5]);
+            $this->x = 5;
         }
     }
 }
@@ -1113,6 +1108,7 @@ class ModelWithHooks extends ModelWithHooksBefore
     {
         if ($this->id !== null && $this->str !== null && $this->x === 1) {
             database()->table('table1')->whereIs('id', $this->id)->update(['x' => 2]);
+            $this->x = 2;
         }
     }
 
@@ -1120,6 +1116,7 @@ class ModelWithHooks extends ModelWithHooksBefore
     {
         if ($this->str === 'b' && $this->x === 3) {
             database()->table('table1')->whereIs('id', $this->id)->update(['x' => 4]);
+            $this->x = 4;
         }
     }
 

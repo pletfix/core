@@ -288,14 +288,14 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public function isDirty($attributes = null)
+    public function isDirty($names = null)
     {
-        if ($attributes === null) {
-            $attributes &= $this->attributes;
+        if ($names === null) {
+            $names = array_keys($this->attributes);
         }
 
-        foreach ((array)$attributes as $name => $value) {
-            if (!array_key_exists($name, $this->original) || ($value !== $this->original[$name] && !$this->originalIsNumericallyEquivalent($name))) {
+        foreach ((array)$names as $name) {
+            if (!array_key_exists($name, $this->original) || ($this->attributes[$name] !== $this->original[$name] && !$this->originalIsNumericallyEquivalent($name))) {
                 return true;
             }
         }
@@ -543,7 +543,7 @@ class Model implements ModelContract
      */
     public static function whereNotBetween($column, $lowest, $highest)
     {
-        return static::builder()->whereBetween($column, $lowest, $highest);
+        return static::builder()->whereNotBetween($column, $lowest, $highest);
     }
 
     /**
@@ -769,7 +769,6 @@ class Model implements ModelContract
      */
     public static function create(array $attributes = [])
     {
-        /** @var Model $model */
         $model = new static;
         $model->attributes = $attributes;
 

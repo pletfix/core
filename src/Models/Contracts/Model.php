@@ -76,10 +76,10 @@ interface Model extends Arrayable, ArrayAccess, Hookable, Jsonable, JsonSerializ
      *
      * If you omit the argument, all attributes are checked.
      *
-     * @param array|string|null $attributes
+     * @param array|string|null The name of one or more $attributes.
      * @return bool
      */
-    public function isDirty($attributes = null);
+    public function isDirty($names = null);
 
     /**
      * Reload the attributes from the database.
@@ -578,7 +578,7 @@ interface Model extends Arrayable, ArrayAccess, Hookable, Jsonable, JsonSerializ
      * It returns FALSE if the operation was canceled by a hook.
      *
      * @param array $attributes
-     * @return static|false
+     * @return $this|false
      */
     public static function create(array $attributes = []);
 
