@@ -3,7 +3,15 @@
 namespace Core\Tests\Models;
 
 use Core\Exceptions\MassAssignmentException;
+use Core\Models\BelongsToManyRelation;
+use Core\Models\BelongsToRelation;
+use Core\Models\HasManyRelation;
+use Core\Models\HasOneRelation;
 use Core\Models\Model;
+use Core\Models\MorphManyRelation;
+use Core\Models\MorphOneRelation;
+use Core\Models\MorphToRelation;
+use Core\Models\Relation;
 use Core\Services\AbstractDatabase;
 use Core\Services\Contracts\Database;
 use Core\Services\Contracts\DatabaseFactory;
@@ -61,7 +69,8 @@ class ModelTest extends TestCase
     {
         $this->defineMemoryAsDefaultDatabase();
         $this->db = database();
-        $this->execSqlFile($this->db, 'create_author_books_relation');
+        $this->execSqlFile($this->db, 'create_employee_relation');
+        $this->execSqlFile($this->db, 'create_author_books_relation'); // todo Testfälle für empploee umschreiben
         $this->execSqlFile($this->db, 'create_table_for_hooktest');
     }
 
@@ -577,16 +586,721 @@ class ModelTest extends TestCase
         $this->assertInstanceOf(Model::class, $model->clearRelationCache());
         $this->assertEmpty($this->getPrivateProperty($model, 'relations'));
     }
+
+    // employee <- profile
+    public function testHasOneRelation()
+    {
+        $this->initTestDatabase();
+
+        /** @var Employee $employee */
+        $employee = Employee::find(1);
+        $this->assertSame('Anton', $employee->name);
+        $this->assertInstanceOf(HasOneRelation::class, $employee->profile());
+
+        $builder = $employee->profile()->builder();
+        /** @noinspection SqlDialectInspection */
+        $this->assertSame('SELECT * FROM "profiles" WHERE "employee_id" = ?', $builder->toSql());
+        $this->assertSame(['1'], $builder->bindings());
+
+        $this->assertSame(1, $employee->profile()->count());
+
+        $this->assertInstanceOf(Profile::class, $employee->profile);
+        $this->assertSame('Profile Anton', $employee->profile->name);
+
+        // Eager Loading
+
+        Relation::noConstraints(function () {
+            /** @var Employee[] $employees */
+            $employees = Employee::all();
+            $builder = $employees[0]->profile()->addEagerConstraints($employees);
+            /** @noinspection SqlDialectInspection */
+            $this->assertSame('SELECT * FROM "profiles" WHERE "employee_id" IN (?, ?, ?)', $builder->toSql());
+            $this->assertSame(['1', '2', '3'], $builder->bindings());
+        });
+
+        $employee = Employee::with('profile')->find(2);
+        $this->assertSame('Berta', $employee->name);
+        $this->assertSame('Profile Berta', $employee->profile->name);
+    }
+
+    // employee <- salaries
+    public function testHasManyRelation()
+    {
+        $this->initTestDatabase();
+
+        /** @var Employee $employee */
+        $employee = Employee::find(1);
+        $this->assertSame('Anton', $employee->name);
+        $this->assertInstanceOf(HasManyRelation::class, $employee->salaries());
+
+        $builder = $employee->salaries()->builder();
+        /** @noinspection SqlDialectInspection */
+        $this->assertSame('SELECT * FROM "salaries" WHERE "employee_id" = ?', $builder->toSql());
+        $this->assertSame(['1'], $builder->bindings());
+
+        $this->assertSame(2, $employee->salaries()->count());
+
+        $this->assertCount(2, $employee->salaries);
+        $this->assertInstanceOf(Salary::class, $employee->salaries[0]);
+        $this->assertSame('Salary Anton 1', $employee->salaries[0]->name);
+        $this->assertSame('Salary Anton 2', $employee->salaries[1]->name);
+
+        // Eager Loading
+
+        Relation::noConstraints(function () {
+            /** @var Employee[] $employees */
+            $employees = Employee::all();
+            $builder = $employees[0]->salaries()->addEagerConstraints($employees);
+            /** @noinspection SqlDialectInspection */
+            $this->assertSame('SELECT * FROM "salaries" WHERE "employee_id" IN (?, ?, ?)', $builder->toSql());
+            $this->assertSame(['1', '2', '3'], $builder->bindings());
+        });
+
+        $employee = Employee::with('salaries')->find(2);
+        $this->assertSame('Berta', $employee->name);
+        $this->assertCount(2, $employee->salaries);
+        $this->assertSame('Salary Berta 1', $employee->salaries[0]->name);
+        $this->assertSame('Salary Berta 2', $employee->salaries[1]->name);
+    }
+
+    // salary -> employee
+    public function testBelongsToRelation()
+    {
+        $this->initTestDatabase();
+
+        /** @var Salary $salary */
+        $salary = Salary::find(3);
+        $this->assertSame('Salary Berta 1', $salary->name);
+        $this->assertInstanceOf(BelongsToRelation::class, $salary->employee());
+
+        $builder = $salary->employee()->builder();
+        /** @noinspection SqlDialectInspection */
+        $this->assertSame('SELECT * FROM "employees" WHERE "id" = ?', $builder->toSql());
+        $this->assertSame(['2'], $builder->bindings());
+
+        $this->assertInstanceOf(Employee::class, $salary->employee);
+        $this->assertSame('Berta', $salary->employee->name);
+
+        // Eager Loading
+
+        Relation::noConstraints(function () {
+            /** @var Salary[] $salaries */
+            $salaries = Salary::all();
+            $builder = $salaries[0]->employee()->addEagerConstraints($salaries);
+            /** @noinspection SqlDialectInspection */
+            $this->assertSame('SELECT * FROM "employees" WHERE "id" IN (?, ?, ?, ?)', $builder->toSql());
+            $this->assertSame(['1', '1', '2', '2'], $builder->bindings());
+        });
+
+        $salary = Salary::with('employee')->find(1);
+        $this->assertSame('Salary Anton 1', $salary->name);
+        $this->assertSame('Anton', $salary->employee->name);
+    }
+
+    // employee <-> departments
+    public function testBelongsToManyRelation()
+    {
+        $this->initTestDatabase();
+
+        /** @var Employee $employee */
+        $employee = Employee::find(1);
+        $this->assertSame('Anton', $employee->name);
+        $this->assertInstanceOf(BelongsToManyRelation::class, $employee->departments());
+
+        $builder = $employee->departments()->builder();
+        /** @noinspection SqlDialectInspection */
+        $this->assertSame('SELECT "departments".* FROM "departments" INNER JOIN "department_employee" ON "departments"."id" = "department_employee"."department_id" WHERE "department_employee"."employee_id" = ?', $builder->toSql());
+        $this->assertSame(['1'], $builder->bindings());
+
+        $this->assertSame(2, $employee->departments()->count());
+
+        $this->assertInstanceOf(Department::class, $employee->departments[0]);
+        $this->assertSame('Development', $employee->departments[0]->name);
+        $this->assertSame('Marketing', $employee->departments[1]->name);
+
+        // Eager Loading
+
+        Relation::noConstraints(function () {
+            /** @var Employee[] $employees */
+            $employees = Employee::all();
+            $builder = $employees[0]->departments()->addEagerConstraints($employees);
+            /** @noinspection SqlDialectInspection */
+            $this->assertSame('SELECT "departments".*, "department_employee"."employee_id" AS "___id" FROM "departments" INNER JOIN "department_employee" ON "departments"."id" = "department_employee"."department_id" WHERE "department_employee"."employee_id" IN (?, ?, ?)', $builder->toSql());
+            $this->assertSame(['1', '2', '3'], $builder->bindings());
+        });
+
+        $employee = Employee::with('departments')->find(2);
+        $this->assertSame('Berta', $employee->name);
+        $this->assertCount(2, $employee->departments);
+        $this->assertSame('Marketing', $employee->departments[0]->name);
+        $this->assertSame('HR', $employee->departments[1]->name);
+    }
+
+    // department <-> employees
+    public function testBelongsToManyRelatio2()
+    {
+        $this->initTestDatabase();
+
+        /** @var Department $department */
+        $department = Department::find(2);
+        $this->assertSame('Marketing', $department->name);
+        $this->assertInstanceOf(BelongsToManyRelation::class, $department->employees());
+
+        $builder = $department->employees()->builder();
+        /** @noinspection SqlDialectInspection */
+        $this->assertSame('SELECT "employees".* FROM "employees" INNER JOIN "department_employee" ON "employees"."id" = "department_employee"."employee_id" WHERE "department_employee"."department_id" = ?', $builder->toSql());
+        $this->assertSame(['2'], $builder->bindings());
+
+        $this->assertSame(2, $department->employees()->count());
+
+        $this->assertInstanceOf(Employee::class, $department->employees[0]);
+        $this->assertSame('Anton', $department->employees[0]->name);
+        $this->assertSame('Berta', $department->employees[1]->name);
+
+        // Eager Loading
+
+        Relation::noConstraints(function () {
+            /** @var Department[] $departments */
+            $departments = Department::all();
+            $builder = $departments[0]->employees()->addEagerConstraints($departments);
+            /** @noinspection SqlDialectInspection */
+            $this->assertSame('SELECT "employees".*, "department_employee"."department_id" AS "___id" FROM "employees" INNER JOIN "department_employee" ON "employees"."id" = "department_employee"."employee_id" WHERE "department_employee"."department_id" IN (?, ?, ?, ?)', $builder->toSql());
+            $this->assertSame(['1', '2', '3', '4'], $builder->bindings());
+        });
+
+        $department = Department::with('employees')->find(3);
+        $this->assertSame('HR', $department->name);
+        $this->assertCount(1, $department->employees);
+        $this->assertSame('Berta', $department->employees[0]->name);
+    }
+
+    // department <- picture
+    public function testMorphOneRelation()
+    {
+        $this->initTestDatabase();
+        
+        /** @var Department $department */
+        $department = Department::find(1);
+        $this->assertSame('Development', $department->name);
+        $this->assertInstanceOf(MorphOneRelation::class, $department->picture());
+
+        $builder = $department->picture()->builder();
+        /** @noinspection SqlDialectInspection */
+        $this->assertSame('SELECT * FROM "pictures" WHERE "imageable_type" = ? AND "imageable_id" = ?', $builder->toSql());
+        $this->assertSame(['Core\Tests\Models\Department', '1'], $builder->bindings());
+
+        $this->assertSame(1, $department->picture()->count());
+
+        $this->assertInstanceOf(Picture::class, $department->picture);
+        $this->assertSame('Picture Development', $department->picture->name);
+
+        // Eager Loading
+
+        Relation::noConstraints(function () {
+            /** @var Department[] $departments */
+            $departments = Department::all();
+            $builder = $departments[0]->picture()->addEagerConstraints($departments);
+            /** @noinspection SqlDialectInspection */
+            $this->assertSame('SELECT * FROM "pictures" WHERE "imageable_type" = ? AND "imageable_id" IN (?, ?, ?, ?)', $builder->toSql());
+            $this->assertSame(['Core\Tests\Models\Department', '1', '2', '3', '4'], $builder->bindings());
+        });
+
+        $department = Department::with('picture')->find(2);
+        $this->assertSame('Marketing', $department->name);
+        $this->assertSame('Picture Marketing', $department->picture->name);
+    }
+
+    // employees <- pictures
+    public function testMorphManyRelation()
+    {
+        $this->initTestDatabase();
+
+        /** @var Employee $employee */
+        $employee = Employee::find(1);
+        $this->assertSame('Anton', $employee->name);
+        $this->assertInstanceOf(MorphManyRelation::class, $employee->pictures());
+
+        $builder = $employee->pictures()->builder();
+        /** @noinspection SqlDialectInspection */
+        $this->assertSame('SELECT * FROM "pictures" WHERE "imageable_type" = ? AND "imageable_id" = ?', $builder->toSql());
+        $this->assertSame(['Core\Tests\Models\Employee', '1'], $builder->bindings());
+
+        $this->assertSame(2, $employee->pictures()->count());
+
+        $this->assertCount(2, $employee->pictures);
+        $this->assertInstanceOf(Picture::class, $employee->pictures[0]);
+        $this->assertSame('Picture Anton 1', $employee->pictures[0]->name);
+        $this->assertSame('Picture Anton 2', $employee->pictures[1]->name);
+
+        // employees -> pictures (Eager Loading)
+
+        Relation::noConstraints(function () {
+            /** @var Employee[] $employees */
+            $employees = Employee::all();
+            $builder = $employees[0]->pictures()->addEagerConstraints($employees);
+            /** @noinspection SqlDialectInspection */
+            $this->assertSame('SELECT * FROM "pictures" WHERE "imageable_type" = ? AND "imageable_id" IN (?, ?, ?)', $builder->toSql());
+            $this->assertSame(['Core\Tests\Models\Employee', '1', '2', '3'], $builder->bindings());
+        });
+
+        $employee = Employee::with('salaries')->find(2);
+        $this->assertSame('Berta', $employee->name);
+        $this->assertCount(2, $employee->pictures);
+        $this->assertSame('Picture Berta 1', $employee->pictures[0]->name);
+        $this->assertSame('Picture Berta 2', $employee->pictures[1]->name);
+    }
+
+    // picture -> employees
+    public function testMorphToRelation()
+    {
+        $this->initTestDatabase();
+
+        /** @var Picture $picture */
+        $picture = Picture::find(2);
+        $this->assertSame('Picture Anton 2', $picture->name);
+        $this->assertInstanceOf(MorphToRelation::class, $picture->imageable());
+
+        $builder = $picture->imageable()->builder();
+        /** @noinspection SqlDialectInspection */
+        $this->assertSame('SELECT * FROM "employees" WHERE "id" = ?', $builder->toSql());
+        $this->assertSame(['1'], $builder->bindings());
+
+        $this->assertSame(2, $picture->imageable()->count());
+
+        $this->assertInstanceOf(Employee::class, $picture->imageable[0]);
+        $this->assertSame('Berta', $picture->imageable[0]->name);
+        $this->assertSame('Berta', $picture->imageable[1]->name);
+
+        // picture -> employee (Eager Loading)
+
+        Relation::noConstraints(function () {
+            /** @var Picture[] $pictures */
+            $pictures = Picture::whereIn('id', [2, 3])->all();
+            $builder = $pictures[0]->imageable()->addEagerConstraints($pictures);
+            /** @noinspection SqlDialectInspection */
+            $this->assertSame('SELECT * FROM "employees" WHERE "id" IN (?, ?, ?)', $builder->toSql());
+            $this->assertSame(['1', '2', '3'], $builder->bindings());
+        });
+
+        $picture = Picture::with('imageable')->find(3);
+        $this->assertSame('Picture Berta 1', $picture->name);
+        $this->assertSame('Berta', $picture->imageable->name);
+    }
+
+    // picture -> department
+    public function testMorphToRelation2()
+    {
+        $this->initTestDatabase();
+
+        /** @var Picture $picture */
+        $picture = Picture::find(3);
+        $this->assertSame('Picture Berta 1', $picture->name);
+        $this->assertInstanceOf(MorphToRelation::class, $picture->imageable());
+
+        $builder = $picture->imageable()->builder();
+        /** @noinspection SqlDialectInspection */
+        $this->assertSame('SELECT * FROM "departments" WHERE "id" = ?', $builder->toSql());
+        $this->assertSame(['2'], $builder->bindings());
+
+        $this->assertSame(1, $picture->imageable()->count());
+
+        $this->assertInstanceOf(Department::class, $picture->imageable);
+        $this->assertSame('Berta', $picture->imageable->name);
+
+        // picture -> department (Eager Loading)
+
+        Relation::noConstraints(function () {
+            /** @var Picture[] $pictures */
+            $pictures = Picture::whereIn('id', [2, 3])->all();
+            $builder = $pictures[0]->imageable()->addEagerConstraints($pictures);
+            /** @noinspection SqlDialectInspection */
+            $this->assertSame('SELECT * FROM "department" WHERE "id" IN (?, ?, ?)', $builder->toSql());
+            $this->assertSame(['1', '2', '3'], $builder->bindings());
+        });
+
+        $picture = Picture::with('imageable')->find(2);
+        $this->assertSame('Picture Anton 2', $picture->name);
+        $this->assertSame('Anton', $picture->imageable->name);
+    }
+
+
+//    public function testAssociateRelation()
+//    {
+//        echo "<p><b>Associate Relations</b></p>";
+//
+//        /** @var Employee $employee */
+//        $employee = Employee::find(1);
+//        $i = count($employee->departments);
+//
+//        $department = Department::create(['name' => 'dummy']);
+//        $employee->departments()->associate($department);
+//        if (count($department->employees) !== 1) {
+//            dd("Test a failed!");
+//        }
+//        if (count($employee->departments) !== $i + 1) {
+//            dd("Test b failed!");
+//        }
+//        $rows = $employee->database()->table('department_employee')->where('employee_id = ? AND department_id = ?', [$employee->id, $department->id])->all();
+//        if (count($rows) !== 1) {
+//            dd("Test c failed!");
+//        }
+//        $departmentId = $department->id;
+//        $employee->departments()->disassociate($department);
+//        if (!empty($department->employees)) {
+//            dd("Test d failed!");
+//        }
+//        $employee->departments()->associate($department);
+//        $department->employees()->disassociate();
+//        if (!empty($department->employees)) {
+//            dd("Test e failed!");
+//        }
+//        if (count($employee->departments) !== $i) {
+//            dd("Test f failed!");
+//        }
+//        $department->delete();
+//        if (Department::count() !== 9) {
+//            dd("Test g failed!");
+//        }
+//        $rows = $employee->database()->table('department_employee')->where('employee_id = ? AND department_id = ?', [$employee->id, $departmentId])->all();
+//        if (!empty($rows)) {
+//            dd("Test h failed!");
+//        }
+//
+//        $salary = Salary::create(['salary' => 4711]);
+//        $employee->salaries()->associate($salary);
+//        if ($salary->employee_id !== $employee->id) {
+//            dd("Test i failed!");
+//        }
+//        $employee->salaries()->disassociate($salary);
+//        if ($salary->employee_id !== null) {
+//            dd("Test j failed!");
+//        }
+//        $salary->delete();
+//
+//        $picture  = Picture::create(['name'  => 'dummy']);
+//        $employee->pictures()->associate($picture);
+//        if ($picture->imageable_id !== $employee->id || $picture->imageable_type != 'App\Models\Employee') {
+//            dd("Test l failed!");
+//        }
+//        $employee->pictures()->disassociate($picture);
+//        if ($picture->imageable_type !== null || $picture->imageable_id !== null) {
+//            dd("Test m failed!");
+//        }
+//        $picture->delete();
+//
+//        /** @var Salary $salary */
+//        $salary = Salary::find(1);
+//        if ($salary->employee_id !== 9) {
+//            $salary->employee_id = 9;
+//            $salary->save();
+//        }
+//        $employee  = Employee::create(['lastname'  => 'dummy']);
+//        $salary->employee()->associate($employee);
+//        if ($salary->employee_id !== $employee->id) {
+//            dd("Test o failed!");
+//        }
+//        $salary->employee()->disassociate($employee);
+//        if ($salary->employee_id !== null) {
+//            dd("Test p failed!");
+//        }
+//        $salary->employee()->associate($employee);
+//        $salary->employee()->disassociate();
+//        if ($salary->employee_id !== null) {
+//            dd("Test s failed!");
+//        }
+//        $salary->employee_id = 9;
+//        $salary->save();
+//        $employee->delete();
+//
+//
+//        /** @var Picture $picture */
+//        $picture = Picture::find(3);
+//        // if ($picture->imageable_type !== 'App\Models\Employee' || $picture->imageable_id !== 10) {
+//        $picture->imageable_type = null;//'App\Models\Employee';
+//        $picture->imageable_id = 10;
+//        $picture->save();
+//        //}
+//        $employee  = Employee::create(['lastname'  => 'dummy']);
+//        $picture->imageable()->associate($employee);
+//        if ($picture->imageable_id !== $employee->id || $picture->imageable_type !== 'App\Models\Employee') {
+//            dd("Test u failed!");
+//        }
+//        $picture->imageable()->disassociate($employee);
+//        if ($picture->imageable_type !== null || $picture->imageable_id !== null) {
+//            dd("Test v failed!");
+//        }
+//        $picture->imageable()->associate($employee);
+//        $picture->imageable()->disassociate();
+//        if ($picture->imageable_type !== null || $picture->imageable_id !== null) {
+//            dd("Test x failed!");
+//        }
+//        $employee->delete();
+//        $picture->imageable_type = 'App\Models\Employee';
+//        $picture->imageable_id = 10;
+//        $picture->save();
+//
+//        $department  = Department::create(['name'  => 'dummy']);
+//        $picture->imageable()->associate($department);
+//        if ($picture->imageable_id !== $department->id || $picture->imageable_type !== 'App\Models\Department') {
+//            dd("Test q failed!");
+//        }
+//        $picture->imageable()->disassociate($department);
+//        $department->delete();
+//        $picture->imageable_type = 'App\Models\Employee';
+//        $picture->imageable_id = 10;
+//        $picture->save();
+//    }
+
+//    public function testInsertRelation()
+//    {
+//        echo "<p><b>Insert a Record through Relation</b></p>";
+//
+//        /** @var Employee $employee */
+//        $employee = Employee::find(1);
+//        $i = count($employee->departments);
+//
+//        /** @var Department $department */
+//        $department = $employee->departments()->create(['name' => 'dummy']);
+//        if (!($department instanceof Department)) {
+//            dd("Test a1 failed!");
+//        }
+//        if ($department->name != 'dummy') {
+//            dd("Test a2 failed!");
+//        }
+//        if (count($department->employees) !== 1) {
+//            dd("Test a3 failed!");
+//        }
+//        if (count($employee->departments) !== $i + 1) {
+//            dd("Test b failed!");
+//        }
+//        $rows = $employee->database()->table('department_employee')->where('employee_id = ? AND department_id = ?', [$employee->id, $department->id])->all();
+//        if (count($rows) !== 1) {
+//            dd("Test c failed!");
+//        }
+//        if (Department::count() !== 10) {
+//            dd("Test c2 failed!");
+//        }
+//        $departmentId = $department->id;
+//        $employee->departments()->delete($department);
+//        if ($department->id !== null) {
+//            dd("Test d failed!");
+//        }
+//        if (count($employee->departments) !== $i) {
+//            dd("Test f failed!");
+//        }
+//        if (Department::count() !== 9) {
+//            dd("Test g failed!");
+//        }
+//        $rows = $employee->database()->table('department_employee')->where('employee_id = ? AND department_id = ?', [$employee->id, $departmentId])->all();
+//        if (!empty($rows)) {
+//            dd("Test h failed!");
+//        }
+//
+//        $n = Salary::count();
+//        /** @var Salary $salary */
+//        $salary = $employee->salaries()->create(['salary'  => 4711]);
+//        if ($salary->employee_id !== $employee->id) {
+//            dd("Test i failed!");
+//        }
+//        if (Salary::count() !== $n + 1) {
+//            dd("Test i2 failed!");
+//        }
+//        $employee->salaries()->delete($salary);
+//        if ($salary->employee_id !== null) {
+//            dd("Test j failed!");
+//        }
+//        if ($salary->id !== null) {
+//            dd("Test k failed!");
+//        }
+//        if (Salary::count() !== $n) {
+//            dd("Test i2 failed!");
+//        }
+//
+//        /** @var Picture $picture */
+//        $n = Picture::count();
+//        $picture = $employee->pictures()->create(['name'  => 'dummy']);
+//        if ($picture->imageable_id !== $employee->id || $picture->imageable_type != 'App\Models\Employee') {
+//            dd("Test l failed!");
+//        }
+//        if (Picture::count() !== $n + 1) {
+//            dd("Test l2 failed!");
+//        }
+//        $employee->pictures()->delete($picture);
+//        if (Picture::count() !== $n) {
+//            dd("Test l3 failed!");
+//        }
+//        if ($picture->imageable_type !== null || $picture->imageable_id !== null) {
+//            dd("Test m failed!");
+//        }
+//        if ($picture->id !== null) {
+//            dd("Test n failed!");
+//        }
+//
+//        /** @var Salary $salary */
+//        $n = Employee::count();
+//        $salary = Salary::find(1);
+//        if ($salary->employee_id !== 9) {
+//            $salary->employee_id = 9;
+//            $salary->save();
+//        }
+//        $employee  = $salary->employee()->create(['lastname'  => 'dummy']);
+//        if (Employee::count() !== $n + 1) {
+//            dd("Test n2 failed!");
+//        }
+//        if ($salary->employee_id !== $employee->id) {
+//            dd("Test o failed!");
+//        }
+//        $salary->employee()->delete($employee);
+//        if (Employee::count() !== $n) {
+//            dd("Test o2 failed!");
+//        }
+//        if ($salary->employee_id !== null) {
+//            dd("Test p failed!");
+//        }
+//        if ($employee->id !== null) {
+//            dd("Test p2 failed!");
+//        }
+//        $salary->employee_id = 9;
+//        $salary->save();
+//
+//
+//        /** @var Picture $picture */
+//        $picture = Picture::find(3);
+//        if ($picture->imageable_type !== 'App\Models\Employee' || $picture->imageable_id !== 10) {
+//            $picture->imageable_type = 'App\Models\Employee';
+//            $picture->imageable_id = 10;
+//            $picture->save();
+//        }
+//        $employee = $picture->imageable()->create(['lastname'  => 'dummy']);
+//        if (!($employee instanceof Employee)) {
+//            dd("Test p3 failed!");
+//        }
+//        if (Employee::count() !== $n + 1) {
+//            dd("Test p4 failed!");
+//        }
+//        if ($picture->imageable_id !== $employee->id || $picture->imageable_type !== 'App\Models\Employee') {
+//            dd("Test q failed!");
+//        }
+//        $picture->imageable()->delete($employee);
+//        if (Employee::count() !== $n) {
+//            dd("Test u2 failed!");
+//        }
+//        if ($picture->imageable_id !== null) {
+//            dd("Test x failed!");
+//        }
+//        if ($employee->id !== null) {
+//            dd("Test x2 failed!");
+//        }
+//        $picture->imageable_type = 'App\Models\Employee';
+//        $picture->imageable_id = 10;
+//        $picture->save();
+//
+//        $picture = Picture::find(4);
+//        if ($picture->imageable_type !== 'App\Models\Department' || $picture->imageable_id !== 5) {
+//            $picture->imageable_type = 'App\Models\Department';
+//            $picture->imageable_id = 5;
+//            $picture->save();
+//        }
+//        $department = $picture->imageable()->create(['name'  => 'dummy']);
+//        if (!($department instanceof Department)) {
+//            dd("Test q1 failed!");
+//        }
+//        if ($picture->imageable_id !== $department->id || $picture->imageable_type !== 'App\Models\Department') {
+//            dd("Test q failed!");
+//        }
+//        $picture->imageable()->delete($department);
+//        $picture->imageable_type = 'App\Models\Department';
+//        $picture->imageable_id = 5;
+//        $picture->save();
+//    }
+
+//    public function testFind()
+//    {
+//        echo "<p><b>Execute Query</b></p>";
+//
+//        /** @var Employee $employee */
+//        $employee = Employee::find(1);
+//        if (!($employee instanceof Employee)) {
+//            dd("Test a failed!");
+//        }
+//        if ($employee->id !== 1) {
+//            dd("Test b failed!");
+//        }
+//    }
+
+//    public function testAggregate()
+//    {
+//        echo "<p><b>Aggregate Functions</b></p>";
+//
+//        $count = Salary::count();
+//        if ($count != 2844047) {
+//            dd("Test a failed!");
+//        }
+//
+//        $count = Salary::select('salary')->count();
+//        if ($count != 2844047) {
+//            dd("Test b failed!");
+//        }
+//
+//        $count = Salary::select('salary')->distinct()->count();
+//        if ($count != 85814) {
+//            dd("Test c failed!");
+//        }
+//
+//        $max = Salary::max('salary');
+//        if ($max != 158220) {
+//            dd("Test d failed!");
+//        }
+//
+//        $max = Salary::select('salary')->max();
+//        if ($max != 158220) {
+//            dd("Test e failed!");
+//        }
+//
+//
+//        $min = Salary::min('salary');
+//        if ($min != 38623) {
+//            dd("Test f failed!");
+//        }
+//
+//        $min = Salary::select('salary')->min();
+//        if ($min != 38623) {
+//            dd("Test g failed!");
+//        }
+//
+//
+//        $avg = Salary::avg('salary');
+//        if ($avg != 63810.7448) {
+//            dd("Test h failed!");
+//        }
+//
+//        $avg = Salary::select('salary')->avg();
+//        if ($avg != 63810.7448) {
+//            dd("Test i failed!");
+//        }
+//
+//
+//        $sum = Salary::sum('salary');
+//        if ($sum != 181480757419) {
+//            dd("Test j failed!");
+//        }
+//
+//        $sum = Salary::select('salary')->sum();
+//        if ($sum != 181480757419) {
+//            dd("Test k failed!");
+//        }
+//
+//    }
 }
 
 ///////////////////////////////////////////////////////////////////////
-// Relation Test
+// Relation Test Books
 
 /**
  * @property integer $id
  * @property string $name
  */
-class Author extends Model
+class Author extends Model // Department
 {
     public function books()
     {
@@ -604,11 +1318,116 @@ class Author extends Model
  * @property integer $author_id
  * @property string $title
  */
-class Book extends Model
+class Book extends Model // Employee
 {
     public function author()
     {
         return $this->belongsTo(Author::class);
+    }
+}
+
+///////////////////////////////////////////////////////////////////////
+// Relation Test Employees
+
+/**
+ * @property integer $id
+ * @property string $name
+ * @property-read Profile $profile
+ * @property-read Department[] $departments
+ * @property-read Salary[] $salaries
+ * @property-read Picture[] $pictures
+ */
+class Employee extends Model
+{
+    public function profile()
+    {
+        return $this->hasOne(Profile::class);
+    }
+
+    public function departments()
+    {
+        return $this->belongsToMany(Department::class);
+    }
+
+    public function salaries()
+    {
+        return $this->hasMany(Salary::class);
+    }
+
+    public function pictures()
+    {
+        return $this->morphMany(Picture::class, 'imageable');
+    }
+
+    public function getFirstnameAttribute()
+    {
+        return ucfirst($this->attributes['firstname']);
+    }
+
+    public function setFirstnameAttribute($value)
+    {
+        $this->attributes['firstname'] = strtolower($value);
+    }
+}
+
+/**
+ * @property integer $id
+ * @property string $name
+ * @property-read Employee[] $employees
+ * @property-read Picture $picture
+ */
+class Department extends Model
+{
+    public function employees()
+    {
+        return $this->belongsToMany(Employee::class);
+    }
+
+    public function picture()
+    {
+        return $this->morphOne(Picture::class, 'imageable');
+    }
+}
+
+/**
+ * @property integer $id
+ * @property string $imageable_type
+ * @property int $imageable_id
+ * @property string $name
+ * @property-read Model $imageable
+ */
+class Picture extends Model
+{
+    public function imageable()
+    {
+        return $this->morphTo('imageable');
+    }
+}
+
+/**
+ * @property integer $id
+ * @property string $name
+ * @property-read Employee $employee
+ */
+class Profile extends Model
+{
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
+    }
+}
+
+/**
+ * @property integer $id
+ * @property int $employee_id
+ * @property string $name
+ * @property-read Employee $employee
+ */
+class Salary extends Model
+{
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
     }
 }
 

@@ -10,6 +10,7 @@ use Core\Models\HasManyRelation;
 use Core\Models\HasOneRelation;
 use Core\Models\MorphManyRelation;
 use Core\Models\MorphOneRelation;
+use Core\Models\MorphToRelation;
 use Core\Services\Contracts\Arrayable;
 use Core\Services\Contracts\Database;
 use Core\Services\Contracts\Jsonable;
@@ -727,7 +728,7 @@ interface Model extends Arrayable, ArrayAccess, Hookable, Jsonable, JsonSerializ
      * @param string $prefix Prefix for the type attribute and foreign key, e.g. "imageable".
      * @param string|null $typeAttribute Default: "&lt;prefix&gt;_type", e.g. "imageable_type".
      * @param string|null $foreignKey Default: "&lt;prefix&gt;_id", e.g. "imageable_id".
-     * @return BelongsToRelation
+     * @return MorphToRelation
      */
     public function morphTo($prefix, $typeAttribute = null, $foreignKey = null);
 }

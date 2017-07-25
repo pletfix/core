@@ -687,9 +687,10 @@ interface Builder extends Countable
     /**
      * Calculates the number of records.
      *
+     * @param string|null $column
      * @return int
      */
-    public function count();
+    public function count($column = null);
 
     /**
      * Calculates the maximum value of a given column.

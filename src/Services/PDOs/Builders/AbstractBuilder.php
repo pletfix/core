@@ -909,7 +909,7 @@ class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilde
     protected function aggregate($function, $column = null)
     {
         if ($column === null) {
-            $column = !empty($this->columns) ? implode(', ', $this->columns) : '*';
+            $column = count($this->columns) == 1 && strpos($this->columns[0], '*') === false ? $this->columns[0] : '*';
         }
         else {
             $column = $this->db->quoteName($column);
@@ -934,9 +934,9 @@ class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilde
     /**
      * @inheritdoc
      */
-    public function count()
+    public function count($column = null)
     {
-        return (int)$this->aggregate('COUNT');
+        return (int)$this->aggregate('COUNT', $column);
     }
 
     /**
