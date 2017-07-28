@@ -138,7 +138,7 @@ interface Database
     /**
      * Rollback the active database transaction.
      */
-    public function rollBack();
+    public function rollBack(); // todo oder rollback() ? Was ist üblich?
 
     /**
      * Get the number of active transactions.

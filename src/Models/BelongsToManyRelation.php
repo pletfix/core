@@ -153,12 +153,16 @@ class BelongsToManyRelation extends Relation
     {
         $localId = $this->model->getAttribute($this->localKey);
         $foreignId = $model->getAttribute($this->otherKey);
+
         $this->model->database()->table($this->joinTable)->insert([
             $this->localForeignKey => $localId,
             $this->otherForeignKey => $foreignId,
         ]);
+
         $this->model->clearRelationCache();
         $model->clearRelationCache();
+
+        return true;
     }
 
         /**
@@ -167,33 +171,41 @@ class BelongsToManyRelation extends Relation
     public function disassociate(ModelContract $model = null)
     {
         $localId = $this->model->getAttribute($this->localKey);
+
         if ($model === null) {
             $this->model->database()->table($this->joinTable)
                 ->whereIs($this->localForeignKey, $localId)
                 ->delete();
             $this->model->clearRelationCache();
+            return true;
         }
-        else {
-            $foreignId = $model->getAttribute($this->otherKey);
-            $this->model->database()->table($this->joinTable)
-                ->whereIs($this->localForeignKey, $localId)
-                ->whereIs($this->otherForeignKey, $foreignId)
-                ->delete();
-            $this->model->clearRelationCache();
-            $model->clearRelationCache();
-        }
-    }
 
+        $foreignId = $model->getAttribute($this->otherKey);
+
+        $this->model->database()->table($this->joinTable)
+            ->whereIs($this->localForeignKey, $localId)
+            ->whereIs($this->otherForeignKey, $foreignId)
+            ->delete();
+
+        $this->model->clearRelationCache();
+        $model->clearRelationCache();
+
+        return true;
+    }
 
     /**
      * @inheritdoc
      */
     public function create(array $attributes = [])
     {
-        return $this->model->database()->transaction(function() use($attributes) {
+        return $this->model->database()->transaction(function(Database $db) use($attributes) {
             /** @var ModelContract $class */
             $class = $this->builder->getClass();
             $model = $class::create($attributes);
+            if ($model === false) {
+                return false;
+            }
+
             $this->associate($model);
 
             return $model;
@@ -205,14 +217,20 @@ class BelongsToManyRelation extends Relation
      */
     public function delete(ModelContract $model)
     {
-        $this->model->database()->transaction(function(Database $db) use($model) {
+        return $this->model->database()->transaction(function(Database $db) use($model) {
             $foreignId = $model->getAttribute($this->otherKey);
-            $model->delete();
+            if (!$model->delete()) {
+                return false;
+            }
+
             $model->clearRelationCache();
+            $this->model->clearRelationCache();
+
             $db->table($this->joinTable)
                 ->whereIs($this->otherForeignKey, $foreignId)
                 ->delete();
-            $this->model->clearRelationCache();
+
+            return true;
         });
     }
 }

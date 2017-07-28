@@ -725,6 +725,8 @@ interface Model extends Arrayable, ArrayAccess, Hookable, Jsonable, JsonSerializ
     /**
      * Define a polymorphic, inverse one-to-one or inverse one-to-many relationship.
      *
+     * If the model has not stored a type, the method defines a relationship with itself.
+     *
      * @param string $prefix Prefix for the type attribute and foreign key, e.g. "imageable".
      * @param string|null $typeAttribute Default: "&lt;prefix&gt;_type", e.g. "imageable_type".
      * @param string|null $foreignKey Default: "&lt;prefix&gt;_id", e.g. "imageable_id".

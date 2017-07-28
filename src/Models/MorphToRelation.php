@@ -5,6 +5,7 @@ namespace Core\Models;
 use Core\Models\Contracts\Model as ModelContract;
 use Core\Services\Contracts\Database;
 use Core\Services\PDOs\Builders\Contracts\Builder;
+use LogicException;
 
 class MorphToRelation extends BelongsToRelation
 {
@@ -34,6 +35,23 @@ class MorphToRelation extends BelongsToRelation
     /**
      * @inheritdoc
      */
+    public function addEagerConstraints(array $entities)
+    {
+        $this->eagerHash = [];
+        $class = $this->builder->getClass();
+        foreach ($entities as $entity) {
+            if ($entity->getAttribute($this->typeAttribute) !== $class) {
+                throw new LogicException('Cannot load several types eagerly.');
+            }
+            $this->eagerHash[$entity->getId()] = $entity->getAttribute($this->foreignKey); // eg. eagerHash[$book_id] = $author_id
+        }
+
+        return $this->builder->whereIn($this->otherKey, array_values($this->eagerHash));
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function associate(ModelContract $model)
     {
         $type = get_class($model);
@@ -44,13 +62,17 @@ class MorphToRelation extends BelongsToRelation
 
         $otherId = $model->getAttribute($this->otherKey);
 
-        $this->model
+        $success = $this->model
             ->clearRelationCache()
             ->setAttribute($this->typeAttribute, $type)
             ->setAttribute($this->foreignKey, $otherId)
             ->save();
 
-        $model->clearRelationCache();
+        if ($success) {
+            $model->clearRelationCache();
+        }
+
+        return $success;
     }
 
     /**
@@ -59,25 +81,33 @@ class MorphToRelation extends BelongsToRelation
     public function disassociate(ModelContract $model = null)
     {
         if ($model === null) {
-            $this->model
-                ->clearRelationCache()
+            $success = $this->model
                 ->setAttribute($this->typeAttribute, null)
                 ->setAttribute($this->foreignKey, null)
                 ->save();
-            return;
+            if ($success) {
+                $this->model->clearRelationCache();
+            }
+            return $success;
         }
 
         $foreignId = $this->model->getAttribute($this->foreignKey);
-        $otherId   = $model->getAttribute($this->otherKey);
-        if ($foreignId == $otherId) {
-            $this->model
-                ->clearRelationCache()
+        $otherId = $model->getAttribute($this->otherKey);
+        if ($foreignId != $otherId) {
+            return true;
+        }
+
+        $success = $this->model
                 ->setAttribute($this->typeAttribute, null)
                 ->setAttribute($this->foreignKey, null)
                 ->save();
+
+        if ($success) {
+            $this->model->clearRelationCache();
+            $model->clearRelationCache();
         }
 
-        $model->clearRelationCache();
+        return $success;
     }
 
     /**
@@ -85,14 +115,20 @@ class MorphToRelation extends BelongsToRelation
      */
     public function create(array $attributes = [])
     {
-        return $this->model->database()->transaction(function() use($attributes) {
+        return $this->model->database()->transaction(function(Database $db) use($attributes) {
             /** @var ModelContract $class */
             $class = $this->builder->getClass();
             if ($class === null) {
-                throw new \Exception('The type of the polymorphic relationship is not defined.');
+                throw new LogicException('The type of the polymorphic relationship is not defined.');
             }
             $model = $class::create($attributes);
-            $this->associate($model);
+            if ($model === false) {
+                return false;
+            }
+            if (!$this->associate($model)) {
+                $db->rollBack();
+                return false;
+            }
 
             return $model;
         });
@@ -103,12 +139,15 @@ class MorphToRelation extends BelongsToRelation
      */
     public function delete(ModelContract $model)
     {
-        $this->model->database()->transaction(function(Database $db) use($model) {
+        return $this->model->database()->transaction(function(Database $db) use($model) {
             $type      = get_class($model);
             $otherId   = $model->getAttribute($this->otherKey);
             $foreignId = $this->model->getAttribute($this->foreignKey);
 
-            $model->delete();
+            if (!$model->delete()) {
+                return false;
+            }
+
             $model->clearRelationCache();
 
             $db->table($this->model->getTable())
@@ -126,6 +165,8 @@ class MorphToRelation extends BelongsToRelation
                     ->setAttribute($this->foreignKey, null)
                     ->sync();
             }
+
+            return true;
         });
     }
 }

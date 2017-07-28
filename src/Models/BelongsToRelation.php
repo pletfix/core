@@ -105,9 +105,15 @@ class BelongsToRelation extends Relation
     public function associate(ModelContract $model)
     {
         $otherId = $model->getAttribute($this->otherKey);
-        $this->model->setAttribute($this->foreignKey, $otherId)->save();
-        $this->model->clearRelationCache();
-        $model->clearRelationCache();
+
+        $success = $this->model->setAttribute($this->foreignKey, $otherId)->save();
+
+        if ($success) {
+            $this->model->clearRelationCache();
+            $model->clearRelationCache();
+        }
+
+        return $success;
     }
 
     /**
@@ -116,18 +122,27 @@ class BelongsToRelation extends Relation
     public function disassociate(ModelContract $model = null)
     {
         if ($model === null) {
-            $this->model->setAttribute($this->foreignKey, null)->save();
-            $this->model->clearRelationCache();
-            return;
+            $success = $this->model->setAttribute($this->foreignKey, null)->save();
+            if ($success) {
+                $this->model->clearRelationCache();
+            }
+            return $success;
         }
 
         $foreignId = $this->model->getAttribute($this->foreignKey);
-        $otherId   = $model->getAttribute($this->otherKey);
-        if ($foreignId == $otherId) {
-            $this->model->setAttribute($this->foreignKey, null)->save();
+        $otherId = $model->getAttribute($this->otherKey);
+        if ($foreignId != $otherId) {
+            return true;
         }
-        $this->model->clearRelationCache();
-        $model->clearRelationCache();
+
+        $success = $this->model->setAttribute($this->foreignKey, null)->save();
+
+        if ($success) {
+            $this->model->clearRelationCache();
+            $model->clearRelationCache();
+        }
+
+        return $success;
     }
 
     /**
@@ -135,11 +150,17 @@ class BelongsToRelation extends Relation
      */
     public function create(array $attributes = [])
     {
-        return $this->model->database()->transaction(function() use($attributes) {
+        return $this->model->database()->transaction(function(Database $db) use($attributes) {
             /** @var ModelContract $class */
             $class = $this->builder->getClass();
             $model = $class::create($attributes);
-            $this->associate($model);
+            if ($model === false) {
+                return false;
+            }
+            if (!$this->associate($model)) {
+                $db->rollBack();
+                return false;
+            }
 
             return $model;
         });
@@ -150,11 +171,13 @@ class BelongsToRelation extends Relation
      */
     public function delete(ModelContract $model)
     {
-        $this->model->database()->transaction(function(Database $db) use($model) {
+        return $this->model->database()->transaction(function(Database $db) use($model) {
             $foreignId = $this->model->getAttribute($this->foreignKey);
             $otherId = $model->getAttribute($this->otherKey);
+            if (!$model->delete()) {
+                return false;
+            }
 
-            $model->delete();
             $model->clearRelationCache();
 
             $db->table($this->model->getTable())
@@ -162,9 +185,11 @@ class BelongsToRelation extends Relation
                 ->update([$this->foreignKey => null]);
 
             if ($foreignId == $otherId) {
-                $this->model->setAttribute($this->foreignKey, null)->sync();
                 $this->model->clearRelationCache();
+                $this->model->setAttribute($this->foreignKey, null)->sync();
             }
+
+            return true;
         });
     }
 }

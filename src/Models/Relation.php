@@ -222,7 +222,7 @@ abstract class Relation implements RelationContract
      */
     public function whereNotBetween($column, $lowest, $highest)
     {
-        return $this->builder->whereBetween($column, $lowest, $highest);
+        return $this->builder->whereNotBetween($column, $lowest, $highest);
     }
 
     /**

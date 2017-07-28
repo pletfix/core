@@ -1088,8 +1088,8 @@ class Model implements ModelContract
             $foreignKey = $prefix . '_id';
         }
 
-        $class = $this->attributes[$typeAttribute] ?: static::class;
         /** @var Model $model */
+        $class = isset($this->attributes[$typeAttribute]) ? $this->attributes[$typeAttribute] : static::class;
         $model = new $class;
 
         $otherKey = $model->getPrimaryKey();

@@ -101,12 +101,18 @@ class MorphManyRelation extends Relation
     {
         $type = get_class($this->model);
         $id   = $this->model->getId();
-        $model
+
+        $success = $model
             ->clearRelationCache()
             ->setAttribute($this->typeAttribute, $type)
             ->setAttribute($this->foreignKey, $id)
             ->save();
-        $this->model->clearRelationCache();
+
+        if ($success) {
+            $this->model->clearRelationCache();
+        }
+
+        return $success;
     }
 
     /**
@@ -115,26 +121,35 @@ class MorphManyRelation extends Relation
     public function disassociate(ModelContract $model = null)
     {
         if ($model === null) {
-            $this->builder->update([
+            $result = $this->builder->update([
                 $this->typeAttribute => null,
                 $this->foreignKey => null,
             ]);
-            $this->model->clearRelationCache();
-            return;
+            if ($result !== false) {
+                $this->model->clearRelationCache();
+            }
+            return $result !== false;
         }
 
         $type = get_class($this->model);
-        $id   = $this->model->getId();
+        $id = $this->model->getId();
         $foreignType = $model->getAttribute($this->typeAttribute);
-        $foreignId   = $model->getAttribute($this->foreignKey);
-        if ($type == $foreignType && $id == $foreignId) {
-            $model
-                ->clearRelationCache()
-                ->setAttribute($this->typeAttribute, null)
-                ->setAttribute($this->foreignKey, null)
-                ->save();
+        $foreignId = $model->getAttribute($this->foreignKey);
+        if ($type != $foreignType || $id != $foreignId) {
+            return true;
+        }
+
+        $success = $model
+            ->clearRelationCache()
+            ->setAttribute($this->typeAttribute, null)
+            ->setAttribute($this->foreignKey, null)
+            ->save();
+
+        if ($success) {
             $this->model->clearRelationCache();
         }
+
+        return $success;
     }
 
     /**
@@ -147,7 +162,9 @@ class MorphManyRelation extends Relation
         $model = new $class;
         $model->checkMassAssignment($attributes);
         $model->setAttributes($attributes);
-        $this->associate($model); // the model is saved here
+        if (!$this->associate($model)) { // the model is saved here
+            return false;
+        }
 
         return $model;
     }
@@ -162,8 +179,11 @@ class MorphManyRelation extends Relation
         $foreignType = $model->getAttribute($this->typeAttribute);
         $foreignId   = $model->getAttribute($this->foreignKey);
 
+        if (!$model->delete()) {
+            return false;
+        }
+
         $model
-            ->delete()
             ->clearRelationCache()
             ->setAttribute($this->typeAttribute, null)
             ->setAttribute($this->foreignKey, null)
@@ -172,5 +192,7 @@ class MorphManyRelation extends Relation
         if ($type == $foreignType && $id == $foreignId) {
             $this->model->clearRelationCache();
         }
+
+        return true;
     }
 }

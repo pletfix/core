@@ -458,37 +458,50 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
     /**
      * Add the relation to the given model.
      *
+     * It returns FALSE if the operation was canceled by a hook, otherwise TRUE.
+     *
      * @param Model $model
+     * @return bool
      */
     public function associate(Model $model);
 
     /**
      * Remove the relation to the given model.
      *
+     * It returns FALSE if the operation was canceled by a hook, otherwise TRUE.
+     *
      * @param Model|null $model
+     * @return bool
      */
     public function disassociate(Model $model = null);
 
     /**
      * Create a new model, set the relation and save it in the database.
      *
+     * It returns FALSE if the operation was canceled by a hook.
+     *
      * @param array $attributes
-     * @return Model
+     * @return Model|false
      */
     public function create(array $attributes = []);
 
     /**
      * Update all records of the relation with th given attributes and return the number of affected rows.
      *
+     * It returns FALSE if the operation was canceled by a hook.
+     *
      * @param array $attributes Values to be updated
-     * @return int
+     * @return int|false
      */
     public function update(array $attributes);
 
     /**
      * Delete the given model from the database and remove the relation.
      *
+     * It returns FALSE if the operation was canceled by a hook, otherwise TRUE.
+     *
      * @param Model $model
+     * @return bool
      */
     public function delete(Model $model); // todo evtl umbenennen in remove(), um Verwechlung mit QueryBuilder auszuschließen
 }

@@ -107,9 +107,15 @@ class HasManyRelation extends Relation
     public function associate(ModelContract $model)
     {
         $localId = $this->model->getAttribute($this->localKey);
-        $model->setAttribute($this->foreignKey, $localId)->save();
-        $this->model->clearRelationCache();
-        $model->clearRelationCache();
+
+        $success = $model->setAttribute($this->foreignKey, $localId)->save();
+
+        if ($success) {
+            $this->model->clearRelationCache();
+            $model->clearRelationCache();
+        }
+
+        return $success;
     }
 
     /**
@@ -118,19 +124,27 @@ class HasManyRelation extends Relation
     public function disassociate(ModelContract $model = null)
     {
         if ($model === null) {
-            $this->builder->update([$this->foreignKey => null]);
-            $this->model->clearRelationCache();
-            return;
+            $result = $this->builder->update([$this->foreignKey => null]);
+            if ($result !== false) {
+                $this->model->clearRelationCache();
+            }
+            return $result !== false;
         }
 
-        $localId   = $this->model->getAttribute($this->localKey);
+        $localId = $this->model->getAttribute($this->localKey);
         $foreignId = $model->getAttribute($this->foreignKey);
+        if ($localId != $foreignId) {
+            return true;
+        }
 
-        if ($localId == $foreignId) {
-            $model->setAttribute($this->foreignKey, null)->save();
+        $success = $model->setAttribute($this->foreignKey, null)->save();
+
+        if ($success) {
             $this->model->clearRelationCache();
             $model->clearRelationCache();
         }
+
+        return $success;
     }
 
     /**
@@ -143,7 +157,9 @@ class HasManyRelation extends Relation
         $model = new $class;
         $model->checkMassAssignment($attributes);
         $model->setAttributes($attributes);
-        $this->associate($model); // the model is saved here
+        if (!$this->associate($model)) { // the model is saved here
+            return false;
+        }
 
         return $model;
     }
@@ -156,12 +172,17 @@ class HasManyRelation extends Relation
         $localId = $this->model->getAttribute($this->localKey);
         $foreignId = $model->getAttribute($this->foreignKey);
 
-        $model->delete();
-        $model->setAttribute($this->foreignKey, null)->sync();
+        if (!$model->delete()) {
+            return false;
+        }
+
         $model->clearRelationCache();
+        $model->setAttribute($this->foreignKey, null)->sync();
 
         if ($localId == $foreignId) {
             $this->model->clearRelationCache();
         }
+
+        return true;
     }
 }
