@@ -128,6 +128,14 @@ class View implements ViewContract
     }
 
     /**
+     * @inheritdoc
+     */
+    public static function clearManifestCache()
+    {
+        self::$manifest = null;
+    }
+
+    /**
      * Determine if the cached file is up to date with the template.
      *
      * @param string $cachedFile
@@ -237,13 +245,7 @@ class View implements ViewContract
      */
     protected function yieldContent($section, $default = '')
     {
-        $content = isset($this->scope->sections[$section]) ? $this->scope->sections[$section] : $default;
-
-        //$content = str_replace('@@parent', '--parent--holder--', $content);
-        //$content = str_replace('@parent', '', $content);
-        //$content = str_replace('--parent--holder--', '@parent', $content);
-
-        return $content;
+        return isset($this->scope->sections[$section]) ? $this->scope->sections[$section] : $default;
     }
 
     /**
@@ -287,12 +289,6 @@ class View implements ViewContract
      */
     private function storeSection($section, $content)
     {
-//        if (isset($this->scope->sections[$section])) {
-//            $content = str_replace('@parent', $content, $this->scope->sections[$section]);
-//        }
-//
-//        $this->scope->sections[$section] = $content;
-
         if (!isset($this->scope->sections[$section])) {
             $this->scope->sections[$section] = $content;
         }

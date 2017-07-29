@@ -19,8 +19,8 @@ class LoadConfigurationTest extends TestCase
     public static function setUpBeforeClass()
     {
         self::$origConfig = DI::getInstance()->get('config')->get();
-        self::$envFile = __DIR__ . '/fakes/env.ini';
-        self::$configPath = __DIR__ . '/fakes/config';
+        self::$envFile = __DIR__ . '/../_data/env.ini';
+        self::$configPath = __DIR__ . '/../_data/config';
         self::$cache = storage_path('~test/config.php');
     }
 

@@ -12,10 +12,10 @@ use Core\Testing\TestCase;
 use InvalidArgumentException;
 use RuntimeException;
 
-require_once __DIR__ . '/../Controllers/fakes/CoreDummyController.php.fake';
-require_once __DIR__ . '/../Controllers/fakes/PluginDummyController.php.fake';
-require_once __DIR__ . '/../Middleware/fakes/AppMiddlewareWithoutParams.php.fake';
-require_once __DIR__ . '/../Middleware/fakes/CoreMiddlewareWithParams.php.fake';
+require_once __DIR__ . '/../_data/classes/CoreDummyController.php.stub';
+require_once __DIR__ . '/../_data/classes/PluginDummyController.php.stub';
+require_once __DIR__ . '/../_data/classes/AppMiddlewareWithoutParams.php.stub';
+require_once __DIR__ . '/../_data/classes/CoreMiddlewareWithParams.php.stub';
 
 class RouteTest extends TestCase
 {
@@ -38,7 +38,7 @@ class RouteTest extends TestCase
 
     protected function setUp()
     {
-        $this->route = new Route(__DIR__ . '/plugin_manifest/classes.php');
+        $this->route = new Route(__DIR__ . '/../_data/plugin_manifest/classes.php');
     }
 
     public function testDispatchController()
@@ -160,7 +160,7 @@ class RouteTest extends TestCase
 
     public function testPluginManifestNotExists()
     {
-        $route = new Route(__DIR__ . '/plugin_manifest/classes2.php');
+        $route = new Route(__DIR__ . '/../_data/plugin_manifest/classes2.php');
 
         $request = $this->getMockBuilder(Request::class)->setMethods(['method', 'path'])->getMock();
         $request->expects($this->any())->method('method')->willReturn('POST');

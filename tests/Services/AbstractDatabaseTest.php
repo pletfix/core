@@ -13,7 +13,6 @@ use DateTime;
 use Generator;
 use stdClass;
 
-// todo die Abstracte Klasse testen, ohne SQLite zu verwenden. Dafür diese Methoden hier nach SQLiteTest verschieben (SQLIteTest ohne Mocks verwenden)
 class AbstractDatabaseTest extends TestCase
 {
     /**

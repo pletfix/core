@@ -12,7 +12,7 @@ class SQLiteSchemaTest extends SchemaTestCase
 {
     public static function setUpBeforeClass()
     {
-        self::$fixturePath = __DIR__  . '/../../fixtures/sqlite';
+        self::$fixturePath = __DIR__  . '/../../../_data/fixtures/sqlite';
     }
 
     protected function setUp()
@@ -276,7 +276,6 @@ class SQLiteSchemaTest extends SchemaTestCase
         ]));
     }
 
-    // todo diesen Test auch für die anderen DBs durchführen (wird der zugehörige Index gelöscht?)
     public function testDropColumn()
     {
         $this->expectGetColumnsAndIndexesOfTable3();
@@ -293,7 +292,6 @@ class SQLiteSchemaTest extends SchemaTestCase
         $this->assertInstanceOf(SQLiteSchema::class, $this->schema->dropColumn('table3', 'string2'));
     }
 
-    // todo diesen Test auch für die anderen DBs durchführen (wird der zugehörige Index umbenannt?)
     public function testRenameColumn()
     {
         $this->expectGetColumnsAndIndexesOfTable3();

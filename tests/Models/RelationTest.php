@@ -5,8 +5,7 @@ namespace Core\Tests\Models;
 use Core\Models\Model;
 use Core\Models\Relation;
 use Core\Services\AbstractDatabase;
-use Core\Services\PDOs\Builders\AbstractBuilder;
-use Core\Services\PDOs\Builders\Contracts\Builder;
+use Core\Services\PDOs\Builders\Builder;
 use Core\Testing\TestCase;
 use PHPUnit_Framework_MockObject_MockObject;
 
@@ -31,7 +30,7 @@ class RelationTest extends TestCase
             ->setConstructorArgs([['database' => '~test']])
             ->getMockForAbstractClass();
 
-        $this->builder = $this->getMockBuilder(AbstractBuilder::class)
+        $this->builder = $this->getMockBuilder(Builder::class)
             ->setConstructorArgs([$db])
             ->setMethods([
                 'select',
@@ -234,7 +233,7 @@ class RelationTest extends TestCase
 
     public function testCursor()
     {
-        $this->builder->expects($this->once())->method('cursor')->with()->willReturn('Generator'); //todo
+        $this->builder->expects($this->once())->method('cursor')->with()->willReturn('Generator');
         $this->assertSame('Generator', $this->relation->cursor());
     }
 

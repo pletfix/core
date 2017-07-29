@@ -22,27 +22,6 @@ class PostgresBuilderTest extends TestCase
      */
     private $db;
 
-//    /**
-//     * @var string
-//     */
-//    protected static $fixturePath;
-//
-//    public static function setUpBeforeClass()
-//    {
-//        self::$fixturePath = __DIR__ . '/../../fixtures/sqlite';
-//    }
-//
-//    private function execSqlFile(Database $db, $name)
-//    {
-//        $statements = explode(';', file_get_contents(self::$fixturePath . '/' . $name . '.sql'));
-//        foreach ($statements as $statement) {
-//            $statement = trim($statement);
-//            if (!empty($statement)) {
-//                $db->exec($statement);
-//            }
-//        }
-//    }
-
     protected function setUp()
     {
         $this->db = $this->getMockBuilder(AbstractDatabase::class)
@@ -56,7 +35,7 @@ class PostgresBuilderTest extends TestCase
                 return "'$value'";
             });
 
-        $this->builder = new PostgresBuilder($this->db); // todo Rename AbstractBuilder, it is not really abstract!
+        $this->builder = new PostgresBuilder($this->db);
     }
 
     public function testInsert()

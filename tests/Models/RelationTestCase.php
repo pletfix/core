@@ -22,7 +22,7 @@ class RelationTestCase extends TestCase
 
     public static function setUpBeforeClass()
     {
-        self::$fixturePath = __DIR__  . '/../Services/fixtures/sqlite';
+        self::$fixturePath = __DIR__  . '/../_data/fixtures/sqlite';
         self::$origFactory = DI::getInstance()->get('database-factory');
     }
 

@@ -7,13 +7,12 @@ use Core\Models\Contracts\Model;
 use Core\Models\Contracts\Relation;
 use Core\Services\Contracts\Database;
 use Core\Services\PDOs\Builders\Contracts\Builder as BuilderContract;
-use Core\Services\PDOs\Builders\Contracts\Builder;
 use Core\Services\PDOs\Builders\Contracts\Hookable;
 use InvalidArgumentException;
 use LogicException;
 
 /**
- * Abstract Query Builder
+ * Query Builder
  *
  * The class based on the Aura's QueryFactory ([BSD 2-clause "Simplified" License](https://github.com/auraphp/Aura.SqlQuery/blob/3.x/LICENSE))
  * and the Laravel's QueryBuilder ([MIT License](https://github.com/laravel/laravel/tree/5.3)).
@@ -23,14 +22,14 @@ use LogicException;
  * @see https://github.com/illuminate/database/blob/5.3/Query/Builder.php Laravel's Query Builder on GitHub
  * @see https://github.com/cakephp/database/tree/3.2 CakePHP's Database Library
  */
-class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilder!
+class Builder implements BuilderContract
 {
     /**
      * Database Access Layer.
      *
      * @var Database
      */
-    protected $db; // todo evtl getter anbieten
+    protected $db;
 
     /**
      * Name of the class where the data are mapped to.
@@ -312,7 +311,7 @@ class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilde
             $source = $source(new static($this->db));
         }
 
-        if ($source instanceof Builder) {
+        if ($source instanceof BuilderContract) {
             $this->putBindings('from', $source->bindings());
             $source = $source->toSql();
         }
@@ -383,7 +382,7 @@ class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilde
      * See the <pre>join</pre> method for details and examples.
      *
      * @param string $type The join type ("INNER", "LEFT" or "RIGHT")).
-     * @param string|Builder|Closure $source A table name or a subquery.
+     * @param string|BuilderContract|Closure $source A table name or a subquery.
      * @param string $on Join on this condition, e.g.: "foo.id = d.foo_id"
      * @param string|null $alias The alias name for the source.
      * @param array $bindings
@@ -395,7 +394,7 @@ class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilde
             $source = $source(new static($this->db));
         }
 
-        if ($source instanceof Builder) {
+        if ($source instanceof BuilderContract) {
             $this->putBindings('join', $source->bindings());
             $source = $source->toSql();
         }
@@ -487,7 +486,7 @@ class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilde
             $query = $query(new static($this->db));
         }
 
-        if ($query instanceof Builder) {
+        if ($query instanceof BuilderContract) {
             $this->putBindings('where', $query->bindings());
             $query = $query->toSql();
         }
@@ -516,7 +515,7 @@ class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilde
             $query = $query(new static($this->db));
         }
 
-        if ($query instanceof Builder) {
+        if ($query instanceof BuilderContract) {
             $this->putBindings('where', $query->bindings());
             $query = $query->toSql();
         }
@@ -1432,7 +1431,7 @@ class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilde
     /**
      * Render the column list.
      *
-     * @param string|array|Builder|Closure $columns One or more columns or subquery.
+     * @param string|array|BuilderContract|Closure $columns One or more columns or subquery.
      * @param string $clause Key for the binding list: "select", "group" or "order"
      * @return array
      */
@@ -1450,7 +1449,7 @@ class AbstractBuilder implements BuilderContract // todo ist kein AbstractBuilde
                     $column = $column(new static($this->db));
                 }
 
-                if ($column instanceof Builder) {
+                if ($column instanceof BuilderContract) {
                     $this->putBindings($clause, $column->bindings());
                     $column = $column->toSql();
                 }

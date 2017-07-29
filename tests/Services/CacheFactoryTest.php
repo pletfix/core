@@ -74,13 +74,13 @@ class CacheFactoryTest extends TestCase
 
     public function testMemcachedStore()
     {
-        require 'fakes/Memcached.php.fake';
+        require __DIR__  . '/../_data/fakes/Memcached.php.fake';
         $this->assertInstanceOf(Cache::class, $this->factory->store('memcached'));
     }
 
     public function testRedisStore()
     {
-        require 'fakes/Redis.php.fake';
+        require __DIR__  . '/../_data/fakes/Redis.php.fake';
         $this->assertInstanceOf(Cache::class, $this->factory->store('redis'));
     }
 

@@ -15,7 +15,7 @@ use LogicException;
  *
  * @see https://github.com/symfony/console/blob/3.0/Application.php
  */
-abstract class AbstractCommand implements CommandContract
+abstract class AbstractCommand implements CommandContract // todo in COmmand umbennenen
 {
     /**
      * The console command name.

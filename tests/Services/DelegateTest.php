@@ -8,9 +8,9 @@ use Core\Services\Delegate;
 use Core\Services\Request;
 use Core\Testing\TestCase;
 
-require_once __DIR__ . '/../Middleware/fakes/AppMiddlewareWithoutParams.php.fake';
-require_once __DIR__ . '/../Middleware/fakes/CoreMiddlewareWithParams.php.fake';
-require_once __DIR__ . '/../Middleware/fakes/PluginDummyMiddleware.php.fake';
+require_once __DIR__ . '/../_data/classes/AppMiddlewareWithoutParams.php.stub';
+require_once __DIR__ . '/../_data/classes/CoreMiddlewareWithParams.php.stub';
+require_once __DIR__ . '/../_data/classes/PluginDummyMiddleware.php.stub';
 
 class DelegateTest extends TestCase
 {
@@ -21,7 +21,7 @@ class DelegateTest extends TestCase
 
     protected function setUp()
     {
-        $this->d = new Delegate(__DIR__ . '/plugin_manifest/classes.php');
+        $this->d = new Delegate(__DIR__ . '/../_data/plugin_manifest/classes.php');
     }
 
     public function testAbsoluteMiddlewarePathAndProcessReturnsString()
@@ -62,7 +62,7 @@ class DelegateTest extends TestCase
 
     public function testPluginManifestNotExists()
     {
-        $d = new Delegate(__DIR__ . '/plugin_manifest/classes2.php');
+        $d = new Delegate(__DIR__ . '/../_data/plugin_manifest/classes2.php');
         $d->setMiddleware(['MiddlewareWithParams:X,Y']);
         $this->assertInstanceOf(Delegate::class, $d->setAction(function() {
             return 'Z';

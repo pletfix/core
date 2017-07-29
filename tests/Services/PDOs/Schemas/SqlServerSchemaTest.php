@@ -12,7 +12,7 @@ class SqlServerSchemaTest extends SchemaTestCase
 {
     public static function setUpBeforeClass()
     {
-        self::$fixturePath = __DIR__  . '/../../fixtures/sqlserver';
+        self::$fixturePath = __DIR__  . '/../../../_data/fixtures/sqlserver';
     }
 
     protected function setUp()
@@ -41,7 +41,7 @@ class SqlServerSchemaTest extends SchemaTestCase
     public function testTables()
     {
         /** @noinspection PhpIncludeInspection */
-        $fixture = include __DIR__  . '/../../fixtures/sqlserver/get_default_collation.php';
+        $fixture = include __DIR__  . '/../../../_data/fixtures/sqlserver/get_default_collation.php';
         $this->db->expects($this->once())->method('scalar')->with($fixture['query'])->willReturn($fixture['result']);
         $this->expectsQueryFile('show_tables', 1);
         $this->expectsQueryFile('show_table_comments', 2);

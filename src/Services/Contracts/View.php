@@ -23,4 +23,9 @@ interface View
      * @return bool
      */
     public function exists($name);
+
+    /**
+     * Clear the internal plugin manifest cache.
+     */
+    public static function clearManifestCache();
 }

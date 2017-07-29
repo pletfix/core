@@ -71,11 +71,6 @@ class PostgresTest extends TestCase
 
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->setMethods(['exec'])->getMock();
         $pdo->expects($this->any())->method('exec')->willReturn(0);
-//        $pdo->expects($this->at(0))->method('exec')->with('SET search_path to "public"')->willReturn($pdoStatement);
-//        $pdo->expects($this->at(1))->method('exec')->with("SET names 'utf8'")->willReturn($pdoStatement);
-//        $pdo->expects($this->at(2))->method('exec')->with("SET time_zone='Europe/Berlin'")->willReturn($pdoStatement);
-//        $pdo->expects($this->at(3))->method('exec')->with("SET application_name to 'myapp'")->willReturn($pdoStatement);
-
 
         /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(Postgres::class)
@@ -133,7 +128,7 @@ class PostgresTest extends TestCase
             AND table_name = ?
             AND column_default LIKE 'nextval(%'
         ", ['public', 'table1'])
-            ->willReturn("nextval('table1_id_seq'::regclass)"); // todo fixture verwenden
+            ->willReturn("nextval('table1_id_seq'::regclass)");
 
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->setMethods(['lastInsertId'])->getMock();
         $pdo->expects($this->once())->method('lastInsertId')->willReturn(4711);

@@ -7,7 +7,7 @@ use Core\Services\DI;
 use Core\Services\View;
 use Core\Testing\TestCase;
 
-require_once 'fakes/headers_sent.php.fake';
+require_once __DIR__ . '/../_data/fakes/headers_sent.php.fake';
 
 class ResponseTest extends TestCase
 {

@@ -16,40 +16,22 @@ class TranslatorTest extends TestCase
     public static function setUpBeforeClass()
     {
         DI::getInstance()->get('config')
-            ->set('app.locale', '~testlocale')
-            ->set('app.fallback_locale', '~testfallback');
+            ->set('app.locale', 'en')
+            ->set('app.fallback_locale', 'de');
 
-        DI::getInstance()->get('translator')
-            ->setLocale('~testlocale');
-
-        $path1 = resource_path('lang/~testlocale');
-        $path2 = resource_path('lang/~testfallback');
-        @mkdir($path1);
-        @mkdir($path2);
-        file_put_contents($path1 . '/dummy.php', '<?php return [\'welcome\' => \'Hello {name}!\'];');
-        file_put_contents($path2 . '/dummy.php', '<?php return [\'welcome\' => \'Hallo {name}!!\', \'foo\' => \'fallback\'];');
-    }
-
-    public static function tearDownAfterClass()
-    {
-        $path1 = resource_path('lang/~testlocale');
-        $path2 = resource_path('lang/~testfallback');
-        @unlink($path1 . '/dummy.php');
-        @unlink($path2 . '/dummy.php');
-        @rmdir($path1);
-        @rmdir($path2);
+        DI::getInstance()->get('translator')->setLocale('en');
     }
 
     protected function setUp()
     {
-        $this->t = new Translator;
+        $this->t = new Translator(__DIR__ . '/../_data/lang', __DIR__ . '/../_data/plugin_manifest/languages.php');
     }
 
     public function testSetAndGetLocale()
     {
-        $this->assertSame('~testlocale', $this->t->getLocale());
-        $this->assertInstanceOf(Translator::class, $this->t->setLocale('~testlocale2'));
-        $this->assertSame('~testlocale2', $this->t->getLocale());
+        $this->assertSame('en', $this->t->getLocale());
+        $this->assertInstanceOf(Translator::class, $this->t->setLocale('fr'));
+        $this->assertSame('fr', $this->t->getLocale());
     }
 
     public function testTranslate()
@@ -61,30 +43,8 @@ class TranslatorTest extends TestCase
 
     public function testTranslateWithoutLanguageFile()
     {
-        // todo dad geht jetzt einfacher!!
-        $pluginPathCreated = false;
-        $migrateFileCreated = false;
-        $manifest = manifest_path('plugins/languages.php');
-        if (!file_exists($manifest)) {
-            if (!file_exists(dirname($manifest))) {
-                @mkdir(dirname($manifest));
-                $pluginPathCreated = true;
-            }
-            file_put_contents($manifest, '<?php return array ();', LOCK_EX);
-            $migrateFileCreated = true;
-        }
-        try {
-            $this->t->setLocale('~testlocale2'); // language file not exists
-            $this->assertSame('dummy.bar', $this->t->translate(('dummy.bar')));
-        }
-        finally {
-            if ($migrateFileCreated) {
-                @unlink($manifest);
-            }
-            if ($pluginPathCreated) {
-                @rmdir(dirname($manifest));
-            }
-        }
+        $this->t->setLocale('xy'); // language file not exists
+        $this->assertSame('dummy.bar', $this->t->translate(('dummy.bar')));
     }
 
     public function testHas()

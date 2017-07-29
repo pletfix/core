@@ -115,16 +115,16 @@ class Stdio implements StdioContract
     ///////////////////////////////////////////////////////////////////////////
     // Input
 
-    /**
-     * @inheritdoc
-     */
-    public function canRead($timeout = 0) // todo geht so nicht
-    {
-        $readFds = [$this->stdin];
-        $readyFds = stream_select($readFds, $writeFds, $errorFds, $timeout);
-
-        return $readyFds > 0;
-    }
+//    /**
+//     * @inheritdoc
+//     */
+//    public function canRead($timeout = 0)
+//    {
+//        $readFds = [$this->stdin];
+//        $readyFds = stream_select($readFds, $writeFds, $errorFds, $timeout);
+//
+//        return $readyFds > 0;
+//    }
 
     /**
      * @inheritdoc

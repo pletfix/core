@@ -9,12 +9,16 @@ use Core\Services\PluginManager;
 use Core\Testing\TestCase;
 use InvalidArgumentException;
 
+require_once __DIR__ . '/../_data/plugins/test/src/Commands/DummyCommand.php.fake';
+
 class PluginManagerTest extends TestCase
 {
     private static $origManager;
+    private static $packagePath;
 
     public static function setUpBeforeClass()
     {
+        self::$packagePath = realpath(__DIR__ . '/../_data/plugins');
         self::$origManager = DI::getInstance()->get('asset-manager');
     }
 
@@ -77,7 +81,7 @@ class PluginManagerTest extends TestCase
     public function testRegisterAndUnregister()
     {
         $manifestPath = manifest_path('~plugins');
-        $m = new PluginManager('pletfix/~test', __DIR__ . '/plugins/test', $manifestPath);
+        $m = new PluginManager('pletfix/~test', self::$packagePath . '/test', $manifestPath);
         $this->assertInstanceOf(PluginManager::class, $m);
 
         $assetManager = $this->getMockBuilder(AssetManager::class)->setMethods(['publish', 'remove'])->getMock();
@@ -85,12 +89,10 @@ class PluginManagerTest extends TestCase
         $assetManager->expects($this->once())->method('remove')->with(null, '~test')->willReturnSelf();
         DI::getInstance()->set('asset-manager', $assetManager, true);
 
-        include 'plugins/test/src/Commands/DummyCommand.php.fake';
-
         @unlink(config_path('~test.php'));
         @unlink(public_path('~test/dummy.txt'));
 
-        $currPath = substr(__DIR__, strlen(base_path()) + 1);
+        $relativePackagePath = substr(dirname(__DIR__), strlen(base_path()) + 1) . '/_data/plugins';
 
         // register
 
@@ -103,7 +105,7 @@ class PluginManagerTest extends TestCase
         $data = include $manifestPath . '/assets.php';
         $this->assertSame([
             '~test' => [
-                'js/~dummy.js' => [$currPath  . '/plugins/test/assets/js/dummy.js']
+                'js/~dummy.js' => [$relativePackagePath  . '/test/assets/js/dummy.js']
             ]
         ], $data);
 
@@ -145,8 +147,8 @@ class PluginManagerTest extends TestCase
         /** @noinspection PhpIncludeInspection */
         $data = include $manifestPath . '/languages.php';
         $this->assertSame([
-            'de' => ['~test' => $currPath . '/plugins/test/lang/de.php'],
-            'en' => ['~test' => $currPath . '/plugins/test/lang/en.php']
+            'de' => ['~test' => $relativePackagePath . '/test/lang/de.php'],
+            'en' => ['~test' => $relativePackagePath . '/test/lang/en.php']
         ], $data);
 
         // migrations
@@ -154,7 +156,7 @@ class PluginManagerTest extends TestCase
         /** @noinspection PhpIncludeInspection */
         $data = include $manifestPath . '/migrations.php';
         $this->assertSame([
-            '20170204121100_CreateFooTable' => $currPath . '/plugins/test/migrations/20170204121100_CreateFooTable.php'
+            '20170204121100_CreateFooTable' => $relativePackagePath . '/test/migrations/20170204121100_CreateFooTable.php'
         ], $data);
 
         // packages
@@ -162,7 +164,7 @@ class PluginManagerTest extends TestCase
         /** @noinspection PhpIncludeInspection */
         $data = include $manifestPath . '/packages.php';
         $this->assertSame([
-            'pletfix/~test' => $currPath . '/plugins/test'
+            'pletfix/~test' => $relativePackagePath . '/test'
         ], $data);
 
         // public
@@ -185,7 +187,7 @@ class PluginManagerTest extends TestCase
         /** @noinspection PhpIncludeInspection */
         $data = include $manifestPath . '/views.php';
         $this->assertSame([
-            'admin.dummy' => $currPath . '/plugins/test/views/admin/dummy.blade.php',
+            'foo.baz' => $relativePackagePath . '/test/views/foo/baz.blade.php',
         ], $data);
 
         // unregister
@@ -264,7 +266,7 @@ class PluginManagerTest extends TestCase
     {
         $manifestPath = manifest_path('~plugins');
 
-        $m = new PluginManager('pletfix/~test', __DIR__ . '/plugins/test', $manifestPath);
+        $m = new PluginManager('pletfix/~test', self::$packagePath . '/test', $manifestPath);
         $m->register();
 
         file_put_contents(config_path('~test.php'), '<?php return [\'foo\' => \'baz\'];');
@@ -282,12 +284,12 @@ class PluginManagerTest extends TestCase
     {
         $manifestPath = manifest_path('~plugins');
 
-        $m = new PluginManager('pletfix/~empty', __DIR__ . '/plugins/empty', $manifestPath);
+        $m = new PluginManager('pletfix/~empty', self::$packagePath . '/empty', $manifestPath);
         $this->assertInstanceOf(PluginManager::class, $m);
         $this->assertInstanceOf(PluginManager::class, $m->register());
         $this->assertTrue($m->isRegistered());
 
-        $m2 = new PluginManager('pletfix/~test', __DIR__ . '/plugins/test', $manifestPath);
+        $m2 = new PluginManager('pletfix/~test', self::$packagePath . '/test', $manifestPath);
         $m2->register()->unregister();
 
         $this->assertInstanceOf(PluginManager::class, $m->unregister());
@@ -297,7 +299,7 @@ class PluginManagerTest extends TestCase
     public function testRegisterAlreadyRegisteredPlugin()
     {
         $manifestPath = manifest_path('~plugins');
-        $m = new PluginManager('pletfix/~empty', __DIR__ . '/plugins/empty', $manifestPath);
+        $m = new PluginManager('pletfix/~empty', self::$packagePath . '/empty', $manifestPath);
         $m->register();
         $this->expectException(PluginException::class);
         $m->register();
@@ -306,7 +308,7 @@ class PluginManagerTest extends TestCase
     public function testUpdateNotRegisteredPlugin()
     {
         $manifestPath = manifest_path('~plugins');
-        $m = new PluginManager('pletfix/~empty', __DIR__ . '/plugins/empty', $manifestPath);
+        $m = new PluginManager('pletfix/~empty', self::$packagePath . '/empty', $manifestPath);
         $this->expectException(PluginException::class);
         $m->update();
     }
@@ -314,7 +316,7 @@ class PluginManagerTest extends TestCase
     public function testUnregisterNotRegisteredPlugin()
     {
         $manifestPath = manifest_path('~plugins');
-        $m = new PluginManager('pletfix/~empty', __DIR__ . '/plugins/empty', $manifestPath);
+        $m = new PluginManager('pletfix/~empty', self::$packagePath . '/empty', $manifestPath);
         $this->expectException(PluginException::class);
         $m->unregister();
     }
@@ -322,7 +324,7 @@ class PluginManagerTest extends TestCase
     public function testWithoutPsr4()
     {
         $this->expectException(InvalidArgumentException::class);
-        new PluginManager('pletfix/~faulty', __DIR__ . '/plugins/faulty', manifest_path('~plugins'));
+        new PluginManager('pletfix/~faulty', self::$packagePath . '/faulty', manifest_path('~plugins'));
     }
 
 }

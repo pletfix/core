@@ -23,7 +23,7 @@ class MigratorTest extends TestCase
         $currPath = substr(__DIR__, strlen(base_path()) + 1);
         @mkdir(manifest_path('~plugins'));
         file_put_contents(manifest_path('~plugins/migrations.php'),
-            "<?php return array ('20170204121100_CreateFooTable' => '$currPath/plugins/test/migrations/20170204121100_CreateFooTable.php');"
+            "<?php return array ('20170204121100_CreateFooTable' => '$currPath/../_data/plugins/test/migrations/20170204121100_CreateFooTable.php');"
         );
     }
 
@@ -63,8 +63,8 @@ class MigratorTest extends TestCase
         $db = database();
 
         // run the first migration
-        copy(__DIR__ . '/migrations/20170204121101_UpdateBurTable.php', storage_path('~test/20170204121101_UpdateBurTable.php'));
-        copy(__DIR__ . '/migrations/20170204121102_UpdateBuzTable.php', storage_path('~test/20170204121102_UpdateBuzTable.php'));
+        copy(__DIR__ . '/../_data/migrations/20170204121101_UpdateBurTable.php', storage_path('~test/20170204121101_UpdateBurTable.php'));
+        copy(__DIR__ . '/../_data/migrations/20170204121102_UpdateBuzTable.php', storage_path('~test/20170204121102_UpdateBuzTable.php'));
         $this->assertInstanceOf(Migrator::class, $this->m->run());
         $t = $db->table('_migrations')->all();
         $this->assertSame([
@@ -85,7 +85,7 @@ class MigratorTest extends TestCase
         $this->assertEquals(2, $db->table('foo')->count());
 
         // run the second migration
-        copy(__DIR__ . '/migrations/20170204121103_UpdateBuuTable.php', storage_path('~test/20170204121103_UpdateBuuTable.php'));
+        copy(__DIR__ . '/../_data/migrations/20170204121103_UpdateBuuTable.php', storage_path('~test/20170204121103_UpdateBuuTable.php'));
         $this->m->run();
         $t = $db->table('_migrations')->all();
         $this->assertSame([
@@ -97,8 +97,8 @@ class MigratorTest extends TestCase
         $this->assertEquals(3, $db->table('foo')->count());
 
         // run the third migration
-        copy(__DIR__ . '/migrations/20170204121104_UpdateBarTable.php', storage_path('~test/20170204121104_UpdateBarTable.php'));
-        copy(__DIR__ . '/migrations/20170204121105_UpdateBazTable.php', storage_path('~test/20170204121105_UpdateBazTable.php'));
+        copy(__DIR__ . '/../_data/migrations/20170204121104_UpdateBarTable.php', storage_path('~test/20170204121104_UpdateBarTable.php'));
+        copy(__DIR__ . '/../_data/migrations/20170204121105_UpdateBazTable.php', storage_path('~test/20170204121105_UpdateBazTable.php'));
         $this->m->run();
         $t = $db->table('_migrations')->all();
         $this->assertSame([
@@ -112,7 +112,7 @@ class MigratorTest extends TestCase
         $this->assertEquals(5, $db->table('foo')->count());
 
         // run the fourth migration
-        copy(__DIR__ . '/migrations/20170204121106_UpdateBaaTable.php', storage_path('~test/20170204121106_UpdateBaaTable.php'));
+        copy(__DIR__ . '/../_data/migrations/20170204121106_UpdateBaaTable.php', storage_path('~test/20170204121106_UpdateBaaTable.php'));
         $this->m->run();
         $t = $db->table('_migrations')->all();
         $this->assertSame([

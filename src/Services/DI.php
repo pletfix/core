@@ -93,6 +93,8 @@ class DI implements DIContract
             'shared'     => $shared,
             'instance'   => null
         ];
+
+        return $this;
     }
 
     /**

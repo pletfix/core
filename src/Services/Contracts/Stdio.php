@@ -55,13 +55,13 @@ interface Stdio
      */
     public function __construct($stdin = null, $stdout = null, $stderr = null);
 
-    /**
-     * Check if data is available on standard input.
-     *
-     * @param int $timeout An optional time to wait for data
-     * @return bool True for data available, false otherwise
-     */
-    public function canRead($timeout = 0);
+//    /**
+//     * Check if data is available on standard input.
+//     *
+//     * @param int $timeout An optional time to wait for data
+//     * @return bool True for data available, false otherwise
+//     */
+//    public function canRead($timeout = 0);
 
     /**
      * Prompts the user for input, and returns it.

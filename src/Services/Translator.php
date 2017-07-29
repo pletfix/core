@@ -28,11 +28,11 @@ class Translator implements TranslatorContract
     private $fallback;
 
     /**
-     * Plugin's language files
+     * Language Path.
      *
-     * @var array
+     * @var string
      */
-    private static $manifest;
+    private $languagePath;
 
     /**
      * Manifest file of languages.
@@ -42,11 +42,21 @@ class Translator implements TranslatorContract
     private $pluginManifestOfLanguages;
 
     /**
+     * Plugin's language files
+     *
+     * @var array
+     */
+    private $manifest;
+
+    /**
      * Create a new Translator instance.
+     *
+     * @param string|null $languagePath
      * @param string|null $pluginManifestOfLanguages
      */
-    public function __construct($pluginManifestOfLanguages = null)
+    public function __construct($languagePath = null, $pluginManifestOfLanguages = null)
     {
+        $this->languagePath = $languagePath ?: resource_path('lang');
         $this->pluginManifestOfLanguages = $pluginManifestOfLanguages ?: manifest_path('plugins/languages.php');
     }
 
@@ -127,19 +137,19 @@ class Translator implements TranslatorContract
      */
     private function dictionaryFile($dictionary, $locale)
     {
-        $file = resource_path('lang/' . $locale . '/' . $dictionary . '.php');
+        $file = $this->languagePath . DIRECTORY_SEPARATOR . $locale . DIRECTORY_SEPARATOR . $dictionary . '.php';
         if (@file_exists($file)) {
             return $file;
         }
 
-        if (self::$manifest === null) {
+        if ($this->manifest === null) {
             if (@file_exists($this->pluginManifestOfLanguages)) {
                 /** @noinspection PhpIncludeInspection */
-                self::$manifest = include $this->pluginManifestOfLanguages;
+                $this->manifest = include $this->pluginManifestOfLanguages;
             }
         }
 
-        return isset(self::$manifest[$locale][$dictionary]) ? base_path(self::$manifest[$locale][$dictionary]) : null;
+        return isset($this->manifest[$locale][$dictionary]) ? base_path($this->manifest[$locale][$dictionary]) : null;
     }
 
     /**

@@ -32,6 +32,7 @@ interface DI
      * @param string $name Name of the service.
      * @param string|object|\Closure $definition Could by a class name, instance or a function.
      * @param bool $shared if true, the service will be created as a singleton object
+     * @return $this;
      */
     public function set($name, $definition, $shared = false);
 }

@@ -5,8 +5,7 @@ namespace Core\Tests\Services\PDOs\Builders;
 use Core\Models\Model;
 use Core\Services\AbstractDatabase;
 use Core\Services\Contracts\Database;
-use Core\Services\PDOs\Builders\AbstractBuilder;
-use Core\Services\PDOs\Builders\Contracts\Builder;
+use Core\Services\PDOs\Builders\Builder;
 use Core\Testing\TestCase;
 use Generator;
 use InvalidArgumentException;
@@ -14,7 +13,7 @@ use LogicException;
 use PHPUnit_Framework_MockObject_MockObject;
 use stdClass;
 
-class AbstractBuilderTest extends TestCase
+class BuilderTest extends TestCase
 {
     /**
      * @var Builder
@@ -33,7 +32,7 @@ class AbstractBuilderTest extends TestCase
 
     public static function setUpBeforeClass()
     {
-        self::$fixturePath = __DIR__  . '/../../fixtures/sqlite';
+        self::$fixturePath = __DIR__  . '/../../../_data/fixtures/sqlite';
     }
 
     private function execSqlFile(Database $db, $name)
@@ -60,18 +59,17 @@ class AbstractBuilderTest extends TestCase
                 return "'$value'";
             });
 
-//        $this->builder = $this->getMockBuilder(AbstractBuilder::class)
+//        $this->builder = $this->getMockBuilder(Builder::class)
 //            ->setConstructorArgs([$this->db])
 //            //->setMethods(['tables', 'columns', 'indexes', 'createTable'])
 //            ->getMockForAbstractClass();
 
-        $this->builder = new AbstractBuilder($this->db); // todo Rename AbstractBuilder, it is not really abstract!
+        $this->builder = new Builder($this->db);
     }
 
     public function testReset()
     {
-        // todo erst alles setzen, anschließend auf null prüfen
-        $this->assertInstanceOf(AbstractBuilder::class, $this->builder->reset());
+        $this->assertInstanceOf(Builder::class, $this->builder->reset());
         $this->assertSame('SELECT *', $this->builder->toSql());
     }
 
@@ -93,27 +91,27 @@ class AbstractBuilderTest extends TestCase
     public function testSetAndGetClass()
     {
         $this->assertNull($this->builder->getClass());
-        $this->assertInstanceOf(AbstractBuilder::class, $this->builder->asClass(stdClass::class));
+        $this->assertInstanceOf(Builder::class, $this->builder->asClass(stdClass::class));
         $this->assertSame(stdClass::class, $this->builder->getClass());
     }
 
     public function testEnableAndDisableHooks()
     {
-        $this->assertInstanceOf(AbstractBuilder::class, $this->builder->enableHooks());
+        $this->assertInstanceOf(Builder::class, $this->builder->enableHooks());
         $this->assertTrue($this->getPrivateProperty($this->builder, 'enableHooks'));
-        $this->assertInstanceOf(AbstractBuilder::class, $this->builder->disableHooks());
+        $this->assertInstanceOf(Builder::class, $this->builder->disableHooks());
         $this->assertFalse($this->getPrivateProperty($this->builder, 'enableHooks'));
     }
 
     public function testWith()
     {
-        $this->assertInstanceOf(AbstractBuilder::class, $this->builder->with('a'));
+        $this->assertInstanceOf(Builder::class, $this->builder->with('a'));
         $this->assertSame(['a'], $this->getPrivateProperty($this->builder, 'with'));
 
-        $this->assertInstanceOf(AbstractBuilder::class, $this->builder->with('b'));
+        $this->assertInstanceOf(Builder::class, $this->builder->with('b'));
         $this->assertSame(['a', 'b'], $this->getPrivateProperty($this->builder, 'with'));
 
-        $this->assertInstanceOf(AbstractBuilder::class, $this->builder->with(['c', 'd']));
+        $this->assertInstanceOf(Builder::class, $this->builder->with(['c', 'd']));
         $this->assertSame(['a', 'b', 'c', 'd'], $this->getPrivateProperty($this->builder, 'with'));
     }
 
@@ -202,7 +200,7 @@ class AbstractBuilderTest extends TestCase
     public function testSetAndGetTable()
     {
         $this->assertNull($this->builder->getTable());
-        $this->assertInstanceOf(AbstractBuilder::class, $this->builder->table('table1'));
+        $this->assertInstanceOf(Builder::class, $this->builder->table('table1'));
         $this->assertSame('"table1"', $this->builder->getTable());
         $this->assertSame('SELECT * FROM "table1"', $this->builder->toSql());
     }
@@ -314,7 +312,7 @@ class AbstractBuilderTest extends TestCase
         );
     }
 
-    public function testWhereNotExists() // todo gegen DB testen
+    public function testWhereNotExists()
     {
         $builder2 = $this->builder->copy();
 
@@ -378,7 +376,6 @@ class AbstractBuilderTest extends TestCase
 
     public function testWhereBetween()
     {
-        // todo testen, ob Abfrage ausführbar ist, ansonst Klammern hinzufügen
         $sql = $this->builder->reset()
             ->whereBetween('column1', 11, 22)
             ->whereBetween('column2', 33, 44)
@@ -399,7 +396,6 @@ class AbstractBuilderTest extends TestCase
 
     public function testWhereNotBetween()
     {
-        // todo testen, ob Abfrage ausführbar ist, ansonst Klammern hinzufügen
         $sql = $this->builder->reset()
             ->whereNotBetween('column1', 11, 22)
             ->whereNotBetween('column2', 33, 44)

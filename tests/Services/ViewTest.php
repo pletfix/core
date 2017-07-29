@@ -12,61 +12,81 @@ class ViewTest extends TestCase
     /**
      * @var View
      */
-    private $v;
+    private $view;
+
+    public static function setUpBeforeClass()
+    {
+        View::clearManifestCache();
+    }
 
     public static function tearDownAfterClass()
     {
-        @unlink(storage_path('cache/views/25f6fa9de10774bc3375d7d93551a017.phtml')); // 'foo.bar'
-        @unlink(storage_path('cache/views/2433f35a285a859f5ef56f295e2dc295.phtml')); // 'layout'
-        @unlink(storage_path('cache/views/d52e835e93f8e0d8e92d887b724c45c5.phtml')); // 'foo.invalid'
+        View::clearManifestCache();
+        @unlink(storage_path('cache/views/' . md5(__DIR__ . '/../_data/views/foo/bar.blade.php') . '.phtml'));
+        @unlink(storage_path('cache/views/' . md5(__DIR__ . '/../_data/views/foo/invalid.blade.php') . '.phtml'));
+        @unlink(storage_path('cache/views/' . md5(__DIR__ . '/../_data/views/layout.blade.php') . '.phtml'));
+        @unlink(storage_path('cache/views/' . md5(dirname(__DIR__) . '/_data/plugin_manifest/../plugins/test/views/foo/baz.blade.php') . '.phtml'));
     }
 
     protected function setUp()
     {
-        $this->v = new View(__DIR__ . '/views');
+        $this->view = new View(__DIR__ . '/../_data/views', __DIR__ . '/../_data/plugin_manifest/views.php');
     }
 
     public function testExists()
     {
-        $this->assertTrue($this->v->exists('foo.bar'));
-        $this->assertFalse($this->v->exists('wrong'));
+        $this->assertTrue($this->view->exists('foo.bar'));
+        $this->assertFalse($this->view->exists('wrong'));
     }
 
     public function testRender()
     {
         $s = "<html>\n<head>\n    <title>Test</title>\n</head>\n<body>\n        You talking to me?\n</body>\n</html>";
-        $this->assertSame($s, trim($this->v->render('foo.bar')));
-        $this->assertSame($s, trim($this->v->render('foo.bar', ['a' => 'A'])));
-        $this->assertSame($s, trim($this->v->render('foo.bar', new Collection(['a' => 'A']))));
+        $this->assertSame($s, trim($this->view->render('foo.bar')));
+        $this->assertSame($s, trim($this->view->render('foo.bar', ['a' => 'A'])));
+        $this->assertSame($s, trim($this->view->render('foo.bar', new Collection(['a' => 'A']))));
+    }
+
+    public function testRenderFromPlugin()
+    {
+        $this->assertSame('<h3>Dummy View</h3>', trim($this->view->render('foo.baz')));
+    }
+
+    public function testClearManifestCache()
+    {
+        $this->view->render('foo.baz');
+        $manifest = $this->getPrivateProperty($this->view, 'manifest');
+        $this->assertNotEmpty($manifest);
+        View::clearManifestCache();
+        $manifest = $this->getPrivateProperty($this->view, 'manifest');
+        $this->assertEmpty($manifest);
     }
 
     public function testCreateCache()
     {
-        $cachedFile = storage_path('cache/views/25f6fa9de10774bc3375d7d93551a017.phtml'); // 'foo.bar'
-        @unlink($cachedFile);
-        $this->v->render('foo.bar');
-        $this->assertSame(filemtime($cachedFile), filemtime(__DIR__ . '/views/foo/bar.blade.php'));
+        $cacheFile = storage_path('cache/views/' . md5(__DIR__ . '/../_data/views/foo/bar.blade.php') . '.phtml');
+        @unlink($cacheFile);
+        $this->view->render('foo.bar');
+        $this->assertSame(filemtime($cacheFile), filemtime(__DIR__ . '/../_data/views/foo/bar.blade.php'));
     }
 
     public function testUpdateCache()
     {
-        $cachedFile = storage_path('cache/views/25f6fa9de10774bc3375d7d93551a017.phtml'); // 'foo.bar'
-        @touch($cachedFile);
-        $this->v->render('foo.bar');
-        $this->assertSame(filemtime($cachedFile), filemtime(__DIR__ . '/views/foo/bar.blade.php'));
+        $cacheFile = storage_path('cache/views/' . md5(__DIR__ . '/../_data/views/foo/bar.blade.php') . '.phtml');
+        @touch($cacheFile);
+        $this->view->render('foo.bar');
+        $this->assertSame(filemtime($cacheFile), filemtime(__DIR__ . '/../_data/views/foo/bar.blade.php'));
     }
 
     public function testRenderNotExistView()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->v->render('wrong');
+        $this->view->render('wrong');
     }
 
     public function testRenderInvalidView()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->v->render('foo.invalid');
+        $this->view->render('foo.invalid');
     }
-
-    // todo plugin testen (Manifest laden)
 }

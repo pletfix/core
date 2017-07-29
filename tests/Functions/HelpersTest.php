@@ -211,11 +211,6 @@ class HelpersTest extends TestCase
 
     public function testAsset()
     {
-        // todo prüfen, ob ExamplePlugin installiert ist , wenn nicht dies für den Test installieren und danach wieder säubern
-//        if (!plugin_manager('pletfix/example')->isRegistered()) {
-//            system('composer require pletfix/example & php console plugin pletfix/example');
-//        }
-
         $request = $this->getMockBuilder(Request::class)->setMethods(['baseUrl'])->getMock();
         $request->expects($this->any())->method('baseUrl')->willReturn('my_base_url');
         DI::getInstance()->set('request', $request, true);
@@ -644,7 +639,7 @@ class HelpersTest extends TestCase
         $this->assertInstanceOf(\Core\Services\Contracts\Database::class, database());
 
         DI::getInstance()->get('config')->set('database.stores.~foo', ['driver' => 'sqlite']);
-        DI::getInstance()->set('database-factory', DatabaseFactory::class, true); // todo DI::reset() bauen
+        DI::getInstance()->set('database-factory', DatabaseFactory::class, true);
 
         $this->assertSame('sqlite', database('~foo')->config('driver'));
 
@@ -733,7 +728,6 @@ class HelpersTest extends TestCase
     {
         /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->assertInstanceOf(\Core\Services\Contracts\Migrator::class, migrator());
-        // todo migrator($store = null, $path = null)
     }
 
     public function testPluginManager()
@@ -741,10 +735,6 @@ class HelpersTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         plugin_manager('~foo/~bar');
 
-        // todo Test-Plugin installieren
-        //$package = 'pletfix/example';
-        ///** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        //$this->assertInstanceOf(\Core\Services\Contracts\PluginManager::class, plugin_manager($package));
     }
 
     public function testRequest()

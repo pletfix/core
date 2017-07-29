@@ -27,7 +27,7 @@ use Throwable;
  * @see https://phpdelusions.net/pdo#query PDO Tutorial
  * @see https://phpdelusions.net/pdo/objects Fetching objects with PDO
  */
-abstract class AbstractDatabase implements DatabaseContract
+abstract class AbstractDatabase implements DatabaseContract // todo in Database umbennen
 {
     /**
      * PHP Data Object representing a connection to a database.

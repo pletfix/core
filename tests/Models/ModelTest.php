@@ -15,8 +15,7 @@ use Core\Services\AbstractDatabase;
 use Core\Services\Contracts\Database;
 use Core\Services\Contracts\DatabaseFactory;
 use Core\Services\DI;
-use Core\Services\PDOs\Builders\AbstractBuilder;
-use Core\Services\PDOs\Builders\Contracts\Builder;
+use Core\Services\PDOs\Builders\Builder;
 use Core\Testing\TestCase;
 use LogicException;
 
@@ -34,7 +33,7 @@ class ModelTest extends TestCase
 
     public static function setUpBeforeClass()
     {
-        self::$fixturePath = __DIR__  . '/../Services/fixtures/sqlite';
+        self::$fixturePath = __DIR__  . '/../_data/fixtures/sqlite';
         self::$origFactory = DI::getInstance()->get('database-factory');
     }
 
@@ -73,7 +72,7 @@ class ModelTest extends TestCase
             ->setMethods(['createBuilder'])
             ->getMockForAbstractClass();
 
-        $builder = $this->getMockBuilder(AbstractBuilder::class)
+        $builder = $this->getMockBuilder(Builder::class)
             ->setConstructorArgs([$db])
             ->setMethods([
                 'from',
@@ -360,7 +359,7 @@ class ModelTest extends TestCase
 
     public function testCursor()
     {
-        $this->getMockForBuilder('authors')->expects($this->once())->method('cursor')->with()->willReturn('Generator'); //todo
+        $this->getMockForBuilder('authors')->expects($this->once())->method('cursor')->with()->willReturn('Generator');
         $this->assertSame('Generator', Author::cursor());
     }
 
@@ -598,10 +597,6 @@ class ModelTest extends TestCase
     // employee <- salaries
     public function testHasManyRelation()
     {
-        //        $model = $this->getMockBuilder(Author::class)
-//            ->setMethods(['book'])->getMock();
-//        $model->expects($this->once())->method('book');
-
         $model = new Author;
         $relation = $model->hasMany(Book::class);
         $this->assertInstanceOf(HasManyRelation::class, $relation);

@@ -5,7 +5,7 @@ namespace Core\Services\PDOs\Builders;
 /**
  * SQLite Query Builder
  */
-class SQLiteBuilder extends AbstractBuilder
+class SQLiteBuilder extends Builder
 {
     // @codeCoverageIgnoreStart
     // todo gehört zum Schema!

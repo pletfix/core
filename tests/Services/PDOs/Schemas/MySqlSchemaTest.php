@@ -12,7 +12,7 @@ class MySqlSchemaTest extends SchemaTestCase
 {
     public static function setUpBeforeClass()
     {
-        self::$fixturePath = __DIR__  . '/../../fixtures/mysql';
+        self::$fixturePath = __DIR__  . '/../../../_data/fixtures/mysql';
     }
 
     protected function setUp()

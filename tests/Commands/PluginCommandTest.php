@@ -11,12 +11,10 @@ use Core\Testing\TestCase;
 
 class PluginCommandTest extends TestCase
 {
-
     private static $origManager;
 
     public static function setUpBeforeClass()
     {
-        //self::$origManager = DI::getInstance()->definition('plugin-manager'); // todo definition() hinzufügen
         self::$origManager = PluginManager::class;
     }
 

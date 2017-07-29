@@ -10,7 +10,7 @@ use Core\Services\View;
 use Core\Testing\TestCase;
 use Exception;
 
-require_once 'fakes/mail.php.fake'; // todo oder stub? Begriffsdefinition klären!
+require_once __DIR__ . '/../_data/fakes/mail.php.fake';
 
 class MailerTest extends TestCase
 {

@@ -50,7 +50,7 @@ class TestCase extends PHPUnit_Framework_TestCase
             ],
         ]);
 
-        DI::getInstance()->set('database-factory', DatabaseFactory::class, true); // todo DI::reset() bauen
+        DI::getInstance()->set('database-factory', DatabaseFactory::class, true);
     }
 
     /**

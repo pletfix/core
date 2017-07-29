@@ -34,7 +34,7 @@ class MySqlBuilderTest extends TestCase
                 return "'$value'";
             });
 
-        $this->builder = new MySqlBuilder($this->db); // todo Rename AbstractBuilder, it is not really abstract!
+        $this->builder = new MySqlBuilder($this->db);
     }
 
     public function testDelete()

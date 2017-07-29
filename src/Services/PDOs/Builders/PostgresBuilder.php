@@ -5,7 +5,7 @@ namespace Core\Services\PDOs\Builders;
 /**
  * PostgreSQL Query Builder
  */
-class PostgresBuilder extends AbstractBuilder
+class PostgresBuilder extends Builder
 {
     /**
      * @inheritdoc
