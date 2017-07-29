@@ -38,7 +38,7 @@ class TestCase extends PHPUnit_Framework_TestCase
      *
      * @see http://www.sqlite.org/inmemorydb.html
      */
-    public static function defineMemoryAsDefaultDatabase() // todo dokumentieren
+    public static function defineMemoryAsDefaultDatabase()
     {
         DI::getInstance()->get('config')->set('database', [
             'default' => '~test',
@@ -72,7 +72,7 @@ class TestCase extends PHPUnit_Framework_TestCase
 //    }
 
     /**
-     * Assert whether the client was redirected to a given URL.
+     * Assert whether the client is redirected to the given URL.
      *
      * @param string $url
      */
@@ -91,7 +91,7 @@ class TestCase extends PHPUnit_Framework_TestCase
      * @param array $arguments
      * @return mixed
      */
-    public function invokePrivateMethod($object, $method, array $arguments = []) // todo dokumentieren
+    public function invokePrivateMethod($object, $method, array $arguments = [])
     {
         $reflector = new ReflectionClass($object);
         $method = $reflector->getMethod($method);
@@ -107,7 +107,7 @@ class TestCase extends PHPUnit_Framework_TestCase
      * @param string $property
      * @return mixed
      */
-    public function getPrivateProperty($object, $property) // todo dokumentieren
+    public function getPrivateProperty($object, $property)
     {
         $reflector = new ReflectionClass($object);
         $property = $reflector->getProperty($property);
@@ -124,7 +124,7 @@ class TestCase extends PHPUnit_Framework_TestCase
      * @param mixed $value
      * @return $this
      */
-    public function setPrivateProperty($object, $property, $value) // todo dokumentieren
+    public function setPrivateProperty($object, $property, $value)
     {
         $reflector = new ReflectionClass($object);
         $property = $reflector->getProperty($property);

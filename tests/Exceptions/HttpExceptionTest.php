@@ -3,6 +3,7 @@
 namespace Core\Tests\Exceptions;
 
 use Core\Exceptions\HttpException;
+use Core\Services\Contracts\Response;
 use Core\Testing\TestCase;
 
 class HttpExceptionTest extends TestCase
@@ -14,12 +15,12 @@ class HttpExceptionTest extends TestCase
 
     protected function setUp()
     {
-        $this->e = new HttpException(HTTP_STATUS_NOT_FOUND, null, null, ['Pragma' => 'no-cache']);
+        $this->e = new HttpException(Response::HTTP_NOT_FOUND, null, null, ['Pragma' => 'no-cache']);
     }
 
     public function testGetStatusCode()
     {
-        $this->assertSame(HTTP_STATUS_NOT_FOUND, $this->e->getStatusCode());
+        $this->assertSame(Response::HTTP_NOT_FOUND, $this->e->getStatusCode());
     }
 
     public function testGetHeaders()

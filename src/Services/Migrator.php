@@ -40,7 +40,7 @@ class Migrator implements MigratorContract
     public function __construct($store = null, $migrationPath = null, $pluginManifestOfMigrations = null)
     {
         $this->db = DI::getInstance()->get('database-factory')->store($store);
-        $this->migrationPath = $migrationPath ?: migration_path();
+        $this->migrationPath = $migrationPath ?: resource_path('migrations');
         $this->pluginManifestOfMigrations = $pluginManifestOfMigrations ?: manifest_path('plugins/migrations.php');
 
         $tables = $this->db->schema()->tables();

@@ -16,6 +16,7 @@
  * @see https://github.com/danielstjules/Stringy/blob/master/src/Stringy.php Stringy on GitHub
  */
 
+use Core\Services\Contracts\Response;
 use Core\Services\DI;
 
 if (!function_exists('abort')) {
@@ -27,7 +28,7 @@ if (!function_exists('abort')) {
      * @param array $headers
      * @throws Exception
      */
-    function abort($status = HTTP_STATUS_INTERNAL_SERVER_ERROR, $message = '', array $headers = [])
+    function abort($status = Response::HTTP_INTERNAL_SERVER_ERROR, $message = '', array $headers = [])
     {
 //        if ($code == 404) {
 //            throw new NotFoundHttpException($message);
@@ -125,7 +126,7 @@ if (! function_exists('command')) {
      * @param array $argv Command line arguments and options
      * @return int Exit code
      */
-    function command($name, array $argv = []) // todo command() testen
+    function command($name, array $argv = [])
     {
         array_unshift($argv, $name);
         /** @var \Core\Services\Contracts\Command|false $command */
@@ -364,7 +365,7 @@ if (!function_exists('is_windows')) {
      */
     function is_windows()
     {
-        return strtolower(substr(PHP_OS, 0, 3)) == 'win'; // todo testen (mit laravel vergl.)
+        return strtolower(substr(PHP_OS, 0, 3)) == 'win';
     }
 }
 
@@ -530,7 +531,7 @@ if (! function_exists('redirect')) {
      * @param array $flash
      * @param int $status
      * @param array $headers
-     * @return \Core\Services\Contracts\Response
+     * @return Response
      */
     function redirect($path, $parameters = [], $flash = [], $status = 302, $headers = [])
     {
@@ -583,6 +584,99 @@ if (!function_exists('remove_dir')) {
     }
 }
 
+if (!function_exists('http_status_text')) {
+    /**
+     * Translate a HTTP Status code to plain text.
+     *
+     * The list of codes is complete according to the HTTP Status Code Registry:
+     * http://www.iana.org/assignments/http-status-codes.
+     *
+     * Last updated: 2016-03-01
+     *
+     * Unless otherwise noted, the status code is defined in RFC2616.
+     *
+     * @param int $status
+     * @return string
+     */
+    function http_status_text($status)
+    {
+        $statusTexts = [
+
+            // 1xx Informational
+            100 => 'Continue',
+            101 => 'Switching Protocols',
+            102 => 'Processing',                        // RFC2518
+
+            // 2xx Success
+            200 => 'OK',
+            201 => 'Created',
+            202 => 'Accepted',
+            203 => 'Non-Authoritative Information',
+            204 => 'No Content',
+            205 => 'Reset Content',
+            206 => 'Partial Content',
+            207 => 'Multi-Status',                      // RFC4918
+            208 => 'Already Reported',                  // RFC5842
+            226 => 'IM Used',                           // RFC3229
+
+            // 3xx Redirection
+            300 => 'Multiple Choices',
+            301 => 'Moved Permanently',
+            302 => 'Found',
+            303 => 'See Other',
+            304 => 'Not Modified',
+            305 => 'Use Proxy',
+            307 => 'Temporary Redirect',
+            308 => 'Permanent Redirect',                // RFC7238
+
+            // 4xx Client Error
+            400 => 'Bad Request',
+            401 => 'Unauthorized',
+            402 => 'Payment Required',
+            403 => 'Forbidden',
+            404 => 'Not Found',
+            405 => 'Method Not Allowed',
+            406 => 'Not Acceptable',
+            407 => 'Proxy Authentication Required',
+            408 => 'Request Timeout',
+            409 => 'Conflict',
+            410 => 'Gone',
+            411 => 'Length Required',
+            412 => 'Precondition Failed',
+            413 => 'Payload Too Large',
+            414 => 'URI Too Long',
+            415 => 'Unsupported Media Type',
+            416 => 'Range Not Satisfiable',
+            417 => 'Expectation Failed',
+            418 => 'I\'m a teapot',                     // RFC2324
+            421 => 'Misdirected Request',               // RFC7540
+            422 => 'Unprocessable Entity',              // RFC4918
+            423 => 'Locked',                            // RFC4918
+            424 => 'Failed Dependency',                 // RFC4918
+            426 => 'Upgrade Required',                  // RFC2817
+            428 => 'Precondition Required',             // RFC6585
+            429 => 'Too Many Requests',                 // RFC6585
+            431 => 'Request Header Fields Too Large',   // RFC6585
+            451 => 'Unavailable For Legal Reasons',     // RFC7725
+
+            // 5xx Server Error
+            500 => 'Internal Server Error',
+            501 => 'Not Implemented',
+            502 => 'Bad Gateway',
+            503 => 'Service Unavailable',
+            504 => 'Gateway Timeout',
+            505 => 'HTTP Version Not Supported',
+            506 => 'Variant Also Negotiates',           // RFC2295
+            507 => 'Insufficient Storage',              // RFC4918
+            508 => 'Loop Detected',                     // RFC5842
+            510 => 'Not Extended',                      // RFC2774
+            511 => 'Network Authentication Required',   // RFC6585
+        ];
+
+        return isset($statusTexts[$status]) ? $statusTexts[$status] : '';
+    }
+}
+
 if (!function_exists('t')) {
     /**
      * Get the translation for the given key.
@@ -630,19 +724,6 @@ if (!function_exists('app_path')) {
     }
 }
 
-if (!function_exists('asset_path')) { // todo ist noch nicht dokumentiert - evtl mit resource_path('assets/' . $file) ersetzen!
-    /**
-     * Get the asset path (the subfolder of resources).
-     *
-     * @param string $path
-     * @return string
-     */
-    function asset_path($path = '')
-    {
-        return BASE_PATH . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'assets' . (!empty($path) ? DIRECTORY_SEPARATOR . $path : '');
-    }
-}
-
 if (!function_exists('base_path')) {
     /**
      * Get the base path for the application.
@@ -666,29 +747,6 @@ if (!function_exists('config_path')) {
     function config_path($path = '')
     {
         return BASE_PATH . DIRECTORY_SEPARATOR . 'config' . (!empty($path) ? DIRECTORY_SEPARATOR . $path : '');
-    }
-}
-
-if (!function_exists('environment_file')) { // todo ist noch nicht dokumentiert - evtl mit base_path('.env') ersetzen!
-    /**
-     * Get the environment file.
-     */
-    function environment_file()
-    {
-        return BASE_PATH . DIRECTORY_SEPARATOR . '.env';
-    }
-}
-
-if (!function_exists('migration_path')) { // todo ist noch nicht dokumentiert - evtl mit resource_path('migrations/' . $file) ersetzen
-    /**
-     * Get the migration path.
-     *
-     * @param string $path
-     * @return string
-     */
-    function migration_path($path = '')
-    {
-        return BASE_PATH . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'migrations' . (!empty($path) ? DIRECTORY_SEPARATOR . $path : '');
     }
 }
 
@@ -757,19 +815,6 @@ if (!function_exists('vendor_path')) {
     }
 }
 
-if (!function_exists('view_path')) {
-    /**
-     * Get the view path.
-     *
-     * @param string $path
-     * @return string
-     */
-    function view_path($path = '') // todo noch nicht dokumentiert - evtl mit resource_path('views/' . $file) ersetzen
-    {
-        return BASE_PATH . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'views' . (!empty($path) ? DIRECTORY_SEPARATOR . $path : '');
-    }
-}
-
 if (!function_exists('workbench_path')) {
     /**
      * Get the workbench path.
@@ -777,7 +822,7 @@ if (!function_exists('workbench_path')) {
      * @param string $path
      * @return string
      */
-    function workbench_path($path = '') // todo noch nicht dokumentiert - evtl mit base_path('workbench/' . $file) ersetzen
+    function workbench_path($path = '')
     {
         return BASE_PATH . DIRECTORY_SEPARATOR . 'workbench' . (!empty($path) ? DIRECTORY_SEPARATOR . $path : '');
     }

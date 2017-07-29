@@ -298,11 +298,17 @@ if (!function_exists('view')) {
      */
     function view($name = null, $variables = [])
     {
-        $view = DI::getInstance()->get('view');
         if ($name === null) {
-            return $view;
+            return DI::getInstance()->get('view');
         }
 
-        return $view->render($name, $variables); // todo ein Response zurück geben
+        return DI::getInstance()->get('response')->view($name, $variables);
+
+//        $view = DI::getInstance()->get('view');
+//        if ($name === null) {
+//            return $view;
+//        }
+//
+//        return $view->render($name, $variables);
     }
 }

@@ -25,7 +25,7 @@ class Response implements ResponseContract
      *
      * @var int
      */
-    private $status = HTTP_STATUS_OK;
+    private $status = ResponseContract::HTTP_OK;
 
     /**
      * HTTP headers
@@ -46,7 +46,7 @@ class Response implements ResponseContract
      */
     public function clear()
     {
-        $this->status  = HTTP_STATUS_OK;
+        $this->status  = ResponseContract::HTTP_OK;
         $this->headers = [];
         $this->content = '';
 
@@ -56,7 +56,7 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
-    public function output($content, $status = HTTP_STATUS_OK, $headers = [])
+    public function output($content, $status = ResponseContract::HTTP_OK, $headers = [])
     {
         $this->content = $content;
         $this->status  = $status;
@@ -70,7 +70,7 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
-    public function view($name, array $variables = [], $status = HTTP_STATUS_OK, $headers = [])
+    public function view($name, array $variables = [], $status = ResponseContract::HTTP_OK, $headers = [])
     {
         return $this->output(DI::getInstance()->get('view')->render($name, $variables), $status, $headers);
     }
@@ -78,7 +78,7 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
-    public function redirect($url, $status = HTTP_STATUS_FOUND, $headers = [])
+    public function redirect($url, $status = ResponseContract::HTTP_FOUND, $headers = [])
     {
         if (!empty($headers)) {
             $this->header($headers);
@@ -113,7 +113,6 @@ class Response implements ResponseContract
      */
     public function getStatusText() // todo umbennenen in statusText()
     {
-//        return isset(static::$statusTexts[$this->status]) ?  static::$statusTexts[$this->status] : '';
         return http_status_text($this->status);
     }
 

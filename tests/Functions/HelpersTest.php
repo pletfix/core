@@ -35,7 +35,7 @@ class HelpersTest extends TestCase
 
     public function testHttpStatus()
     {
-        $this->assertSame('Bad Request', http_status_text(HTTP_STATUS_BAD_REQUEST));
+        $this->assertSame('Bad Request', http_status_text(Response::HTTP_BAD_REQUEST));
     }
 
     // Paths
@@ -44,12 +44,6 @@ class HelpersTest extends TestCase
     {
         $this->assertEquals(BASE_PATH . '/app', app_path());
         $this->assertEquals(BASE_PATH . '/app/foo', app_path('foo'));
-    }
-
-    public function testAssetPath()
-    {
-        $this->assertEquals(BASE_PATH . '/resources/assets', asset_path());
-        $this->assertEquals(BASE_PATH . '/resources/assets/foo', asset_path('foo'));
     }
 
     public function testBasePath()
@@ -62,11 +56,6 @@ class HelpersTest extends TestCase
     {
         $this->assertEquals(BASE_PATH . '/config', config_path());
         $this->assertEquals(BASE_PATH . '/config/foo', config_path('foo'));
-    }
-
-    public function testEnvironmentFile()
-    {
-        $this->assertEquals(BASE_PATH . '/.env', environment_file());
     }
 
     public function testManifestPath()
@@ -99,10 +88,10 @@ class HelpersTest extends TestCase
         $this->assertEquals(BASE_PATH . '/vendor/foo', vendor_path('foo'));
     }
 
-    public function testViewPath()
+    public function testWorkbenchPath()
     {
-        $this->assertEquals(BASE_PATH . '/resources/views', view_path());
-        $this->assertEquals(BASE_PATH . '/resources/views/foo', view_path('foo'));
+        $this->assertEquals(BASE_PATH . '/workbench', workbench_path());
+        $this->assertEquals(BASE_PATH . '/workbench/foo', workbench_path('foo'));
     }
 
     // Strings
@@ -198,7 +187,7 @@ class HelpersTest extends TestCase
     {
         /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->expectException(\Core\Exceptions\HttpException::class);
-        abort(HTTP_STATUS_FORBIDDEN);
+        abort(Response::HTTP_FORBIDDEN);
     }
 
     public function testAbortWithMessage()
@@ -206,7 +195,7 @@ class HelpersTest extends TestCase
         /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->expectException(\Core\Exceptions\HttpException::class);
         $this->expectExceptionMessage('Foo');
-        abort(HTTP_STATUS_INTERNAL_SERVER_ERROR, 'Foo');
+        abort(Response::HTTP_INTERNAL_SERVER_ERROR, 'Foo');
     }
 
     public function testAsset()

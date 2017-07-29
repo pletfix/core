@@ -33,8 +33,6 @@ class QueryException extends PDOException
      */
     private $dump;
 
-//    public $errorInfo; // todo public? make a getter!
-
     /**
      * Create a new query exception instance.
      *

@@ -66,6 +66,6 @@ class AuthTest extends TestCase
 
         $response = $this->middleware->process($request, $delegate);
         $this->assertInstanceOf(Response::class, $response);
-        $this->assertSame(HTTP_STATUS_OK, $response->getStatusCode());
+        $this->assertSame(Response::HTTP_OK, $response->getStatusCode());
     }
 }

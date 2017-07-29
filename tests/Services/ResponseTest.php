@@ -36,13 +36,13 @@ class ResponseTest extends TestCase
     public function testOutputAndClear()
     {
         $this->r->clear();
-        $this->assertInstanceOf(Response::class, $this->r->output('bla', HTTP_STATUS_ACCEPTED, ['foo' => 'bar']));
+        $this->assertInstanceOf(Response::class, $this->r->output('bla', Response::HTTP_ACCEPTED, ['foo' => 'bar']));
         $this->assertSame('bla', $this->r->getContent());
-        $this->assertSame(HTTP_STATUS_ACCEPTED, $this->r->getStatusCode());
+        $this->assertSame(Response::HTTP_ACCEPTED, $this->r->getStatusCode());
         $this->assertSame(['foo' => 'bar'], $this->r->getHeader());
         $this->assertInstanceOf(Response::class, $this->r->clear());
         $this->assertEmpty($this->r->getContent());
-        $this->assertSame(HTTP_STATUS_OK, $this->r->getStatusCode());
+        $this->assertSame(Response::HTTP_OK, $this->r->getStatusCode());
         $this->assertEmpty($this->r->getHeader());
     }
 
@@ -61,8 +61,8 @@ class ResponseTest extends TestCase
     public function testRedirect()
     {
         $this->r->clear();
-        $this->assertInstanceOf(Response::class, $this->r->redirect('https://example.de', HTTP_STATUS_FOUND, ['foo2' => 'bar2']));
-        $this->assertSame(HTTP_STATUS_FOUND, $this->r->getStatusCode());
+        $this->assertInstanceOf(Response::class, $this->r->redirect('https://example.de', Response::HTTP_FOUND, ['foo2' => 'bar2']));
+        $this->assertSame(Response::HTTP_FOUND, $this->r->getStatusCode());
         $this->assertSame(['foo2' => 'bar2', 'location' => 'https://example.de'], $this->r->getHeader());
         $this->r->clear();
     }
@@ -70,8 +70,8 @@ class ResponseTest extends TestCase
     public function testStatusCodeAndText()
     {
         $this->r->clear();
-        $this->assertInstanceOf(Response::class, $this->r->status(HTTP_STATUS_ACCEPTED));
-        $this->assertSame(HTTP_STATUS_ACCEPTED, $this->r->getStatusCode());
+        $this->assertInstanceOf(Response::class, $this->r->status(Response::HTTP_ACCEPTED));
+        $this->assertSame(Response::HTTP_ACCEPTED, $this->r->getStatusCode());
         $this->assertSame('Accepted', $this->r->getStatusText());
     }
 
@@ -120,7 +120,7 @@ class ResponseTest extends TestCase
     public function testSend()
     {
         $this->r->clear();
-        $this->r->output('Rolling Stones', HTTP_STATUS_OK, ['foo' => 'bar', 'blub' => ['a' => 'A']]);
+        $this->r->output('Rolling Stones', Response::HTTP_OK, ['foo' => 'bar', 'blub' => ['a' => 'A']]);
         ob_start();
         try {
             $this->r->send();

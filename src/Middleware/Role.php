@@ -5,6 +5,7 @@ namespace Core\Middleware;
 use Core\Services\Contracts\Delegate;
 use Core\Middleware\Contracts\Middleware as MiddlewareContract;
 use Core\Services\Contracts\Request;
+use Core\Services\Contracts\Response;
 
 class Role implements MiddlewareContract
 {
@@ -29,7 +30,7 @@ class Role implements MiddlewareContract
         }
 
         if (!$pass) {
-            abort(HTTP_STATUS_FORBIDDEN);
+            abort(Response::HTTP_FORBIDDEN);
         } // @codeCoverageIgnore
 
         return $delegate->process($request);

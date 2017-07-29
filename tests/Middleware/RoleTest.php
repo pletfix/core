@@ -83,6 +83,6 @@ class RoleTest extends TestCase
 
         $response = $this->middleware->process($request, $delegate, 'manage-user');
         $this->assertInstanceOf(Response::class, $response);
-        $this->assertSame(HTTP_STATUS_OK, $response->getStatusCode());
+        $this->assertSame(Response::HTTP_OK, $response->getStatusCode());
     }
 }

@@ -40,7 +40,7 @@ class LoadConfiguration implements Bootable
      */
     public function __construct($envFile = null, $configPath = null, $cachedFile = null)
     {
-        $this->envFile    = $envFile ?: environment_file();
+        $this->envFile    = $envFile ?: base_path('.env');
         $this->configPath = $configPath ?: config_path();
         $this->cachedFile = $cachedFile ?: storage_path('cache/config.php');
     }
@@ -52,11 +52,6 @@ class LoadConfiguration implements Bootable
      */
     public function boot()
     {
-        /*
-         * Load environment file.
-         */
-        //$this->loadEnvironment(); // todo prüfen, wieviel Zeit dies kostet (ENV kann so nur in der Config verwenden werden)
-
         /*
          * Load configuration files.
          */
