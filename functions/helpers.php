@@ -333,6 +333,23 @@ if (! function_exists('error')) {
 //    }
 //}
 
+if (!function_exists('is_absolute_path')) {
+    /**
+     * Determines if the given path given is an absolute path.
+     *
+     * @param string $path
+     * @return bool
+     */
+    function is_absolute_path($path)
+    {
+        if (is_windows()) {
+            return isset($path[1]) && $path[1] == ':'; // @codeCoverageIgnore
+        }
+
+        return !empty($path) && $path[0] == DIRECTORY_SEPARATOR;
+    }
+}
+
 if (!function_exists('is_console')) {
     /**
      * Determine if we are running in the console.

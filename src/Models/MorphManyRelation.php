@@ -44,7 +44,7 @@ class MorphManyRelation extends Relation
     {
         $type = get_class($this->model);
         $id   = $this->model->getId();
-        $this->builder->whereIs($this->typeAttribute, $type)->whereIs($this->foreignKey, $id);
+        $this->builder->where($this->typeAttribute, $type)->where($this->foreignKey, $id);
     }
 
     /**
@@ -64,7 +64,7 @@ class MorphManyRelation extends Relation
 
         $type = get_class($this->model);
 
-        return $this->builder->whereIs($this->typeAttribute, $type)->whereIn($this->foreignKey, $hash);
+        return $this->builder->where($this->typeAttribute, $type)->whereIn($this->foreignKey, $hash);
     }
 
     /**
@@ -82,7 +82,7 @@ class MorphManyRelation extends Relation
     {
         // get the foreign entities, group by local primary identity
         $foreignEntities = [];
-        foreach ($this->builder->all() as $foreignEntity) { // todo testen, ob cursor schneller ist
+        foreach ($this->builder->cursor() as $foreignEntity) {
             /** @var ModelContract $foreignEntity */
             $id = $foreignEntity->getAttribute($this->foreignKey);
             if (!isset($foreignEntities[$id])) {

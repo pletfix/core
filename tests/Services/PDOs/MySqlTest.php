@@ -2,13 +2,12 @@
 
 namespace Core\Tests\Services\PDOs;
 
-use Core\Services\AbstractDatabase;
+use Core\Services\Database;
 use Core\Services\PDOs\Builders\MySqlBuilder;
 use Core\Services\PDOs\MySql;
 use Core\Services\PDOs\Schemas\MySqlSchema;
 use Core\Testing\TestCase;
 use PDO;
-use PDOStatement;
 use PHPUnit_Framework_MockObject_MockObject;
 
 class MySqlTest extends TestCase
@@ -53,7 +52,7 @@ class MySqlTest extends TestCase
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->setMethods(['exec'])->getMock();
         $pdo->expects($this->any())->method('exec')->willReturn(1);
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(MySql::class)
             ->setMethods(['createPDO'])
             ->setConstructorArgs([$this->config])
@@ -75,7 +74,7 @@ class MySqlTest extends TestCase
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->setMethods(['exec'])->getMock();
         $pdo->expects($this->any())->method('exec')->willReturn(1);
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(MySql::class)
             ->setMethods(['createPDO'])
             ->setConstructorArgs([$this->config])

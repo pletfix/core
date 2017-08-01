@@ -2,15 +2,13 @@
 
 namespace Core\Tests\Services\PDOs\Schemas;
 
-use Core\Services\AbstractDatabase;
-use Core\Services\Contracts\Database;
-use Core\Services\PDOs\Schemas\AbstractSchema;
-use Core\Services\PDOs\Schemas\Contracts\Schema;
+use Core\Services\Database;
+use Core\Services\PDOs\Schemas\Schema;
 use Core\Testing\TestCase;
 use InvalidArgumentException;
 use PHPUnit_Framework_MockObject_MockObject;
 
-class AbstractSchemaTest extends TestCase
+class SchemaTest extends TestCase
 {
     /**
      * @var Schema
@@ -24,7 +22,7 @@ class AbstractSchemaTest extends TestCase
 
     protected function setUp()
     {
-        $this->db = $this->getMockBuilder(AbstractDatabase::class)
+        $this->db = $this->getMockBuilder(Database::class)
             ->setConstructorArgs([['database' => '~test']])
             ->setMethods(['exec', 'quote'])
             ->getMockForAbstractClass();
@@ -35,7 +33,7 @@ class AbstractSchemaTest extends TestCase
                 return "'$value'";
             });
 
-        $this->schema = $this->getMockBuilder(AbstractSchema::class)
+        $this->schema = $this->getMockBuilder(Schema::class)
             ->setConstructorArgs([$this->db])
             ->setMethods(['tables', 'columns', 'indexes', 'createTable'])
             ->getMockForAbstractClass();
@@ -49,7 +47,7 @@ class AbstractSchemaTest extends TestCase
             ->with('DROP TABLE "table1"')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->dropTable('table1'));
+        $this->assertInstanceOf(Schema::class, $this->schema->dropTable('table1'));
     }
 
     public function testRenameTable()
@@ -59,7 +57,17 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" RENAME TO "foo"')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->renameTable('table1', 'foo'));
+        $this->assertInstanceOf(Schema::class, $this->schema->renameTable('table1', 'foo'));
+    }
+
+    public function testTruncateTable()
+    {
+        $this->db->expects($this->once())
+            ->method('exec')
+            ->with('TRUNCATE TABLE "table1"')
+            ->willReturn(0);
+
+        $this->assertInstanceOf(Schema::class, $this->schema->truncateTable('table1'));
     }
 
     public function testAddIdentityColumn()
@@ -70,7 +78,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'identity',
         ]));
     }
@@ -83,7 +91,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" BIGINT NOT NULL PRIMARY KEY AUTO_INCREMENT')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'bigidentity',
         ]));
     }
@@ -96,7 +104,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" SMALLINT NOT NULL')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'smallint',
         ]));
     }
@@ -109,7 +117,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" INT NOT NULL')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'integer',
         ]));
     }
@@ -122,7 +130,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" INT UNSIGNED NOT NULL')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'unsigned',
         ]));
     }
@@ -135,7 +143,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" BIGINT NOT NULL')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'bigint',
         ]));
     }
@@ -148,7 +156,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" NUMERIC(5, 6) NOT NULL')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type'  => 'numeric',
             'size'  => 5,
             'scale' => 6,
@@ -163,7 +171,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" DOUBLE NOT NULL DEFAULT 3.14')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type'      => 'float',
             'size'      => 4,
             'scale'     => 1,
@@ -179,7 +187,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" VARCHAR(50) NOT NULL DEFAULT \'blub\'')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type'    => 'string',
             'size'    => 50,
             'default' => 'blub',
@@ -194,7 +202,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" VARCHAR(255)')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type'     => 'string',
             'nullable' => true,
         ]));
@@ -208,7 +216,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" TEXT NOT NULL')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'text',
         ]));
     }
@@ -221,7 +229,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" TEXT COLLATE utf8_unicode_ci COMMENT \'a rose is a rose\'')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type'      => 'text',
             'nullable'  => true,
             'collation' => 'utf8_unicode_ci',
@@ -237,7 +245,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" TEXT NOT NULL COMMENT \'a rose is a rose (DC2Type:array)\'')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type'    => 'array',
             'comment' => 'a rose is a rose',
         ]));
@@ -251,7 +259,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" TEXT NOT NULL COMMENT \'(DC2Type:json)\'')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'json',
         ]));
     }
@@ -264,7 +272,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" TEXT NOT NULL COMMENT \'(DC2Type:object)\'')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'object',
         ]));
     }
@@ -277,7 +285,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" UUID NOT NULL')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'guid',
         ]));
     }
@@ -290,7 +298,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" VARBINARY(3) NOT NULL')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'binary',
             'size' => 3
         ]));
@@ -304,7 +312,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" BLOB NOT NULL')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'blob',
         ]));
     }
@@ -317,7 +325,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" BOOLEAN NOT NULL DEFAULT 1')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type'    => 'boolean',
             'default' => true,
         ]));
@@ -331,7 +339,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" BOOLEAN NOT NULL DEFAULT 0')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type'    => 'boolean',
             'default' => false,
         ]));
@@ -345,7 +353,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" DATE NOT NULL')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'date',
         ]));
     }
@@ -358,7 +366,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" DATETIME NOT NULL')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'datetime',
         ]));
     }
@@ -371,7 +379,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type'    => 'timestamp',
             'default' => 'CURRENT_TIMESTAMP',
         ]));
@@ -385,7 +393,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD COLUMN "column1" TIME NOT NULL')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'time',
         ]));
     }
@@ -406,7 +414,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" DROP COLUMN "column1"')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->dropColumn('table1', 'column1'));
+        $this->assertInstanceOf(Schema::class, $this->schema->dropColumn('table1', 'column1'));
     }
 
     public function testRenameColumn()
@@ -417,7 +425,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" RENAME COLUMN "column1" TO "foo"')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->renameColumn('table1', 'column1', 'foo'));
+        $this->assertInstanceOf(Schema::class, $this->schema->renameColumn('table1', 'column1', 'foo'));
     }
 
     public function testAddIndex()
@@ -428,7 +436,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD INDEX "table1_column1_column2_index" ("column1", "column2")')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addIndex('table1', null, [
+        $this->assertInstanceOf(Schema::class, $this->schema->addIndex('table1', null, [
             'columns' => ['column1', 'column2'],
         ]));
     }
@@ -441,7 +449,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD UNIQUE "table1_column1_unique" ("column1")')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addIndex('table1', null, [
+        $this->assertInstanceOf(Schema::class, $this->schema->addIndex('table1', null, [
             'columns' => ['column1'],
             'unique'  => true,
         ]));
@@ -455,7 +463,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD PRIMARY KEY ("column1")')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addIndex('table1', null, [
+        $this->assertInstanceOf(Schema::class, $this->schema->addIndex('table1', null, [
             'columns' => ['column1'],
             'primary'  => true,
         ]));
@@ -469,7 +477,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD INDEX "index1" ("column1")')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->addIndex('table1', 'index1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->addIndex('table1', 'index1', [
             'columns' => ['column1'],
         ]));
     }
@@ -488,7 +496,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" DROP INDEX "table1_column1_column2_index"')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->dropIndex('table1', null, [
+        $this->assertInstanceOf(Schema::class, $this->schema->dropIndex('table1', null, [
             'columns' => ['column1', 'column2'],
         ]));
     }
@@ -501,7 +509,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" DROP INDEX "table1_column1_unique"')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->dropIndex('table1', null, [
+        $this->assertInstanceOf(Schema::class, $this->schema->dropIndex('table1', null, [
             'columns' => ['column1'],
             'unique'  => true,
         ]));
@@ -515,7 +523,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" DROP PRIMARY KEY')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->dropIndex('table1', null, [
+        $this->assertInstanceOf(Schema::class, $this->schema->dropIndex('table1', null, [
             'primary'  => true,
         ]));
     }
@@ -528,7 +536,7 @@ class AbstractSchemaTest extends TestCase
             ->with('ALTER TABLE "table1" DROP INDEX "index1"')
             ->willReturn(0);
 
-        $this->assertInstanceOf(AbstractSchema::class, $this->schema->dropIndex('table1', 'index1', [
+        $this->assertInstanceOf(Schema::class, $this->schema->dropIndex('table1', 'index1', [
         ]));
     }
 
@@ -553,8 +561,8 @@ class AbstractSchemaTest extends TestCase
         $this->assertSame('', $this->schema->zero('blob'));
 
         $this->assertSame('[]', $this->schema->zero('array'));
-        $this->assertSame('{}', $this->schema->zero('json'));
-        $this->assertSame('{}', $this->schema->zero('object'));
+        $this->assertSame('""', $this->schema->zero('json'));
+        $this->assertSame('null', $this->schema->zero('object'));
 
         $this->assertSame('00000000-0000-0000-0000-000000000000', $this->schema->zero('guid'));
 

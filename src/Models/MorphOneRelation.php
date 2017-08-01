@@ -19,7 +19,7 @@ class MorphOneRelation extends MorphManyRelation
     {
         // get the foreign entities, group by local primary identity
         $foreignEntities = [];
-        foreach ($this->builder->all() as $foreignEntity) { // todo testen, ob cursor schneller ist
+        foreach ($this->builder->cursor() as $foreignEntity) {
             /** @var Contracts\Model $foreignEntity */
             $id = $foreignEntity->getAttribute($this->foreignKey);
             $foreignEntities[$id] = $foreignEntity;

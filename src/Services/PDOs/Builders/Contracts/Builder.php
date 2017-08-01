@@ -142,7 +142,7 @@ interface Builder extends Countable
      * from(function($builder) { return $builder->from('table1'); }, 't1')
      *
      * // from subquery with placeholders:
-     * from($builder->from('table1')->where('column1 > ?'), 't1', [$foo])
+     * from($builder->from('table1')->whereCondition('column1 > ?'), 't1', [$foo])
      * </pre>
      *
      * @param string|Builder|\Closure $source A table name or a subquery.
@@ -193,7 +193,7 @@ interface Builder extends Countable
      * join(function(Builder $builder) { return $builder->from('table2'); }, 't1.id = t2.table1_id', 't2')
      *
      * // from subquery with placeholders:
-     * join($builder->from('table2')->where('column1 > ?'), 't1.id = t2.table1_id', 't2', [$foo])
+     * join($builder->from('table2')->whereCondition('column1 > ?'), 't1.id = t2.table1_id', 't2', [$foo])
      * </pre>
      *
      * @see https://www.w3schools.com/sql/sql_operators.asp Standard SQL Operators
@@ -235,6 +235,34 @@ interface Builder extends Countable
     public function rightJoin($source, $on, $alias = null, array $bindings = []);
 
     /**
+     * Add a comparison operation into the WHERE clause.
+     *
+     * Example:
+     * <pre>
+     * where('column1', 4711, '>')
+     * </pre>
+     *
+     * @param string $column.
+     * @param mixed $value
+     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE' todo '<>' oder '!=' ?
+     * @param bool $or If false, the condition is added by AND (default), otherwise by OR.
+     * @return Builder
+     */
+    public function where($column, $value, $operator = '=', $or = false);
+
+    /**
+     * Add a comparison operation into the WHERE clause by OR.
+     *
+     * See the <pre>where</pre> method for an example.
+     *
+     * @param string $column.
+     * @param mixed $value
+     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE' todo '<>' oder '!=' ?
+     * @return Builder
+     */
+    public function orWhere($column, $value, $operator = '=');
+
+    /**
      * Adds a WHERE condition to the query.
      *
      * You should only use standard SQL operators and functions, so that the database drivers can translate the
@@ -244,9 +272,9 @@ interface Builder extends Countable
      *
      * Examples:
      * <pre>
-     * where('column1 = ? OR t1.column2 LIKE "%?%"', [$foo, $bar])
-     * where('column1 = (SELECT MAX(i) FROM table2 WHERE c1 = ?)', [$foo])
-     * where(function(Builder $builder) { return $builder->where('c1 = ?')->orWhere('c2 = ?'); }, [$foo, $bar])
+     * whereCondition('column1 = ? OR t1.column2 LIKE "%?%"', [$foo, $bar])
+     * whereCondition('column1 = (SELECT MAX(i) FROM table2 WHERE c1 = ?)', [$foo])
+     * whereCondition(function(Builder $builder) { return $builder->whereCondition('c1 = ?')->orWhereCondition('c2 = ?'); }, [$foo, $bar])
      * </pre>
      *
      * @see https://www.w3schools.com/sql/sql_operators.asp Standard SQL Operators
@@ -258,7 +286,7 @@ interface Builder extends Countable
      * @param bool $or If false, the condition is added by AND (default), otherwise by OR.
      * @return Builder
      */
-    public function where($condition, array $bindings = [], $or = false);
+    public function whereCondition($condition, array $bindings = [], $or = false);
 
     /**
      * Adds a WHERE condition to the query by OR.
@@ -269,36 +297,8 @@ interface Builder extends Countable
      * @param array $bindings
      * @return Builder
      */
-    public function orWhere($condition, array $bindings = []);
+    public function orWhereCondition($condition, array $bindings = []);
 
-    /**
-     * Add a comparison operation into the WHERE clause.
-     *
-     * Example:
-     * <pre>
-     * whereIs('column1', 4711, '>')
-     * </pre>
-     * 
-     * @param string $column.
-     * @param mixed $value
-     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE' todo '<>' oder '!=' ?
-     * @param bool $or If false, the condition is added by AND (default), otherwise by OR.
-     * @return Builder
-     */
-    public function whereIs($column, $value, $operator = '=', $or = false);
-
-    /**
-     * Add a comparison operation into the WHERE clause by OR.
-     *
-     * See the <pre>whereIs</pre> method for an example.
-     *
-     * @param string $column.
-     * @param mixed $value
-     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE' todo '<>' oder '!=' ?
-     * @return Builder
-     */
-    public function orWhereIs($column, $value, $operator = '=');
-    
     /**
      * Add a subquery into the WHERE clause.
      *
@@ -307,8 +307,8 @@ interface Builder extends Countable
      * Examples:
      * <pre>
      * whereSubQuery('column1', 'SELECT MAX(i) FROM table2 WHERE c1 = ?', [$foo])
-     * whereSubQuery('column1', database()->createBuilder()->select('MAX(i)')->from('table2')->where('c1 = ?'), [$foo])
-     * whereSubQuery('column1', function(Builder $builder) { return $builder->select('MAX(i)')->from('table2')->where('c1 = ?'); }, [$foo])
+     * whereSubQuery('column1', database()->createBuilder()->select('MAX(i)')->from('table2')->whereCondition('c1 = ?'), [$foo])
+     * whereSubQuery('column1', function(Builder $builder) { return $builder->select('MAX(i)')->from('table2')->whereCondition('c1 = ?'); }, [$foo])
      * </pre>
      *
      * @param string $column
@@ -341,8 +341,8 @@ interface Builder extends Countable
      * Examples:
      * <pre>
      * whereExists('column1', 'SELECT MAX(i) FROM table2 WHERE c1 = ?', [$foo])
-     * whereExists('column1', database()->createBuilder()->select('MAX(i)')->from('table2')->where('c1 = ?'), [$foo])
-     * whereExists('column1', function(Builder $builder) { return $builder->select('MAX(i)')->from('table2')->where('c1 = ?'); }, [$foo])
+     * whereExists('column1', database()->createBuilder()->select('MAX(i)')->from('table2')->whereCondition('c1 = ?'), [$foo])
+     * whereExists('column1', function(Builder $builder) { return $builder->select('MAX(i)')->from('table2')->whereCondition('c1 = ?'); }, [$foo])
      * </pre>
      *
      * @param string|Builder|\Closure $query
@@ -499,7 +499,7 @@ interface Builder extends Countable
      * @param bool $not If true the condition is negated.
      * @return Builder
      */
-    public function whereIsNull($column, $or = false, $not = false);
+    public function whereNull($column, $or = false, $not = false);
 
     /**
      * Add "WHERE column IS NULL to the query by OR.
@@ -507,7 +507,7 @@ interface Builder extends Countable
      * @param string $column
      * @return Builder
      */
-    public function orWhereIsNull($column);
+    public function orWhereNull($column);
 
     /**
      * Add "WHERE column IS NOT NULL to the query.
@@ -516,7 +516,7 @@ interface Builder extends Countable
      * @param bool $or If false, the condition is added by AND (default), otherwise by OR.
      * @return Builder
      */
-    public function whereIsNotNull($column, $or = false);
+    public function whereNotNull($column, $or = false);
 
     /**
      * Add "WHERE column IS NOT NULL to the query by OR.
@@ -524,7 +524,7 @@ interface Builder extends Countable
      * @param string $column
      * @return Builder
      */
-    public function orWhereIsNotNull($column);
+    public function orWhereNotNull($column);
 
     /**
      * Adds GROUP BY clause to the query.
@@ -587,9 +587,11 @@ interface Builder extends Countable
      *
      * // as array:
      * orderBy(['column1', 'column2 ASC', 't1.column3 DESC'])
+     *
+     * // as expression:
+     * orderBy('column1 > 5')
      * </pre>
      *
-     * // todo prüfen, ob auch subqueries möglich sind
      * @param string|array $columns The columns to order by, possible with the direction key word "ASC" (default) or "DESC".
      * @param array $bindings
      * @return Builder
@@ -753,16 +755,4 @@ interface Builder extends Countable
      * @return int|false
      */
     public function delete();
-
-    /**
-     * Truncate the table.
-     *
-     * Note, that TRUNCATE TABLE is DDL and not DML like DELETE. This means that TRUNCATE TABLE will cause an implicit
-     * COMMIT in a transaction block, see also https://dev.mysql.com/doc/refman/5.7/en/truncate-table.html!
-     *
-     * It returns FALSE if the operation was canceled by a `beforeDelete` hook.
-     *
-     * @return int|false
-     */
-    public function truncate();
 }

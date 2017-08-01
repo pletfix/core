@@ -27,7 +27,7 @@ use Throwable;
  * @see https://phpdelusions.net/pdo#query PDO Tutorial
  * @see https://phpdelusions.net/pdo/objects Fetching objects with PDO
  */
-abstract class AbstractDatabase implements DatabaseContract // todo in Database umbennen
+abstract class Database implements DatabaseContract
 {
     /**
      * PHP Data Object representing a connection to a database.
@@ -69,7 +69,7 @@ abstract class AbstractDatabase implements DatabaseContract // todo in Database 
      *
      * @var string
      */
-    protected $dateFormat = 'Y-m-d H:i:s'; // todo evtl. unnötig, wenn "immer direkt aus config lesen" nicht langsamer ist
+    protected $dateFormat = 'Y-m-d H:i:s';
 
     /**
      * Create a new Database instance.
@@ -177,9 +177,9 @@ abstract class AbstractDatabase implements DatabaseContract // todo in Database 
     }
 
     /*
-     * ----------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      * Connect / Disconnect
-     * ----------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      */
 
     /**
@@ -263,33 +263,38 @@ abstract class AbstractDatabase implements DatabaseContract // todo in Database 
         return $this;
     }
 
-    /*
-     * ----------------------------------------------------------------------------------------------------------------
-     * Error- und Event Handling
-     * ----------------------------------------------------------------------------------------------------------------
-     */
-
-    /**
-     * @inheritdoc
-     */
-    public function errorCode() // todo ein Fehler sollte ein Exception auslösen, daher diese und errorInfo() nicht notwendig
-    {
-        $this->connect();
-
-        return $this->pdo->errorCode();
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function errorInfo()
-    {
-        $this->connect();
-
-        return $this->pdo->errorInfo();
-    }
-
-    // todo: Event-Handling
+//    /*
+//     * ----------------------------------------------------------------
+//     * Error Handling
+//     * ----------------------------------------------------------------
+//     */
+//
+//    /**
+//     * @inheritdoc
+//     */
+//    public function errorCode()
+//    {
+//        $this->connect();
+//
+//        return $this->pdo->errorCode();
+//    }
+//
+//    /**
+//     * @inheritdoc
+//     */
+//    public function errorInfo()
+//    {
+//        $this->connect();
+//
+//        return $this->pdo->errorInfo();
+//    }
+//
+//    /*
+//     * ----------------------------------------------------------------
+//     * Event Handling
+//     * ----------------------------------------------------------------
+//     */
+//
 //    /**
 //     * Register a database query listener with the connection.
 //     *
@@ -308,10 +313,16 @@ abstract class AbstractDatabase implements DatabaseContract // todo in Database 
      */
     public function dump($statement, array $bindings = [], $return = null)
     {
-        foreach ($bindings as $binding) {
-            $value = is_string($binding) ? $this->quote($binding) : $binding; // todo oder immer quote?
-            $statement = preg_replace('/\?/', $value, $statement, 1);
-            // todo ":name" auflösen
+        foreach ($bindings as $key => $value) {
+            if (is_string($value)) {
+                $value = $this->quote($value);
+            }
+            if (is_int($key)) {
+                $statement = preg_replace('/\?/', $value, $statement, 1);
+            }
+            else {
+                $statement = str_replace($key, $value, $statement);
+            }
         }
 
         if ($return) {
@@ -324,9 +335,9 @@ abstract class AbstractDatabase implements DatabaseContract // todo in Database 
     }
 
     /*
-     * ----------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      * Transaction Handling
-     * ----------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      */
 
     /**
@@ -340,11 +351,11 @@ abstract class AbstractDatabase implements DatabaseContract // todo in Database 
             $this->commit();
         }
         catch (Throwable $e) { // Error or Exception (executed only in PHP 7, will not match in PHP 5)
-            $this->rollBack(); // @codeCoverageIgnore
+            $this->rollback(); // @codeCoverageIgnore
             throw $e;          // @codeCoverageIgnore
         }
         catch (Exception $e) { // Once PHP 5 support is no longer needed, this block can be removed.
-            $this->rollBack(); // @codeCoverageIgnore
+            $this->rollback(); // @codeCoverageIgnore
             throw $e;          // @codeCoverageIgnore
         }
 
@@ -387,10 +398,10 @@ abstract class AbstractDatabase implements DatabaseContract // todo in Database 
     /**
      * @inheritdoc
      */
-    public function rollBack()
+    public function rollback()
     {
         if ($this->transactions <= 1) {
-            $this->pdo->rollBack();
+            $this->pdo->rollback();
         }
         else {
             if ($this->supportsSavepoints) {
@@ -418,9 +429,9 @@ abstract class AbstractDatabase implements DatabaseContract // todo in Database 
     }
 
     /*
-     * ----------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      * Data Query
-     * ----------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      */
 
     /**
@@ -529,9 +540,9 @@ abstract class AbstractDatabase implements DatabaseContract // todo in Database 
     }
 
     /*
-     * ----------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      * Data Manipulation
-     * ----------------------------------------------------------------------------------------------------------------
+     * ----------------------------------------------------------------
      */
 
     /**

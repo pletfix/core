@@ -3,8 +3,7 @@
 namespace Core\Commands;
 
 use Core\Application;
-use Core\Services\AbstractCommand;
-use Core\Services\Contracts\Command;
+use Core\Services\Command;
 use Core\Services\DI;
 use Core\Services\Stdio;
 
@@ -15,7 +14,7 @@ use Core\Services\Stdio;
  *
  * @see https://github.com/symfony/console/blob/3.2/Application.php
  */
-class HelpCommand extends AbstractCommand
+class HelpCommand extends Command
 {
     /**
      * The console command name.

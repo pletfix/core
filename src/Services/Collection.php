@@ -12,7 +12,7 @@ use InvalidArgumentException;
 use JsonSerializable;
 use Traversable;
 
-// todo statistik funktionen hinzufügen
+
 
 /**
  * Collection

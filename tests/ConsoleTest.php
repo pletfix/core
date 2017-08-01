@@ -4,7 +4,7 @@ namespace Core\Tests;
 
 use Core\Application;
 use Core\Console;
-use Core\Services\AbstractCommand;
+use Core\Services\Command;
 use Core\Services\CommandFactory;
 use Core\Services\DI;
 use Core\Services\Response;
@@ -35,7 +35,7 @@ class ConsoleTest extends TestCase
         $command = $this->getMockBuilder(Response::class)->setMethods(['run'])->getMock();
         $command->expects($this->once())
             ->method('run')
-            ->willReturn(AbstractCommand::EXIT_SUCCESS);
+            ->willReturn(Command::EXIT_SUCCESS);
 
         $factory = $this->getMockBuilder(CommandFactory::class)->setMethods(['command'])->getMock();
         $factory->expects($this->once())
@@ -46,6 +46,6 @@ class ConsoleTest extends TestCase
 
         $_SERVER['argv'] = ['console', 'help'];
         $this->setPrivateProperty(Console::class, 'basePath', __DIR__ .'/_data');
-        $this->assertSame(AbstractCommand::EXIT_SUCCESS, Console::run());
+        $this->assertSame(Command::EXIT_SUCCESS, Console::run());
     }
 }

@@ -61,7 +61,7 @@ class View implements ViewContract
      */
     public function __construct($viewPath = null, $pluginManifestOfViews = null, &$scope = null)
     {
-        $this->viewPath = $viewPath ?: view_path();
+        $this->viewPath = $viewPath ?: resource_path('views');
         $this->pluginManifestOfViews = $pluginManifestOfViews ?: manifest_path('plugins/views.php');
 
         if ($scope === null) {

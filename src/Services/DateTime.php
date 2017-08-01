@@ -270,10 +270,6 @@ class DateTime extends BaseDateTime implements DateTimeContract
      */
     public function toIso8601String()
     {
-        // TODO
-        // Note: This format is not compatible with ISO-8601! Use DateTime::ATOM or DATE_ATOM instead.
-        // see http://de2.php.net/manual/en/class.datetime.php#datetime.constants.iso8601
-
         return $this->format(static::ISO8601);
     }
 

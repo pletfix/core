@@ -2,8 +2,7 @@
 
 namespace Core\Tests\Services\PDOs\Builders;
 
-use Core\Services\AbstractDatabase;
-use Core\Services\Contracts\Database;
+use Core\Services\Database;
 use Core\Services\PDOs\Builders\Contracts\Builder;
 use Core\Services\PDOs\Builders\PostgresBuilder;
 use Core\Services\PDOs\Schemas\PostgresSchema;
@@ -24,7 +23,7 @@ class PostgresBuilderTest extends TestCase
 
     protected function setUp()
     {
-        $this->db = $this->getMockBuilder(AbstractDatabase::class)
+        $this->db = $this->getMockBuilder(Database::class)
             ->setConstructorArgs([['database' => '~test']])
             ->setMethods(['quote', 'exec', 'lastInsertId'])
             ->getMockForAbstractClass();

@@ -120,13 +120,6 @@ interface Stdio
     public function secret($prompt, $default = null, $stty = true);
 
     /**
-     * Clear the console
-     *
-     * @return $this;
-     */
-    public function clear();
-
-    /**
      * Format text.
      *
      * @param string $text The message
@@ -228,24 +221,6 @@ interface Stdio
      * @return $this
      */
     public function hr($width = 79);
-
-    /**
-     * Formats a table.
-     *
-     * Example:
-     * +---------------+-----------------------+------------------+
-     * | ISBN          | Title                 | Author           |
-     * +---------------+-----------------------+------------------+
-     * | 99921-58-10-7 | Divine Comedy         | Dante Alighieri  |
-     * | 9971-5-0210-0 | A Tale of Two Cities  | Charles Dickens  |
-     * | 960-425-059-0 | The Lord of the Rings | J. R. R. Tolkien |
-     * +---------------+-----------------------+------------------+
-     *
-     * @param array $headers
-     * @param array $rows
-     * @return $this
-     */
-    public function table(array $headers, array $rows);
 
     /**
      * Prints text to Standard Error.

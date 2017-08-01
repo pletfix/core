@@ -3,8 +3,7 @@
 namespace Core\Tests\Services\PDOs\Builders;
 
 use Core\Models\Model;
-use Core\Services\AbstractDatabase;
-use Core\Services\Contracts\Database;
+use Core\Services\Database;
 use Core\Services\PDOs\Builders\Builder;
 use Core\Testing\TestCase;
 use Generator;
@@ -48,7 +47,7 @@ class BuilderTest extends TestCase
 
     protected function setUp()
     {
-        $this->db = $this->getMockBuilder(AbstractDatabase::class)
+        $this->db = $this->getMockBuilder(Database::class)
             ->setConstructorArgs([['database' => '~test']])
             ->setMethods(['quote', 'exec', 'query', 'single', 'scalar', 'cursor', 'lastInsertId'])
             ->getMockForAbstractClass();
@@ -78,7 +77,7 @@ class BuilderTest extends TestCase
         $this->builder->select('column1, t1.column2 as c2')->distinct();
         $clone = $this->builder->copy();
         $this->assertEquals($this->builder, $clone);
-        $this->builder->where('a=2');
+        $this->builder->whereCondition('a=2');
         $this->assertEquals('SELECT DISTINCT "column1", "t1"."column2" AS "c2" WHERE "a"=2', $this->builder->toSql());
         $this->assertEquals('SELECT DISTINCT "column1", "t1"."column2" AS "c2"', $clone->toSql());
     }
@@ -241,36 +240,36 @@ class BuilderTest extends TestCase
 
     public function testWhere()
     {
-        $sql = $this->builder->reset()->where('column1 = ? or t1.column2 like "%?%"')->toSql();
-        $this->assertSame('SELECT * WHERE "column1" = ? OR "t1"."column2" LIKE "%?%"', $sql);
-
-        $sql = $this->builder->reset()->where('column1 = :c1 or t1.column2 like "%:c2%"')->toSql();
-        $this->assertSame('SELECT * WHERE "column1" = :c1 OR "t1"."column2" LIKE "%:c2%"', $sql);
-
-        $sql = $this->builder->reset()->where('column1 = (select max(i) from table2 where c1 = ?)')->toSql();
-        /** @noinspection SqlDialectInspection */
-        $this->assertSame('SELECT * WHERE "column1" = (select max(i) from table2 where c1 = ?)', $sql);
-
-        $sql = $this->builder->reset()->where(function(Builder $builder) { return $builder->where('c1 = ?')->orWhere('c2 = ?'); })->toSql();
-        $this->assertSame('SELECT * WHERE ("c1" = ? OR "c2" = ?)', $sql);
-
         $sql = $this->builder->reset()
-            ->where('x is null')
-            ->where(function(Builder $builder) { return $builder->where('c1 = ?')->orWhere('c2 = ?'); })
-            ->toSql();
-        $this->assertSame('SELECT * WHERE "x" IS NULL AND ("c1" = ? OR "c2" = ?)', $sql);
-    }
-
-    public function testWhereIs()
-    {
-        $sql = $this->builder->reset()
-            ->whereIs('column1', 11)
-            ->whereIs('t1.column2', 22, '>')
-            ->orWhereIs('t2.column3', 33)
-            ->orWhereIs('column4', 44, '<')
+            ->where('column1', 11)
+            ->where('t1.column2', 22, '>')
+            ->orWhere('t2.column3', 33)
+            ->orWhere('column4', 44, '<')
             ->toSql();
         $this->assertSame('SELECT * WHERE "column1" = ? AND "t1"."column2" > ? OR "t2"."column3" = ? OR "column4" < ?', $sql);
         $this->assertSame([11, 22, 33, 44], $this->builder->bindings());
+    }
+
+    public function testWhereCondition()
+    {
+        $sql = $this->builder->reset()->whereCondition('column1 = ? or t1.column2 like "%?%"')->toSql();
+        $this->assertSame('SELECT * WHERE "column1" = ? OR "t1"."column2" LIKE "%?%"', $sql);
+
+        $sql = $this->builder->reset()->whereCondition('column1 = :c1 or t1.column2 like "%:c2%"')->toSql();
+        $this->assertSame('SELECT * WHERE "column1" = :c1 OR "t1"."column2" LIKE "%:c2%"', $sql);
+
+        $sql = $this->builder->reset()->whereCondition('column1 = (select max(i) from table2 where c1 = ?)')->toSql();
+        /** @noinspection SqlDialectInspection */
+        $this->assertSame('SELECT * WHERE "column1" = (select max(i) from table2 where c1 = ?)', $sql);
+
+        $sql = $this->builder->reset()->whereCondition(function(Builder $builder) { return $builder->whereCondition('c1 = ?')->orWhereCondition('c2 = ?'); })->toSql();
+        $this->assertSame('SELECT * WHERE ("c1" = ? OR "c2" = ?)', $sql);
+
+        $sql = $this->builder->reset()
+            ->whereCondition('x is null')
+            ->whereCondition(function(Builder $builder) { return $builder->whereCondition('c1 = ?')->orWhereCondition('c2 = ?'); })
+            ->toSql();
+        $this->assertSame('SELECT * WHERE "x" IS NULL AND ("c1" = ? OR "c2" = ?)', $sql);
     }
 
     public function testWhereSubQuery()
@@ -278,8 +277,8 @@ class BuilderTest extends TestCase
         $builder2 = $this->builder->copy();
         /** @noinspection SqlDialectInspection */
         $sql = $this->builder
-            ->whereSubQuery('column1', $builder2->copy()->select('min(id)')->from('table1')->where('id > ?'), '=', [48])
-            ->whereSubQuery('column2', function(Builder $builder) { return $builder->copy()->select('min(id)')->from('table1')->where('id > ?', [49]); })
+            ->whereSubQuery('column1', $builder2->copy()->select('min(id)')->from('table1')->whereCondition('id > ?'), '=', [48])
+            ->whereSubQuery('column2', function(Builder $builder) { return $builder->copy()->select('min(id)')->from('table1')->whereCondition('id > ?', [49]); })
             ->orWhereSubQuery('column3', 'select count(*) from table2')
             ->toSql();
         /** @noinspection SqlDialectInspection */
@@ -298,8 +297,8 @@ class BuilderTest extends TestCase
 
         /** @noinspection SqlDialectInspection */
         $sql = $this->builder
-            ->whereExists($builder2->copy()->from('table1')->where('id > t.column1'))
-            ->whereExists(function(Builder $builder) { return $builder->copy()->from('table1')->where('id > t.column2'); })
+            ->whereExists($builder2->copy()->from('table1')->whereCondition('id > t.column1'))
+            ->whereExists(function(Builder $builder) { return $builder->copy()->from('table1')->whereCondition('id > t.column2'); })
             ->orWhereExists('select * from table2 where id = t.column3')
             ->toSql();
 
@@ -318,8 +317,8 @@ class BuilderTest extends TestCase
 
         /** @noinspection SqlDialectInspection */
         $sql = $this->builder
-            ->whereNotExists($builder2->copy()->from('table1')->where('id > t.column1'))
-            ->whereNotExists(function(Builder $builder) { return $builder->copy()->from('table1')->where('id > t.column2'); })
+            ->whereNotExists($builder2->copy()->from('table1')->whereCondition('id > t.column1'))
+            ->whereNotExists(function(Builder $builder) { return $builder->copy()->from('table1')->whereCondition('id > t.column2'); })
             ->orWhereNotExists('select * from table2 where id = t.column3')
             ->toSql();
 
@@ -414,13 +413,13 @@ class BuilderTest extends TestCase
         $this->assertSame([11, 22, 33, 44, 55, 66, 77, 88], $this->builder->bindings());
     }
 
-    public function testWhereIsNull()
+    public function testWhereNull()
     {
         $sql = $this->builder->reset()
-            ->whereIsNull('column1')
-            ->whereIsNull('column2')
-            ->orWhereIsNull('column3')
-            ->orWhereIsNull('column4')
+            ->whereNull('column1')
+            ->whereNull('column2')
+            ->orWhereNull('column3')
+            ->orWhereNull('column4')
             ->toSql();
 
         $this->assertSame('SELECT * ' .
@@ -432,13 +431,13 @@ class BuilderTest extends TestCase
         );
     }
 
-    public function testWhereIsNotNull()
+    public function testWhereNotNull()
     {
         $sql = $this->builder->reset()
-            ->whereIsNotNull('column1')
-            ->whereIsNotNull('column2')
-            ->orWhereIsNotNull('column3')
-            ->orWhereIsNotNull('column4')
+            ->whereNotNull('column1')
+            ->whereNotNull('column2')
+            ->orWhereNotNull('column3')
+            ->orWhereNotNull('column4')
             ->toSql();
 
         $this->assertSame('SELECT * ' .
@@ -516,11 +515,11 @@ class BuilderTest extends TestCase
 
         $sql = $this->builder
             ->select('firstname, lastname, no - ? as no2', [40])
-            ->select(['x' => $builder2->copy()->select('min(id)')->from('departments')->where('id > ?', [41])])
-            ->from($builder2->copy()->from('employees')->whereIn('firstname', [42, 43])->where('a=?')->limit(10), 'sub1', [44])
-            ->join($builder2->copy()->from('departments')->where('id < ?', [45])->limit(10), 'sub1.id=sub2.id + ?', 'sub2', [46])
-            ->where('lastname like ?', [47])
-            ->whereSubQuery('last', $builder2->copy()->select('min(id)')->from('departments')->where('id > ?', [48]))
+            ->select(['x' => $builder2->copy()->select('min(id)')->from('departments')->whereCondition('id > ?', [41])])
+            ->from($builder2->copy()->from('employees')->whereIn('firstname', [42, 43])->whereCondition('a=?')->limit(10), 'sub1', [44])
+            ->join($builder2->copy()->from('departments')->whereCondition('id < ?', [45])->limit(10), 'sub1.id=sub2.id + ?', 'sub2', [46])
+            ->whereCondition('lastname like ?', [47])
+            ->whereSubQuery('last', $builder2->copy()->select('min(id)')->from('departments')->whereCondition('id > ?', [48]))
             ->orWhereBetween('x', 49, 50)
             ->groupBy('x - ?', [51])
             ->having('x <> ? and x = ?', [52, 53])
@@ -612,7 +611,7 @@ class BuilderTest extends TestCase
         $result = $this->builder
             ->from('table1')
             ->asClass(stdClass::class)
-            ->whereIs('column1', 47)
+            ->where('column1', 47)
             ->all();
 
         $this->assertSame($data, $result);
@@ -628,7 +627,7 @@ class BuilderTest extends TestCase
             ->table('books')
             ->asClass(Book::class)
             ->with('author')
-            ->where('title = ?', ['foo']) // not exists
+            ->whereCondition('title = ?', ['foo']) // not exists
             ->all();
 
         $this->assertEmpty($books);
@@ -658,7 +657,7 @@ class BuilderTest extends TestCase
         $cursor = $this->builder
             ->from('table1')
             ->asClass(stdClass::class)
-            ->whereIs('column1', 47)
+            ->where('column1', 47)
             ->cursor();
 
         $this->assertSame(Generator::class, $cursor);
@@ -675,7 +674,7 @@ class BuilderTest extends TestCase
         $entity = $this->builder
             ->from('table1')
             ->asClass(stdClass::class)
-            ->whereIs('column1', 47)
+            ->where('column1', 47)
             ->first();
 
         $this->assertSame([10, 'a', 'b'], $entity);
@@ -691,7 +690,7 @@ class BuilderTest extends TestCase
             ->table('authors')
             ->asClass(Author::class)
             ->with('books')
-            ->whereIs('id', 10)  // not exists
+            ->where('id', 10)  // not exists
             ->first();
 
         $this->assertNull($author);
@@ -700,7 +699,7 @@ class BuilderTest extends TestCase
             ->table('authors')
             ->asClass(Author::class)
             ->with('books')
-            ->whereIs('id', 2)
+            ->where('id', 2)
             ->first();
 
         $this->assertInstanceOf(Author::class, $author);
@@ -755,7 +754,7 @@ class BuilderTest extends TestCase
 
         $value = $this->builder
             ->from('table1')
-            ->whereIs('column1', 47)
+            ->where('column1', 47)
             ->value();
 
         $this->assertSame(10, $value);
@@ -846,7 +845,7 @@ class BuilderTest extends TestCase
 
         $this->assertSame(1, $this->builder
             ->from('table1')
-            ->where('c = ?', ['C'])
+            ->whereCondition('c = ?', ['C'])
             ->update($data));
     }
 
@@ -862,7 +861,7 @@ class BuilderTest extends TestCase
 
         $this->assertSame(1, $this->builder
             ->from('table1')
-            ->where('b = :b', ['b' => 'BOld'])
+            ->whereCondition('b = :b', ['b' => 'BOld'])
             ->update($data));
     }
 
@@ -882,7 +881,7 @@ class BuilderTest extends TestCase
 
         $this->assertSame(1, $this->builder
             ->from('table1')
-            ->where('c = ?', ['C'])
+            ->whereCondition('c = ?', ['C'])
             ->delete());
     }
 
@@ -905,12 +904,12 @@ class BuilderTest extends TestCase
         $this->assertSame(3, $db->table('table1')->count());
 
         // update
-        $builder->whereIs('id', $id)->update(['str' => 'b']);
-        $row = $db->table('table1')->whereIs('id', $id)->first();
+        $builder->where('id', $id)->update(['str' => 'b']);
+        $row = $db->table('table1')->where('id', $id)->first();
         $this->assertSame('b', $row['str']);
 
         // delete
-        $builder->whereIs('id', $id)->delete();
+        $builder->where('id', $id)->delete();
         $row = $db->table('table1')->first();
         $this->assertSame('a2', $row['str']);
         $this->assertSame(2, $db->table('table1')->count());
@@ -984,13 +983,13 @@ class BuilderTest extends TestCase
         $this->assertSame(3, $db->table('table1')->count());
 
         // update
-        $builder->whereIs('id', $id)->update(['str' => 'b']);
+        $builder->where('id', $id)->update(['str' => 'b']);
         //$row = $db->table('table1')->all();
         $row = $db->table('table1')->first();
         $this->assertSame('3', $row['x']);
 
         // delete
-        $builder->whereIs('id', $id)->delete();
+        $builder->where('id', $id)->delete();
         $row = $db->table('table1')->first();
         $this->assertSame('5', $row['x']);
     }
@@ -1012,12 +1011,12 @@ class BuilderTest extends TestCase
         $this->assertSame(3, $db->table('table1')->count());
 
         // update
-        $builder->whereIs('id', $id)->update(['str' => 'b']);
+        $builder->where('id', $id)->update(['str' => 'b']);
         $row = $db->table('table1')->first();
         $this->assertSame('4', $row['x']);
 
         // delete
-        $builder->whereIs('id', $id)->delete();
+        $builder->where('id', $id)->delete();
         $row = $db->table('table1')->first();
         $this->assertSame('6', $row['x']);
     }
@@ -1103,7 +1102,7 @@ class ModelWithHooks extends ModelWithHooksBefore
     public function afterInsert()
     {
         if ($this->id !== null && $this->str !== null && $this->x === 1) {
-            database()->table('table1')->whereIs('id', $this->id)->update(['x' => 2]);
+            database()->table('table1')->where('id', $this->id)->update(['x' => 2]);
             $this->x = 2;
         }
     }
@@ -1111,7 +1110,7 @@ class ModelWithHooks extends ModelWithHooksBefore
     public function afterUpdate()
     {
         if ($this->str === 'b' && $this->x === 3) {
-            database()->table('table1')->whereIs('id', $this->id)->update(['x' => 4]);
+            database()->table('table1')->where('id', $this->id)->update(['x' => 4]);
             $this->x = 4;
         }
     }

@@ -223,6 +223,7 @@ class Request implements RequestContract
 
     /**
      * @inheritdoc
+     * Todo: Klasse Cookie benutzen?
      */
     public function cookie($key = null, $default = null)
     {

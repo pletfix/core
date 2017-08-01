@@ -83,7 +83,7 @@ class BelongsToManyRelation extends Relation
         $this->builder
             ->select([$otherTable . '.*'])
             ->join($this->joinTable, $otherTable . '.' . $this->otherKey . ' = ' . $this->joinTable . '.' .$this->otherForeignKey)
-            ->whereIs($this->joinTable . '.' . $this->localForeignKey, $id);
+            ->where($this->joinTable . '.' . $this->localForeignKey, $id);
     }
 
     /**
@@ -125,7 +125,7 @@ class BelongsToManyRelation extends Relation
     {
         // get the foreign entities, group by "local key"
         $foreignEntities = [];
-        foreach ($this->builder->all() as $foreignEntity) { // todo testen, ob cursor schneller ist
+        foreach ($this->builder->cursor() as $foreignEntity) {
             /** @var ModelContract $foreignEntity */
             $localId = $foreignEntity->getAttribute('___id');
             unset($foreignEntity->___id);
@@ -174,7 +174,7 @@ class BelongsToManyRelation extends Relation
 
         if ($model === null) {
             $this->model->database()->table($this->joinTable)
-                ->whereIs($this->localForeignKey, $localId)
+                ->where($this->localForeignKey, $localId)
                 ->delete();
             $this->model->clearRelationCache();
             return true;
@@ -183,8 +183,8 @@ class BelongsToManyRelation extends Relation
         $foreignId = $model->getAttribute($this->otherKey);
 
         $this->model->database()->table($this->joinTable)
-            ->whereIs($this->localForeignKey, $localId)
-            ->whereIs($this->otherForeignKey, $foreignId)
+            ->where($this->localForeignKey, $localId)
+            ->where($this->otherForeignKey, $foreignId)
             ->delete();
 
         $this->model->clearRelationCache();
@@ -227,7 +227,7 @@ class BelongsToManyRelation extends Relation
             $this->model->clearRelationCache();
 
             $db->table($this->joinTable)
-                ->whereIs($this->otherForeignKey, $foreignId)
+                ->where($this->otherForeignKey, $foreignId)
                 ->delete();
 
             return true;

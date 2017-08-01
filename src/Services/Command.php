@@ -15,7 +15,7 @@ use LogicException;
  *
  * @see https://github.com/symfony/console/blob/3.0/Application.php
  */
-abstract class AbstractCommand implements CommandContract // todo in COmmand umbennenen
+abstract class Command implements CommandContract
 {
     /**
      * The console command name.
@@ -392,9 +392,14 @@ abstract class AbstractCommand implements CommandContract // todo in COmmand umb
     /**
      * @inheritdoc
      */
-    public function clear() // toto in eigenständige Terminal Class
+    public function clearTerminal()
     {
-        $this->stdio->clear();
+        if (DIRECTORY_SEPARATOR === '/') {
+            passthru('clear');
+        }
+        else {
+            passthru('cls'); // @codeCoverageIgnore
+        }
 
         return $this;
     }
@@ -513,14 +518,6 @@ abstract class AbstractCommand implements CommandContract // todo in COmmand umb
 
     ///////////////////////////////////////////////////////////////////////////
     // Standard Input Stream
-
-    /**
-     * @inheritdoc
-     */
-    public function canRead($timeout = 0)
-    {
-        return $this->stdio->canRead($timeout);
-    }
 
     /**
      * @inheritdoc

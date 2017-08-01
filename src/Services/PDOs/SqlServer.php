@@ -2,7 +2,7 @@
 
 namespace Core\Services\PDOs;
 
-use Core\Services\AbstractDatabase;
+use Core\Services\Database;
 use Core\Services\PDOs\Builders\SqlServerBuilder;
 use Core\Services\PDOs\Schemas\SqlServerSchema;
 use PDO;
@@ -15,7 +15,7 @@ use PDO;
  * @see http://php.net/manual/en/ref.pdo-sqlsrv.php Installing PDO Driver PDO_SQLSRV
  * @see https://github.com/illuminate/database/blob/5.3/Connectors/SqlServerConnector.php Laravel's 5.3 SqlServerConnector on GitHub by Taylor Otwell
  */
-class SqlServer extends AbstractDatabase
+class SqlServer extends Database
 {
     /**
      * @inheritdoc

@@ -111,7 +111,7 @@ class BelongsToManyRelationTest extends RelationTestCase
         $this->assertCount(1, $department->employees);
         $this->assertCount(3, $employee->departments);
         $rows = database()->table('department_employee')
-            ->where('employee_id = ? AND department_id = ?', [$employee->id, $department->id])
+            ->whereCondition('employee_id = ? AND department_id = ?', [$employee->id, $department->id])
             ->all();
         $this->assertCount(1, $rows);
 
@@ -128,7 +128,7 @@ class BelongsToManyRelationTest extends RelationTestCase
         $this->assertEmpty($department->employees);
         $this->assertCount(2, $employee->clearRelationCache()->departments);
         $rows = database()->table('department_employee')
-            ->where('employee_id = ? AND department_id = ?', [$employee->id, $department->id])
+            ->whereCondition('employee_id = ? AND department_id = ?', [$employee->id, $department->id])
             ->all();
         $this->assertEmpty($rows);
 
@@ -149,7 +149,7 @@ class BelongsToManyRelationTest extends RelationTestCase
         $this->assertSame('dummy', $department->name);
         $this->assertCount(1, $department->employees);
         $this->assertCount(3, $employee->departments);
-        $rows = $employee->database()->table('department_employee')->where('employee_id = ? AND department_id = ?', [$employee->id, $department->id])->all();
+        $rows = $employee->database()->table('department_employee')->whereCondition('employee_id = ? AND department_id = ?', [$employee->id, $department->id])->all();
         $this->assertCount(1, $rows);
         $this->assertSame(5, Department::count());
 
@@ -158,7 +158,7 @@ class BelongsToManyRelationTest extends RelationTestCase
         $this->assertNull($department->id);
         $this->assertCount(2, $employee->departments);
         $this->assertSame(4, Department::count());
-        $rows = $employee->database()->table('department_employee')->where('employee_id = ? AND department_id = ?', [$employee->id, $departmentId])->all();
+        $rows = $employee->database()->table('department_employee')->whereCondition('employee_id = ? AND department_id = ?', [$employee->id, $departmentId])->all();
         $this->assertEmpty($rows);
 
         // cancel operation by hook

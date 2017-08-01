@@ -89,19 +89,19 @@ interface Database
      */
     public function reconnect();
 
-    /**
-     * Gets the most recent error code.
-     *
-     * @return mixed
-     */
-    public function errorCode();
-
-    /**
-     * Gets the most recent error info.
-     *
-     * @return array
-     */
-    public function errorInfo();
+//    /**
+//     * Gets the most recent error code.
+//     *
+//     * @return mixed
+//     */
+//    public function errorCode();
+//
+//    /**
+//     * Gets the most recent error info.
+//     *
+//     * @return array
+//     */
+//    public function errorInfo();
 
     /**
      * Dump SQL
@@ -138,7 +138,7 @@ interface Database
     /**
      * Rollback the active database transaction.
      */
-    public function rollBack(); // todo oder rollback() ? Was ist üblich?
+    public function rollback();
 
     /**
      * Get the number of active transactions.

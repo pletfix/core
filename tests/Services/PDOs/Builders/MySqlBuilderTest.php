@@ -2,8 +2,7 @@
 
 namespace Core\Tests\Services\PDOs\Builders;
 
-use Core\Services\AbstractDatabase;
-use Core\Services\Contracts\Database;
+use Core\Services\Database;
 use Core\Services\PDOs\Builders\Contracts\Builder;
 use Core\Services\PDOs\Builders\MySqlBuilder;
 use Core\Testing\TestCase;
@@ -23,7 +22,7 @@ class MySqlBuilderTest extends TestCase
 
     protected function setUp()
     {
-        $this->db = $this->getMockBuilder(AbstractDatabase::class)
+        $this->db = $this->getMockBuilder(Database::class)
             ->setConstructorArgs([['database' => '~test']])
             ->setMethods(['quote', 'exec'])
             ->getMockForAbstractClass();
@@ -47,7 +46,7 @@ class MySqlBuilderTest extends TestCase
 
         $this->assertSame(1, $this->builder
             ->from('table1')
-            ->where('c = ?', ['C'])
+            ->whereCondition('c = ?', ['C'])
             ->delete());
     }
 }

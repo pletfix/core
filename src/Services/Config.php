@@ -11,7 +11,7 @@ class Config implements ConfigContract
      *
      * @var array
      */
-    private $items = []; // todo oder statisch? bringt das was?
+    private $items = [];
 
     /**
      * @inheritdoc
@@ -20,6 +20,10 @@ class Config implements ConfigContract
     {
         if ($key === null) {
             return $this->items;
+        }
+
+        if (strpos($key, '.') === false) {
+            return isset($this->items[$key]) ? $this->items[$key] : $default;
         }
 
         $subitems = $this->items;

@@ -2,10 +2,10 @@
 
 namespace Core\Commands;
 
-use Core\Services\AbstractCommand;
+use Core\Services\Command;
 use Core\Services\Contracts\Stdio;
 
-class PluginCommand extends AbstractCommand
+class PluginCommand extends Command
 {
     /**
      * The console command name.

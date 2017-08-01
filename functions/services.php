@@ -1,5 +1,7 @@
 <?php
 
+// todo zusammenlegen mit helpers
+
 use Core\Services\DI;
 
 if (!function_exists('asset_manager')) {

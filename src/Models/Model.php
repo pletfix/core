@@ -19,12 +19,6 @@ use LogicException;
  */
 class Model implements ModelContract
 {
-    // todo
-    // attribute cast
-    // timestamps
-    // setXYZAttribute, getXYZAttribute
-    // Validation Rules
-
     /**
      * The name of the database store.
      *
@@ -39,15 +33,14 @@ class Model implements ModelContract
      *
      * @var string
      */
-    protected $table; // todo static besser?
+    protected $table;
 
     /**
      * The primary key for the model.
      *
      * @var string
      */
-    protected $key = 'id'; // todo: testen, ob es bzgl Speicherverbrauch etwas bringt, wenn das statisch ist
-                            // oder als const KEY_FIELD = 'id'
+    protected $key = 'id';
 
 //    /**
 //     * Indicates if the model should be timestamped.
@@ -131,7 +124,7 @@ class Model implements ModelContract
      *
      * @var array
      */
-    protected $relations = []; // todo Name ist irreführend, da hier die geladenen Entities abgelegt werden, nicht aber Relation Objekte
+    protected $relations = [];
 
     /**
      * Database Access Layer.
@@ -303,28 +296,20 @@ class Model implements ModelContract
         return false;
     }
 
-//    /**
-//     * Determine if the model or given attribute(s) have remained the same.
-//     *
-//     * @param array|string|null $attributes
-//     * @return bool
-//     */
-//    public function isClean($attributes = null)
-//    {
-//        return !$this->isDirty($attributes);
-//    }
-
     /**
      * @inheritdoc
      */
     public function reload()
     {
-        $id = $this->original[$this->key];
-        $this->attributes = $this->database()->table($this->getTable())->find($id, $this->key) ;
+        if (isset($this->original[$this->key])) {
+            $id = $this->original[$this->key];
+            $this->attributes = $this->database()->table($this->getTable())->find($id, $this->key);
+        }
+        else {
+            $this->attributes = [];
+        }
         $this->original = $this->attributes;
         $this->relations = [];
-
-        // todo testen, wenn datensatz nicht vorhandne ist
 
         return $this;
     }
@@ -362,7 +347,7 @@ class Model implements ModelContract
      */
     public function database()
     {
-        if ($this->db === null) { // todo evtl statisch?
+        if ($this->db === null) {
             $this->db = DI::getInstance()->get('database-factory')->store($this->store);
         }
 
@@ -372,7 +357,7 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public function getTable() // todo evtl umbennene: "table()"
+    public function getTable()
     {
         if (!isset($this->table)) {
             $this->table = snake_case(plural($this->getBaseClass()));
@@ -384,7 +369,7 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public function getPrimaryKey() // todo evtl umbennene: "primaryKey()"
+    public function getPrimaryKey()
     {
         return $this->key;
     }
@@ -429,7 +414,7 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public static function select($columns, array $bindings = []) // todo bindings generell auch als einzelnen Wert zulassen
+    public static function select($columns, array $bindings = [])
     {
         return static::builder()->select($columns, $bindings);
     }
@@ -477,17 +462,17 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public static function where($condition, array $bindings = []) // todo umbenennen in whereCondition, und whereIs() in where()
+    public static function where($column, $value, $operator = '=')
     {
-        return static::builder()->where($condition, $bindings);
+        return static::builder()->where($column, $value, $operator);
     }
 
     /**
      * @inheritdoc
      */
-    public static function whereIs($column, $value, $operator = '=') // todo beim Model ist column ein attribute
+    public static function whereCondition($condition, array $bindings = [])
     {
-        return static::builder()->whereIs($column, $value, $operator);
+        return static::builder()->whereCondition($condition, $bindings);
     }
 
     /**
@@ -549,17 +534,17 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public static function whereIsNull($column)
+    public static function whereNull($column)
     {
-        return static::builder()->whereIsNull($column);
+        return static::builder()->whereNull($column);
     }
 
     /**
      * @inheritdoc
      */
-    public static function whereIsNotNull($column)
+    public static function whereNotNull($column)
     {
-        return static::builder()->whereIsNotNull($column);
+        return static::builder()->whereNotNull($column);
     }
 
     /**
@@ -676,7 +661,7 @@ class Model implements ModelContract
             }
 
             $id = $this->original[$this->key];
-            $builder = $this->builder()->disableHooks()->whereIs($this->key, $id);
+            $builder = $this->builder()->disableHooks()->where($this->key, $id);
 
             // Invoke the "before" hook if exists.
             $hook = 'beforeUpdate';
@@ -702,7 +687,7 @@ class Model implements ModelContract
 
                     // Invoke the "after" hook.
                     if ($this->$hook() === false) {
-                        $db->rollBack();
+                        $db->rollback();
                         return false;
                     }
 
@@ -744,7 +729,7 @@ class Model implements ModelContract
 
                     // Invoke the "after" hook.
                     if ($this->$hook() === false) {
-                        $db->rollBack();
+                        $db->rollback();
                         unset($this->attributes[$this->key]);
                         return false;
                     }
@@ -791,7 +776,7 @@ class Model implements ModelContract
     public function delete() // todo sollte besser Exception schmeißen, wenn es nicht klappt
     {
         $id = $this->original[$this->key];
-        $builder = $this->builder()->disableHooks()->whereIs($this->key, $id);
+        $builder = $this->builder()->disableHooks()->where($this->key, $id);
 
         // Invoke the "before" hook if exists.
         $hook = 'beforeDelete';
@@ -814,7 +799,7 @@ class Model implements ModelContract
 
                 // Invoke the "after" hook.
                 if ($this->$hook() === false) {
-                    $db->rollBack();
+                    $db->rollback();
                     $this->attributes[$this->key] = $this->original[$this->key];
                     return false;
                 }
@@ -847,7 +832,7 @@ class Model implements ModelContract
             unset($instance->attributes[$name]);
         }
         unset($instance->attributes[$this->key]);
-//        unset($instance->attributes[$this->getCreatedAtColumn()]);  // todo
+//        unset($instance->attributes[$this->getCreatedAtColumn()]);
 //        unset($instance->attributes[$this->getUpdatedAtColumn()]);
 
         return $instance;
@@ -1098,11 +1083,6 @@ class Model implements ModelContract
     }
 
     ///////////////////////////////////////////////////////////////////
-    // Validation Rules
-
-    // todo
-
-    ///////////////////////////////////////////////////////////////////
     // Accessors and Mutators
 
 //    /**
@@ -1124,11 +1104,6 @@ class Model implements ModelContract
 //    {
 //        $this->attributes['firstname'] = strtolower($value);
 //    }
-
-    ///////////////////////////////////////////////////////////////////
-    // Events
-
-    // todo
 
     ///////////////////////////////////////////////////////////////////
     // Arrayable, Jsonable and JsonSerializable Implementation

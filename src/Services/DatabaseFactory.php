@@ -3,10 +3,10 @@
 namespace Core\Services;
 
 use Core\Services\Contracts\DatabaseFactory as DatabaseFactoryContract;
-use Core\Services\PDOs\MySql;     // rename to MySQL
-use Core\Services\PDOs\Postgres;  // todo rename to PostgreSQL
+use Core\Services\PDOs\MySql;
+use Core\Services\PDOs\Postgres;
 use Core\Services\PDOs\SQLite;
-use Core\Services\PDOs\SqlServer; // todo rename to MSSQLServer
+use Core\Services\PDOs\SqlServer;
 use InvalidArgumentException;
 
 /**
@@ -64,7 +64,6 @@ class DatabaseFactory implements DatabaseFactoryContract
             throw new InvalidArgumentException('Database driver for store "' . $name . '" is not specified.');
         }
 
-        // todo dynamisch gestalten, driver evtl auch im Plugins suchen
         switch ($config['driver']) { // todo use class name such like "MySQL"
             case 'mysql':
                 $db = new MySql($config);

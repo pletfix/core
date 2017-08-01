@@ -51,7 +51,7 @@ class BelongsToRelation extends Relation
     protected function addConstraints()
     {
         $id = $this->model->getAttribute($this->foreignKey);
-        $this->builder->whereIs($this->otherKey, $id);
+        $this->builder->where($this->otherKey, $id);
     }
 
     /**
@@ -82,7 +82,7 @@ class BelongsToRelation extends Relation
     {
         // get the foreign entities, group by foreign id
         $foreignEntities = [];
-        foreach ($this->builder->all() as $foreignEntity) { // todo testen, ob cursor schneller ist
+        foreach ($this->builder->cursor() as $foreignEntity) {
             /** @var ModelContract $foreignEntity */
             $foreignId = $foreignEntity->getAttribute($this->otherKey); // e.g. id of the author
             $foreignEntities[$foreignId] = $foreignEntity;
@@ -158,7 +158,7 @@ class BelongsToRelation extends Relation
                 return false;
             }
             if (!$this->associate($model)) {
-                $db->rollBack();
+                $db->rollback();
                 return false;
             }
 
@@ -181,7 +181,7 @@ class BelongsToRelation extends Relation
             $model->clearRelationCache();
 
             $db->table($this->model->getTable())
-                ->whereIs($this->foreignKey, $otherId)
+                ->where($this->foreignKey, $otherId)
                 ->update([$this->foreignKey => null]);
 
             if ($foreignId == $otherId) {

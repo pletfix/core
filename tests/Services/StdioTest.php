@@ -118,20 +118,6 @@ class StdioTest extends TestCase
         $this->assertSame('foo', $this->io->secret('your password:', 'psss..', false));
     }
 
-    public function testClear()
-    {
-        require __DIR__ . '/../_data/fakes/passthru.php.fake';
-
-        ob_start();
-        try {
-            $this->assertInstanceOf(\Core\Services\Contracts\Stdio::class, $this->io->clear());
-        }
-        finally {
-            $out = ob_get_clean();
-        }
-        $this->assertSame('clear', $out);
-    }
-
     public function testFormat()
     {
         $this->assertSame('foo', $this->io->format('foo'));
@@ -198,11 +184,6 @@ class StdioTest extends TestCase
     public function testHr()
     {
         $this->assertInstanceOf(\Core\Services\Contracts\Stdio::class, $this->io->hr(10));
-    }
-
-    public function testTable()
-    {
-        $this->assertInstanceOf(\Core\Services\Contracts\Stdio::class, $this->io->table(['a', 'b'], ['A', 'B']));
     }
 
     public function testErr()

@@ -57,7 +57,7 @@ class AssetManager implements AssetManagerContract
      * @param string|null $manifestFile
      * @param string|null $pluginManifestOfAssets
      */
-    public function __construct($buildFile = null, $manifestFile = null, $pluginManifestOfAssets = null) // todo Plugin testen, Parameter vertauschen
+    public function __construct($buildFile = null, $manifestFile = null, $pluginManifestOfAssets = null)
     {
         $this->buildFile = $buildFile ?: resource_path('assets/build.php');
         $this->manifestFile = $manifestFile ?: manifest_path('assets/manifest.php');
@@ -144,7 +144,7 @@ class AssetManager implements AssetManagerContract
         $basePath = base_path();
         foreach ($build as $asset => $sources) {
             foreach ($sources as $i => $source) {
-                if ($source[0] != DIRECTORY_SEPARATOR) { // not absolute? todo testen, ob das auch für Windows geht (hängt davon ab wie BASE_PATH aussieht)
+                if (!is_absolute_path($source)) {
                     $build[$asset][$i] = $basePath . DIRECTORY_SEPARATOR . $source;
                 }
             }

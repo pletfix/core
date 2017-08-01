@@ -431,17 +431,6 @@ class Mailer implements MailerContract
     /**
      * @inheritdoc
      */
-    public function attachData($data, $name, $mimeType)
-    {
-        // todo!
-        throw new Exception('Not implemented yet!');
-
-        //return $this;
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function detach($file)
     {
         unset($this->attachments[$file]);
@@ -481,17 +470,6 @@ class Mailer implements MailerContract
         }
 
         return 'cid:' . $cid;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function embedData($data, $name, $mimeType)
-    {
-        // todo!
-        throw new Exception('Not implemented yet!');
-//        $cid = 0;
-//        return 'cid:' . $cid;
     }
 
     /**
@@ -679,7 +657,7 @@ class Mailer implements MailerContract
     {
         foreach($this->attachments as $file => $name) {
             if (($data = @file_get_contents($file)) === false) {
-                throw new MailException('File could bot be read: ' . $file); // @codeCoverageIgnore
+                throw new MailException('File could not be read: ' . $file); // @codeCoverageIgnore
             }
             $data = chunk_split(base64_encode($data));
             $type = mime_content_type($file);
@@ -873,26 +851,4 @@ class Mailer implements MailerContract
 
         return $this;
     }
-
-    /**
-     * Extract all images to be embedded and refer to the cid.
-     *
-     * todo entfernen!
-     *
-     * @param string &$message HTML message
-     * @return array List of embedded images
-     */
-    /*
-    public static function extractImages(&$message)
-    {
-        $images = [];
-        $pattern = '/<img'.'\s+[^>]*src=["|\']([^"|^\']*)["|\'][^>]*\/?>/i';
-        $message = preg_replace_callback($pattern, function($match) use (&$images) {
-            $images[] = $match[1];
-            return '"cid:img' . count($images) . '"';
-        }, $message);
-
-        return $images;
-    }
-    */
 }

@@ -3,15 +3,14 @@
 namespace Core\Tests\Services;
 
 use Core\Exceptions\StopException;
-use Core\Services\AbstractCommand;
-use Core\Services\Contracts\Command;
+use Core\Services\Command;
 use Core\Services\Stdio;
 use Core\Testing\TestCase;
 use InvalidArgumentException;
 use LogicException;
 use PHPUnit_Framework_MockObject_MockObject;
 
-class AbstractCommandTest extends TestCase
+class CommandTest extends TestCase
 {
     /**
      * @var Command|PHPUnit_Framework_MockObject_MockObject|
@@ -31,7 +30,7 @@ class AbstractCommandTest extends TestCase
 
     protected function setUp()
     {
-        $this->cmd = $this->getMockBuilder(AbstractCommand::class)
+        $this->cmd = $this->getMockBuilder(Command::class)
             ->disableOriginalConstructor()
             ->setMethods(['handle'])
             ->getMockForAbstractClass();
@@ -351,10 +350,16 @@ class AbstractCommandTest extends TestCase
 
     public function testClear()
     {
-        $stdio = $this->getMockBuilder(Stdio::class)->setMethods(['clear'])->getMock();
-        $stdio->expects($this->once())->method('clear')->willReturnSelf();
-        $this->cmd->__construct([], $stdio);
-        $this->assertInstanceOf(AbstractCommand::class, $this->cmd->clear());
+        require __DIR__ . '/../_data/fakes/passthru.php.fake';
+
+        ob_start();
+        try {
+            $this->assertInstanceOf(\Core\Services\Contracts\Command::class, $this->cmd->clearTerminal());
+        }
+        finally {
+            $out = ob_get_clean();
+        }
+        $this->assertSame('clear', $out);
     }
 
     public function testTerminalWidthAndHeight()
@@ -374,15 +379,13 @@ class AbstractCommandTest extends TestCase
 
     public function testImputStream()
     {
-        $stdio = $this->getMockBuilder(Stdio::class)->setMethods(['canRead', 'read', 'ask', 'confirm', 'choice', 'secret'])->getMock();
-        $stdio->expects($this->once())->method('canRead')->willReturn(true);
+        $stdio = $this->getMockBuilder(Stdio::class)->setMethods(['read', 'ask', 'confirm', 'choice', 'secret'])->getMock();
         $stdio->expects($this->once())->method('read')->with('prompt')->willReturn('x');
         $stdio->expects($this->once())->method('ask')->with('prompt')->willReturn('y');
         $stdio->expects($this->once())->method('confirm')->with('prompt')->willReturn(true);
         $stdio->expects($this->once())->method('choice')->with('prompt', ['a', 'b'])->willReturn('a');
         $stdio->expects($this->once())->method('secret')->with('prompt')->willReturn('psss');
         $this->cmd->__construct([], $stdio);
-        $this->assertSame(true, $this->cmd->canRead());
         $this->assertSame('x', $this->cmd->read('prompt'));
         $this->assertSame('y', $this->cmd->ask('prompt'));
         $this->assertSame(true, $this->cmd->confirm('prompt'));
@@ -410,18 +413,18 @@ class AbstractCommandTest extends TestCase
         $stdio->expects($this->once())->method('table')->with(['a', 'b'], ['A', 'B'])->willReturnSelf();
         $this->cmd->__construct([], $stdio);
         $this->assertSame('foo', $this->cmd->format('text'));
-        $this->assertInstanceOf(AbstractCommand::class, $this->cmd->write('text', true));
-        $this->assertInstanceOf(AbstractCommand::class, $this->cmd->line('text'));
-        $this->assertInstanceOf(AbstractCommand::class, $this->cmd->info('text'));
-        $this->assertInstanceOf(AbstractCommand::class, $this->cmd->notice('text'));
-        $this->assertInstanceOf(AbstractCommand::class, $this->cmd->question('text'));
-        $this->assertInstanceOf(AbstractCommand::class, $this->cmd->warn('text'));
-        $this->assertInstanceOf(AbstractCommand::class, $this->cmd->error('text'));
-        $this->assertInstanceOf(AbstractCommand::class, $this->cmd->quiet('text'));
-        $this->assertInstanceOf(AbstractCommand::class, $this->cmd->verbose('text'));
-        $this->assertInstanceOf(AbstractCommand::class, $this->cmd->debug('text'));
-        $this->assertInstanceOf(AbstractCommand::class, $this->cmd->hr(30));
-        $this->assertInstanceOf(AbstractCommand::class, $this->cmd->table(['a', 'b'], ['A', 'B']));
+        $this->assertInstanceOf(Command::class, $this->cmd->write('text', true));
+        $this->assertInstanceOf(Command::class, $this->cmd->line('text'));
+        $this->assertInstanceOf(Command::class, $this->cmd->info('text'));
+        $this->assertInstanceOf(Command::class, $this->cmd->notice('text'));
+        $this->assertInstanceOf(Command::class, $this->cmd->question('text'));
+        $this->assertInstanceOf(Command::class, $this->cmd->warn('text'));
+        $this->assertInstanceOf(Command::class, $this->cmd->error('text'));
+        $this->assertInstanceOf(Command::class, $this->cmd->quiet('text'));
+        $this->assertInstanceOf(Command::class, $this->cmd->verbose('text'));
+        $this->assertInstanceOf(Command::class, $this->cmd->debug('text'));
+        $this->assertInstanceOf(Command::class, $this->cmd->hr(30));
+        $this->assertInstanceOf(Command::class, $this->cmd->table(['a', 'b'], ['A', 'B']));
     }
 
 }

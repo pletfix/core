@@ -2,6 +2,7 @@
 
 namespace Core\Services\PDOs\Schemas;
 
+use Core\Services\Contracts\Database;
 use InvalidArgumentException;
 
 /**
@@ -13,7 +14,7 @@ use InvalidArgumentException;
  * @see https://github.com/auraphp/Aura.SqlSchema/blob/2.x/src/SqliteSchema.php Aura.SqlSchema on GitHub
  * @see http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html#mapping-matrix Doctrine's Mapping Matrix
  */
-class SQLiteSchema extends AbstractSchema
+class SQLiteSchema extends Schema
 {
     /**
      * Case Insensitive Collation (default by database access layer)
@@ -28,6 +29,25 @@ class SQLiteSchema extends AbstractSchema
      * @var string
      */
     private $collateCS = 'BINARY';
+
+    /**
+     * SQLiteSchema constructor.
+     * @param Database $db
+     */
+    public function __construct(Database $db)
+    {
+        parent::__construct($db);
+
+        /** @noinspection SqlDialectInspection */
+        $db->exec('
+            CREATE TABLE IF NOT EXISTS _comments (
+                table_name STRING NOT NULL,
+                column_name STRING,
+                content TEXT NOT NULL,
+                PRIMARY KEY (table_name, column_name)
+            )
+        ');
+    }
 
     /**
      * @inheritdoc
@@ -383,7 +403,7 @@ class SQLiteSchema extends AbstractSchema
     /**
      * @inheritdoc
      */
-    public function renameColumn($table, $from, $to) // todo from und to müssen unterschiedlich sein
+    public function renameColumn($table, $from, $to)
     {
         $this->recreateTable($table, 'renameColumn', ['from' => $from, 'to' => $to]);
 
@@ -439,8 +459,6 @@ class SQLiteSchema extends AbstractSchema
                 }
                 $columns = $options['columns'];
                 $name = $this->createIndexName($table, $columns, $unique);
-                // todo der Name sollte besser aus der Indexliste gesucht werden.
-                // Momentan wird einfach angenommen, dass der Index wie vom Access Layer vorgegeben heißt.
             }
             if ($unique) { // index associated with UNIQUE constraint cannot be dropped
                 $this->recreateTable($table, 'dropIndex', ['name' => $name]);
@@ -510,32 +528,33 @@ class SQLiteSchema extends AbstractSchema
             else if ($action == 'renameColumn') {
                 $from = $params['from'];
                 $to   = $params['to'];
+                if ($from != $to) {
+                    // 2. create the new table with renamed column
+                    $columns[$from]['name'] = $to;
+                    $newColumns = [];
+                    foreach ($columns as $attr) {
+                        $newColumns[$attr['name']] = $attr;
+                    }
+                    $this->createTable($table, $newColumns);
+                    $newColumns = '"' . str_replace(',', '","', str_replace('"', '""', implode(',', array_keys($newColumns)))) . '"';
 
-                // 2. create the new table with renamed column
-                $columns[$from]['name'] = $to;
-                $newColumns = [];
-                foreach ($columns as $attr) {
-                    $newColumns[$attr['name']] = $attr;
-                }
-                $this->createTable($table, $newColumns);
-                $newColumns = '"' . str_replace(',', '","', str_replace('"', '""', implode(',', array_keys($newColumns)))) . '"';
+                    /** @noinspection SqlDialectInspection */
+                    //$this->db->exec('DELETE FROM _comments WHERE table_name = ? AND column_name = ?', [$table, $from]);
 
-                /** @noinspection SqlDialectInspection */
-                //$this->db->exec('DELETE FROM _comments WHERE table_name = ? AND column_name = ?', [$table, $from]);
+                    // 3. copy the contents across from the original table
+                    /** @noinspection SqlNoDataSourceInspection */
+                    $this->db->exec("INSERT INTO {$quotedTable} ({$newColumns}) SELECT {$oldColumns} FROM {$oldTable}");
 
-                // 3. copy the contents across from the original table
-                /** @noinspection SqlNoDataSourceInspection */
-                $this->db->exec("INSERT INTO {$quotedTable} ({$newColumns}) SELECT {$oldColumns} FROM {$oldTable}");
-
-                foreach ($indexes as $name => $index) {
-                    $pos = array_search($from, $index['columns']);
-                    if ($pos !== false) {
-                        $indexes[$name]['columns'][$pos] = $to;
-                        $newName = str_replace('_' . $from . '_', '_' . $to . '_', $name);
-                        if ($newName != $name) {
-                            $indexes[$name]['name'] = $newName;
-                            $indexes[$newName] = $indexes[$name];
-                            unset($indexes[$name]);
+                    foreach ($indexes as $name => $index) {
+                        $pos = array_search($from, $index['columns']);
+                        if ($pos !== false) {
+                            $indexes[$name]['columns'][$pos] = $to;
+                            $newName = str_replace('_' . $from . '_', '_' . $to . '_', $name);
+                            if ($newName != $name) {
+                                $indexes[$name]['name'] = $newName;
+                                $indexes[$newName] = $indexes[$name];
+                                unset($indexes[$name]);
+                            }
                         }
                     }
                 }

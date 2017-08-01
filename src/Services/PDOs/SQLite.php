@@ -2,7 +2,7 @@
 
 namespace Core\Services\PDOs;
 
-use Core\Services\AbstractDatabase;
+use Core\Services\Database;
 use Core\Services\PDOs\Builders\SQLiteBuilder;
 use Core\Services\PDOs\Schemas\SQLiteSchema;
 use InvalidArgumentException;
@@ -16,7 +16,7 @@ use PDO;
  * @see http://php.net/manual/en/ref.pdo-sqlite.php Installing PDO Driver PDO_SQLITE
  * @see https://github.com/illuminate/database/blob/5.3/Connectors/SQLiteConnector.php Laravel's 5.3 SQLiteConnector on GitHub by Taylor Otwell
  */
-class SQLite extends AbstractDatabase
+class SQLite extends Database
 {
     /**
      * Name of the table which the last record was inserted.
@@ -88,27 +88,6 @@ class SQLite extends AbstractDatabase
         $password = null; //$config['password'];
 
         return $this->createPDO($dsn, $username, $password, $options);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function connect()
-    {
-        parent::connect();
-
-        // todo dies erst beim Zugriff auf das Schema ausführen
-        /** @noinspection SqlDialectInspection */
-        $this->pdo->exec('
-            CREATE TABLE IF NOT EXISTS _comments (
-                table_name STRING NOT NULL,
-                column_name STRING,
-                content TEXT NOT NULL,
-                PRIMARY KEY (table_name, column_name)
-            )
-        ');
-
-        return $this;
     }
 
     /**

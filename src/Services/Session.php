@@ -234,7 +234,7 @@ class Session implements SessionContract
             return $_SESSION;
         }
 
-        if (strpos($key, '.') === false) { // todo wenn das schneller ist, auch in Config übernehmen
+        if (strpos($key, '.') === false) {
             return isset($_SESSION[$key]) ? $_SESSION[$key] : $default;
         }
 

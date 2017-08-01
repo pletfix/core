@@ -156,17 +156,17 @@ abstract class Relation implements RelationContract
     /**
      * @inheritdoc
      */
-    public function where($condition, array $bindings = [])
+    public function where($column, $value, $operator = '=')
     {
-        return $this->builder->where($condition, $bindings);
+        return $this->builder->where($column, $value, $operator);
     }
 
     /**
      * @inheritdoc
      */
-    public function whereIs($column, $value, $operator = '=')
+    public function whereCondition($condition, array $bindings = [])
     {
-        return $this->builder->whereIs($column, $value, $operator);
+        return $this->builder->whereCondition($condition, $bindings);
     }
 
     /**
@@ -228,17 +228,17 @@ abstract class Relation implements RelationContract
     /**
      * @inheritdoc
      */
-    public function whereIsNull($column)
+    public function whereNull($column)
     {
-        return $this->builder->whereIsNull($column);
+        return $this->builder->whereNull($column);
     }
 
     /**
      * @inheritdoc
      */
-    public function whereIsNotNull($column)
+    public function whereNotNull($column)
     {
-        return $this->builder->whereIsNotNull($column);
+        return $this->builder->whereNotNull($column);
     }
 
     /**
@@ -263,6 +263,14 @@ abstract class Relation implements RelationContract
     public function offset($offset)
     {
         return $this->builder->offset($offset);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function find($id, $key = 'id')
+    {
+        return $this->builder->find($id, $key);
     }
 
     /**

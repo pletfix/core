@@ -2,7 +2,7 @@
 
 namespace Core\Services\PDOs;
 
-use Core\Services\AbstractDatabase;
+use Core\Services\Database;
 use Core\Services\PDOs\Builders\MySqlBuilder;
 use Core\Services\PDOs\Schemas\MySqlSchema;
 use PDO;
@@ -15,7 +15,7 @@ use PDO;
  * @see http://php.net/manual/en/ref.pdo-mysql.php Installing PDO Driver PDO_MYSQL
  * @see https://github.com/illuminate/database/blob/5.3/Connectors/MySqlConnector.php Laravel's 5.3 MySqlConnector on GitHub by Taylor Otwell
  */
-class MySql extends AbstractDatabase
+class MySql extends Database
 {
     /**
      * @inheritdoc

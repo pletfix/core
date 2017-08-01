@@ -2,7 +2,7 @@
 
 namespace Core\Services\PDOs;
 
-use Core\Services\AbstractDatabase;
+use Core\Services\Database;
 use Core\Services\PDOs\Builders\PostgresBuilder;
 use Core\Services\PDOs\Schemas\PostgresSchema;
 
@@ -14,7 +14,7 @@ use Core\Services\PDOs\Schemas\PostgresSchema;
  * @see http://php.net/manual/en/ref.pdo-pgsql.php Installing PDO Driver PDO_PGSQL
  * @see https://github.com/illuminate/database/blob/5.3/Connectors/PostgresConnector.php Laravel's 5.3 PostgresConnector on GitHub by Taylor Otwell
  */
-class Postgres extends AbstractDatabase
+class Postgres extends Database
 {
     /**
      * Name of the table which the last record was inserted.

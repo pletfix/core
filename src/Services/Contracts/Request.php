@@ -81,9 +81,6 @@ interface Request //extends ServerRequestInterface
     /**
      * Retrieve a cookie from the request.
      *
-     * Todo: Cookie setzen mittels setcookie() in Klasse Response einbauen
-     * Todo: Alternative: Klasse Cookie anlegen und die Funktion dahin verlagern
-     *
      * @param string|null $key
      * @param string|null $default
      * @return string|array

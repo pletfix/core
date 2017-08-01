@@ -4,7 +4,7 @@ namespace Core\Tests\Models;
 
 use Core\Models\Model;
 use Core\Models\Relation;
-use Core\Services\AbstractDatabase;
+use Core\Services\Database;
 use Core\Services\PDOs\Builders\Builder;
 use Core\Testing\TestCase;
 use PHPUnit_Framework_MockObject_MockObject;
@@ -26,7 +26,7 @@ class RelationTest extends TestCase
         $model = new Model();
         $this->setPrivateProperty($model, 'table', 'authors');
 
-        $db = $this->getMockBuilder(AbstractDatabase::class)
+        $db = $this->getMockBuilder(Database::class)
             ->setConstructorArgs([['database' => '~test']])
             ->getMockForAbstractClass();
 
@@ -40,7 +40,7 @@ class RelationTest extends TestCase
                 'leftJoin',
                 'rightJoin',
                 'where',
-                'whereIs',
+                'whereCondition',
                 'whereSubQuery',
                 'whereExists',
                 'whereNotExists',
@@ -48,11 +48,12 @@ class RelationTest extends TestCase
                 'whereNotIn',
                 'whereBetween',
                 'whereNotBetween',
-                'whereIsNull',
-                'whereIsNotNull',
+                'whereNull',
+                'whereNotNull',
                 'orderBy',
                 'limit',
                 'offset',
+                'find',
                 'all',
                 'cursor',
                 'first',
@@ -135,14 +136,14 @@ class RelationTest extends TestCase
 
     public function testWhere()
     {
-        $this->builder->expects($this->once())->method('where')->with('name <> ?', ['Peter'])->willReturnSelf();
-        $this->assertInstanceOf(Builder::class, $this->relation->where('name <> ?', ['Peter']));
+        $this->builder->expects($this->once())->method('where')->with('name', 'Peter', '<>')->willReturnSelf();
+        $this->assertInstanceOf(Builder::class, $this->relation->where('name', 'Peter', '<>'));
     }
 
-    public function testWhereIs()
+    public function testWhereCondition()
     {
-        $this->builder->expects($this->once())->method('whereIs')->with('name', 'Peter', '<>')->willReturnSelf();
-        $this->assertInstanceOf(Builder::class, $this->relation->whereIs('name', 'Peter', '<>'));
+        $this->builder->expects($this->once())->method('whereCondition')->with('name <> ?', ['Peter'])->willReturnSelf();
+        $this->assertInstanceOf(Builder::class, $this->relation->whereCondition('name <> ?', ['Peter']));
     }
 
     public function testWhereSubQuery()
@@ -193,16 +194,16 @@ class RelationTest extends TestCase
         $this->assertInstanceOf(Builder::class, $this->relation->whereNotBetween('id', 46, 48));
     }
 
-    public function testWhereIsNull()
+    public function testWhereNull()
     {
-        $this->builder->expects($this->once())->method('whereIsNull')->with('name')->willReturnSelf();
-        $this->assertInstanceOf(Builder::class, $this->relation->whereIsNull('name'));
+        $this->builder->expects($this->once())->method('whereNull')->with('name')->willReturnSelf();
+        $this->assertInstanceOf(Builder::class, $this->relation->whereNull('name'));
     }
 
-    public function testWhereIsNotNull()
+    public function testWhereNotNull()
     {
-        $this->builder->expects($this->once())->method('whereIsNotNull')->with('name')->willReturnSelf();
-        $this->assertInstanceOf(Builder::class, $this->relation->whereIsNotNull('name'));
+        $this->builder->expects($this->once())->method('whereNotNull')->with('name')->willReturnSelf();
+        $this->assertInstanceOf(Builder::class, $this->relation->whereNotNull('name'));
     }
 
     public function testOrderBy()
@@ -221,6 +222,12 @@ class RelationTest extends TestCase
     {
         $this->builder->expects($this->once())->method('offset')->with(5)->willReturnSelf();
         $this->assertInstanceOf(Builder::class, $this->relation->offset(5));
+    }
+
+    public function testFind()
+    {
+        $this->builder->expects($this->once())->method('find')->with(5, 'id')->willReturn(new Model);
+        $this->assertInstanceOf(Model::class, $this->relation->find(5, 'id'));
     }
 
     public function testAll()

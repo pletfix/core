@@ -13,7 +13,7 @@ use InvalidArgumentException;
  * @see https://github.com/auraphp/Aura.SqlSchema/blob/2.x/src/PgsqlSchema.php Aura.SqlSchema on GitHub
  * @see http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html#mapping-matrix Doctrine's Mapping Matrix
  */
-class PostgresSchema extends AbstractSchema
+class PostgresSchema extends Schema
 {
     /**
      * @inheritdoc
@@ -40,7 +40,7 @@ class PostgresSchema extends AbstractSchema
             $name = $val['table_name'];
             $tables[$name] = [
                 'name'      => $name,
-                'collation' => null, // todo
+                'collation' => null,
                 'comment'   => null,
             ];
         }
@@ -333,33 +333,13 @@ class PostgresSchema extends AbstractSchema
         // todo bei NOT NULL ohne default neuen Tabele anlegen
 
         if (empty($options['columns'])) {
-            throw new InvalidArgumentException("Cannot add index without columns.");
+            throw new InvalidArgumentException('Cannot add index without columns.');
         }
 
         $quotedTable = $this->db->quoteName($table);
 
         $columns = $options['columns'];
         $quotedColumns = '"' . str_replace(',', '","', str_replace('"', '""', implode(',', $columns))) . '"';
-
-//        /** @noinspection SqlDialectInspection */
-//        $info = $this->db->query("
-//            SELECT collation_name
-//            FROM information_schema.columns
-//            WHERE table_schema = ?
-//            AND table_name = ?
-//        ", [$schema, $table]);
-
-
-//        $quotedColumns = [];
-//        foreach ($columns as $column) {
-//            $quotedColumns[] = $this->db->quoteName($column);
-//        }
-//        $quotedColumns = implode(', ', $quotedColumns);
-
-//        // case insensitive todo!
-//        if (!$options['sensitive']) {
-//            $quotedColumns = "lower($quotedColumns)";
-//        }
 
         $primary = isset($options['primary']) ? $options['primary'] : false;
         if ($primary) {
@@ -399,8 +379,6 @@ class PostgresSchema extends AbstractSchema
                 $columns = $options['columns'];
                 $unique  = isset($options['unique']) ? $options['unique'] : false;
                 $name = $this->createIndexName($table, $columns, $unique);
-                // todo der Name sollte besser aus der Indexliste gesucht werden.
-                // Momentan wird einfach angenommen, dass der Index wie vom Access Layer vorgegeben heißt.
             }
 
             /** @noinspection SqlNoDataSourceInspection */
@@ -418,11 +396,12 @@ class PostgresSchema extends AbstractSchema
      */
     private function recreateTable($table, $params)
     {
-        // todo Bei einem fehlerhaften INSERT-Statement und mit aktiven Transaction wird ständig die App neu aufgerufen!!
-        // (Browser meldet "Server antowrtet nicht"). Muss Fehler vom Treiber sein.
-      //  $this->transaction(function() use($table, $params) {
+        // Bug by the PDO driver?
+        // If the INSERT statement is incorrect and the transaction is running, the app is constantly called again !!
+        // At some point, the browser says "Server does not respond".
+
+        //$this->transaction(function() use($table, $params) {
             $quotedTable = $this->db->quoteName($table);
-            //$qTable  = $this->db->quote($table);
             $columns = $this->columns($table);
             $indexes = $this->indexes($table);
             $column  = $params['column'];
@@ -430,7 +409,6 @@ class PostgresSchema extends AbstractSchema
             $oldColumns = '"' . str_replace(',', '","', str_replace('"', '""', implode(',', array_keys($columns)))) . '"';
 
             // 1. rename the old table
-
             $oldTable = 't' . uniqid();
             $this->renameTable($table, $oldTable);
 
@@ -453,7 +431,7 @@ class PostgresSchema extends AbstractSchema
             foreach ($indexes as $name => $attr) {
                 $this->addIndex($table, $name, $attr);
             }
-  //      });
+        //});
     }
 
     /**
@@ -631,7 +609,7 @@ class PostgresSchema extends AbstractSchema
                 return 'string';
 
             case 'TEXT':
-            case 'CITEXT': // todo testen, see https://www.postgresql.org/docs/current/static/citext.html
+            case 'CITEXT':
                 return 'text';
 
             case 'UUID':

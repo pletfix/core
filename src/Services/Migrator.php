@@ -3,7 +3,7 @@
 namespace Core\Services;
 
 use Core\Exceptions\MigrationException;
-use Core\Services\Contracts\Database;
+use Core\Services\Contracts\Database as DatabaseContract;
 use Core\Services\Contracts\Migration;
 use Core\Services\Contracts\Migrator as MigratorContract;
 
@@ -12,7 +12,7 @@ class Migrator implements MigratorContract
     /**
      * Database Access Layer.
      *
-     * @var Database;
+     * @var DatabaseContract;
      */
     private $db;
 
@@ -63,7 +63,7 @@ class Migrator implements MigratorContract
         ksort($migrations);
 
         foreach ($migrations as $name => $file) {
-            $this->db->transaction(function (Database $db) use ($name, $file, $batch) {
+            $this->db->transaction(function (DatabaseContract $db) use ($name, $file, $batch) {
                 $this->makeMigrationClass($name, $file)->up($db);
                 $db->table('_migrations')->insert([
                     'name'  => $name,
@@ -85,9 +85,9 @@ class Migrator implements MigratorContract
         krsort($migrations);
 
         foreach ($migrations as $name => $file) {
-            $this->db->transaction(function (Database $db) use ($name, $file, $batch) {
+            $this->db->transaction(function (DatabaseContract $db) use ($name, $file, $batch) {
                 $this->makeMigrationClass($name, $file)->down($db);
-                $db->table('_migrations')->where('name=?', [$name])->delete();
+                $db->table('_migrations')->whereCondition('name=?', [$name])->delete();
             });
         }
 
@@ -173,7 +173,7 @@ class Migrator implements MigratorContract
         $pluginMigrations = $this->pluginMigrations();
 
         /** @noinspection SqlDialectInspection */
-        $rows = $this->db->table('_migrations')->select('name')->where('batch = ?', [$batch])->all();
+        $rows = $this->db->table('_migrations')->select('name')->whereCondition('batch = ?', [$batch])->all();
         foreach ($rows as $row) {
             $name = $row['name'];
             $migrations[$name] = isset($pluginMigrations[$name]) ? $pluginMigrations[$name] : $this->migrationPath . DIRECTORY_SEPARATOR . $name . '.php';

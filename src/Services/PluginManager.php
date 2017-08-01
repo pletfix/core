@@ -3,7 +3,7 @@
 namespace Core\Services;
 
 use Core\Exceptions\PluginException;
-use Core\Services\Contracts\Command;
+use Core\Services\Contracts\Command as CommandContract;
 use Core\Services\Contracts\PluginManager as PluginManagerContract;
 use InvalidArgumentException;
 use Leafo\ScssPhp\Compiler as SCSSCompiler;
@@ -315,7 +315,7 @@ class PluginManager implements PluginManagerContract
      */
     private function publishCommands($register)
     {
-        // read all commands from folder
+        // read all plugin commands from folder
         $commandPath = $this->path . '/src/Commands';
         if (!@file_exists($commandPath)) {
             return;
@@ -323,13 +323,14 @@ class PluginManager implements PluginManagerContract
         $classes = [];
         list_classes($classes, $commandPath, $this->namespace . 'Commands');
 
-        // generate command list
-        // todo gleicher Code bei CommandFactory! => Liste vom CommandFactory generieren lassen
+        // read existing command list
         $manifest = $this->getManifest('commands');
         /** @noinspection PhpIncludeInspection */
         $list = @file_exists($manifest) ? include $manifest : [];
+
+        // merge plugin commands to the list (plugin overrides commands if exist)
         foreach ($classes as $class) {
-            /** @var Command $command */
+            /** @var CommandContract $command */
             $command = new $class;
             $name = $command->name();
             if ($register) {
@@ -340,6 +341,8 @@ class PluginManager implements PluginManagerContract
                 unset($list[$name]);
             }
         }
+
+        // save the new command list
         ksort($list);
         $this->saveArray($manifest, $list);
     }

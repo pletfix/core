@@ -2,7 +2,7 @@
 
 namespace Core\Tests\Services\PDOs;
 
-use Core\Services\AbstractDatabase;
+use Core\Services\Database;
 use Core\Services\PDOs\Builders\SQLiteBuilder;
 use Core\Services\PDOs\Schemas\SQLiteSchema;
 use Core\Services\PDOs\SQLite;
@@ -49,7 +49,7 @@ class SQLiteTest extends TestCase
     {
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(SQLite::class)
             ->setMethods(['createPDO'])
             ->setConstructorArgs([$this->config])
@@ -74,7 +74,7 @@ class SQLiteTest extends TestCase
 
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(SQLite::class)
             ->setMethods(['createPDO'])
             ->setConstructorArgs([$this->config])
@@ -105,7 +105,7 @@ class SQLiteTest extends TestCase
         $pdoStatement = $this->getMockBuilder(PDOStatement::class)->disableOriginalConstructor()->setMethods(['rowCount'])->getMock();
         $pdoStatement->expects($this->once())->method('rowCount')->willReturn(2);
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(SQLite::class)
             ->setMethods(['perform'])
             ->setConstructorArgs([$this->config])

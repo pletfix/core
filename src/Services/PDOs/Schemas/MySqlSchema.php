@@ -13,7 +13,7 @@ use InvalidArgumentException;
  * @see https://github.com/auraphp/Aura.SqlSchema/blob/2.x/src/MysqlSchema.php Aura.SqlSchema on GitHub
  * @see http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html#mapping-matrix Doctrine's Mapping Matrix
  */
-class MySqlSchema extends AbstractSchema
+class MySqlSchema extends Schema
 {
     /**
      * @inheritdoc
@@ -249,10 +249,10 @@ class MySqlSchema extends AbstractSchema
         $from  = $this->db->quoteName($from);
         $to    = $this->db->quoteName($to);
 
-        /** @noinspection SqlNoDataSourceInspection */
-        $sql = "ALTER TABLE {$table} CHANGE COLUMN {$from} {$to} {$definition}";
-
-        $this->db->exec($sql);
+        if ($from != $to) {
+            /** @noinspection SqlNoDataSourceInspection */
+            $this->db->exec("ALTER TABLE {$table} CHANGE COLUMN {$from} {$to} {$definition}");
+        }
 
         return $this;
     }
@@ -281,10 +281,6 @@ class MySqlSchema extends AbstractSchema
 
             case 'boolean':
                 return 'TINYINT(1)';
-
-//            case 'timestamp':
-//                // Extra: ON UPDATE CURRENT_TIMESTAMP // todo in Options einführen (onupdate: CURRENT_TIMESTAMP)
-//                return 'timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP';
 
             default:
                 return parent::compileFieldType($type, $size, $scale);

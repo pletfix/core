@@ -17,7 +17,7 @@ use InvalidArgumentException;
  * @see http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html#mapping-matrix Doctrine's Mapping Matrix
  * @see https://github.com/doctrine/dbal/blob/2.5/lib/Doctrine/DBAL/Schema/AbstractSchemaManager.php Doctrine's Schema Manager
  */
-abstract class AbstractSchema implements SchemaContract
+abstract class Schema implements SchemaContract
 {
     /**
      * Database Access Layer.
@@ -112,17 +112,17 @@ abstract class AbstractSchema implements SchemaContract
         return $this;
     }
 
-//    /**
-//     * @inheritdoc
-//     */
-//    public function truncateTable($table)
-//    {
-//        $table = $this->db->quoteName($table);
-//
-//        $this->db->exec("TRUNCATE TABLE $table");
-//
-//        return $this;
-//    }
+    /**
+     * @inheritdoc
+     */
+    public function truncateTable($table)
+    {
+        $table = $this->db->quoteName($table);
+
+        $this->db->exec("TRUNCATE TABLE $table");
+
+        return $this;
+    }
 
     /**
      * @inheritdoc
@@ -160,7 +160,9 @@ abstract class AbstractSchema implements SchemaContract
         $from  = $this->db->quoteName($from);
         $to    = $this->db->quoteName($to);
 
-        $this->db->exec("ALTER TABLE {$table} RENAME COLUMN {$from} TO {$to}");
+        if ($from != $to) {
+            $this->db->exec("ALTER TABLE {$table} RENAME COLUMN {$from} TO {$to}");
+        }
 
         return $this;
     }
@@ -340,10 +342,10 @@ abstract class AbstractSchema implements SchemaContract
             return '[]';
         }
         if (in_array($type, ['json'])) {
-            return '{}'; // todo wie sieht der leer Inhalt eines JSONS aus?
+            return '""';
         }
         if (in_array($type, ['object'])) {
-            return '{}'; // todo wie sieht der leer Inhalt eines Objects aus?
+            return 'null';
         }
         if (in_array($type, ['guid'])) {
             return '00000000-0000-0000-0000-000000000000';

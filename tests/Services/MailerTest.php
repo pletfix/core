@@ -184,12 +184,6 @@ class MailerTest extends TestCase
         $this->assertEmpty($this->mailer->getAttachments());
     }
 
-    public function testAttachData()
-    {
-        $this->expectException(\Exception::class);
-        $this->mailer->attachData('foo', 'blub.pdf', 'application/pdf');
-    }
-
     public function testEmbed()
     {
         $cid1 = $this->mailer->embed('images/foo1.png');
@@ -203,12 +197,6 @@ class MailerTest extends TestCase
         $this->assertSame(['images/foo1.png' => substr($cid1, 4)], $this->mailer->getEmbeddedFiles());
         $this->assertInstanceOf(Mailer::class, $this->mailer->clearEmbeddedFiles());
         $this->assertEmpty($this->mailer->getEmbeddedFiles());
-    }
-
-    public function testEmbedData()
-    {
-        $this->expectException(Exception::class);
-        $this->mailer->embedData('foo', 'blub.pdf', 'application/pdf');
     }
 
     public function testSendWithoutReceiver()

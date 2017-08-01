@@ -2,7 +2,7 @@
 
 namespace Core\Tests\Services\PDOs;
 
-use Core\Services\AbstractDatabase;
+use Core\Services\Database;
 use Core\Services\PDOs\Builders\PostgresBuilder;
 use Core\Services\PDOs\Postgres;
 use Core\Services\PDOs\Schemas\PostgresSchema;
@@ -46,7 +46,7 @@ class PostgresTest extends TestCase
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->setMethods(['exec'])->getMock();
         $pdo->expects($this->any())->method('exec')->willReturn(0);
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(Postgres::class)
             ->setMethods(['createPDO'])
             ->setConstructorArgs([$this->config])
@@ -72,7 +72,7 @@ class PostgresTest extends TestCase
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->setMethods(['exec'])->getMock();
         $pdo->expects($this->any())->method('exec')->willReturn(0);
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(Postgres::class)
             ->setMethods(['createPDO'])
             ->setConstructorArgs([$this->config])
@@ -95,7 +95,7 @@ class PostgresTest extends TestCase
         $pdoStatement = $this->getMockBuilder(PDOStatement::class)->disableOriginalConstructor()->setMethods(['rowCount'])->getMock();
         $pdoStatement->expects($this->once())->method('rowCount')->willReturn(2);
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(Postgres::class)
             ->setMethods(['perform'])
             ->setConstructorArgs([$this->config])
@@ -112,7 +112,7 @@ class PostgresTest extends TestCase
 
     public function testLastInsertId()
     {
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(Postgres::class)
             ->setMethods(['scalar'])
             ->setConstructorArgs([$this->config])

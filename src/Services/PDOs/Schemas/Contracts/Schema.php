@@ -65,8 +65,8 @@ interface Schema
      * - comment:   (string) A hidden comment.
      *
      * Options have following values:
-     * - temporary: (bool)   The table is temporary.  todo kann raus!
-     * - collation: (string) The default collation of the table (supported only by MySql). todo anders beahndeln (z.B. CS und CI)
+     * - temporary: (bool)   The table is temporary.
+     * - collation: (string) The default collation of the table (supported only by MySql).
      * - comment:   (string) A hidden comment.
      *
      * @param  string $table
@@ -74,7 +74,7 @@ interface Schema
      * @param array $options
      * @return $this
      */
-    public function createTable($table, array $columns, array $options = []); // todo $this zurückgeben
+    public function createTable($table, array $columns, array $options = []);
 
     /**
      * Drop a table from the schema.
@@ -93,20 +93,19 @@ interface Schema
      */
     public function renameTable($from, $to);
 
-    // todo im Builder rauswerfen und hier aktievieren
-//    /**
-//     * Truncate the table.
-//     *
-//     * Note, that TRUNCATE TABLE is DDL and not DML like DELETE. That's why this method is member of Shema and not of
-//     * Builder.
-//     *
-//     * This means that TRUNCATE TABLE will cause an implicit COMMIT in a transaction block, see also
-//     * https://dev.mysql.com/doc/refman/5.7/en/truncate-table.html!
-//     *
-//     * @param string $table
-//     * @return $this
-//     */
-//    public function truncateTable($table);
+    /**
+     * Truncate the table.
+     *
+     * Note, that TRUNCATE TABLE is DDL and not DML like DELETE. That's why this method is member of Schema and not of
+     * Builder.
+     *
+     * This means that TRUNCATE TABLE will cause an implicit COMMIT in a transaction block, see also
+     * https://dev.mysql.com/doc/refman/5.7/en/truncate-table.html!
+     *
+     * @param string $table
+     * @return $this
+     */
+    public function truncateTable($table);
 
     /**
      * Add a new column to the table.

@@ -126,7 +126,7 @@ class MorphToRelation extends BelongsToRelation
                 return false;
             }
             if (!$this->associate($model)) {
-                $db->rollBack();
+                $db->rollback();
                 return false;
             }
 
@@ -151,8 +151,8 @@ class MorphToRelation extends BelongsToRelation
             $model->clearRelationCache();
 
             $db->table($this->model->getTable())
-                ->whereIs($this->typeAttribute, $type)
-                ->whereIs($this->foreignKey, $otherId)
+                ->where($this->typeAttribute, $type)
+                ->where($this->foreignKey, $otherId)
                 ->update([
                     $this->typeAttribute => null,
                     $this->foreignKey => null,

@@ -2,7 +2,7 @@
 
 namespace Core\Tests\Services\PDOs;
 
-use Core\Services\AbstractDatabase;
+use Core\Services\Database;
 use Core\Services\PDOs\Builders\SqlServerBuilder;
 use Core\Services\PDOs\Schemas\SqlServerSchema;
 use Core\Services\PDOs\SqlServer;
@@ -56,7 +56,7 @@ class SqlServerTest extends TestCase
     {
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(SqlServer::class)
             ->setMethods(['createPDO'])
             ->setConstructorArgs([$this->config])
@@ -73,7 +73,7 @@ class SqlServerTest extends TestCase
     {
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(SqlServer::class)
             ->setMethods(['createPDO', 'getAvailableDrivers'])
             ->setConstructorArgs([$this->config])
@@ -99,7 +99,7 @@ class SqlServerTest extends TestCase
 
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(SqlServer::class)
             ->setMethods(['createPDO', 'getAvailableDrivers'])
             ->setConstructorArgs([$this->config])
@@ -123,7 +123,7 @@ class SqlServerTest extends TestCase
 
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(SqlServer::class)
             ->setMethods(['createPDO', 'getAvailableDrivers'])
             ->setConstructorArgs([$this->config])
@@ -147,7 +147,7 @@ class SqlServerTest extends TestCase
 
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(SqlServer::class)
             ->setMethods(['createPDO', 'getAvailableDrivers'])
             ->setConstructorArgs([$this->config])
@@ -175,7 +175,7 @@ class SqlServerTest extends TestCase
 
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
-        /** @var AbstractDatabase|PHPUnit_Framework_MockObject_MockObject $db */
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
         $db = $this->getMockBuilder(SqlServer::class)
             ->setMethods(['createPDO', 'getAvailableDrivers'])
             ->setConstructorArgs([$this->config])

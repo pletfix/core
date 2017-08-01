@@ -344,6 +344,13 @@ class HelpersTest extends TestCase
         $this->assertEquals(['foo1' => 'bar1'], error());
     }
 
+    public function testIsAbsolutePath()
+    {
+        $this->assertTrue(is_absolute_path('/tmp'));
+        $this->assertFalse(is_absolute_path('tmp'));
+        $this->assertFalse(is_absolute_path('./tmp'));
+    }
+
     public function testIsConsole()
     {
         $this->assertTrue(is_console());

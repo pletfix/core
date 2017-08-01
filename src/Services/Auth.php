@@ -2,7 +2,7 @@
 
 namespace Core\Services;
 
-use App\Models\User; // todo Existenz des Models sollte nicht im Core vorausgesetzt werden (weil es im Namespace App liegt)!
+use Core\Models\Contracts\Model;
 use Core\Services\Contracts\Auth as AuthContract;
 use Exception;
 
@@ -26,8 +26,8 @@ class Auth implements AuthContract
         $model  = $config['class'];
         $field  = $config['identity']; // usually "email" or "name"
         $value  = $credentials[$field];
-        $user   = call_user_func([$model, 'whereIs'], $field, $value)->first();
-        //$user = User::whereIs($field, $value)->first();
+        $user   = call_user_func([$model, 'where'], $field, $value)->first();
+        //$user = User::where($field, $value)->first();
         
         $password = $credentials['password'];
         if ($user === null || !password_verify($password, $user->password)) {
@@ -66,24 +66,23 @@ class Auth implements AuthContract
     /**
      * Create a new "remember me" token for the user if one doesn't already exist.
      *
-     * @param User $user
+     * @param Model $user
      */
     private function createRememberMeTokenIfDoesntExist($user)
     {
         if (empty($user->remember_token)) {
-            $user->remember_token = random_string(60);
-            $user->save();
+            $user->setAttribute('remember_token', random_string(60))->save();
         }
     }
 
     /**
      * Create a "remember me" cookie for a given ID.
      *
-     * @param User $user
+     * @param Model $user
      */
     private function saveRememberMeCookie($user)
     {
-        cookie()->setForever('remember_me', base64_encode($user->id . '|' . $user->remember_token));
+        cookie()->setForever('remember_me', base64_encode($user->getId() . '|' . $user->getAttribute('remember_token')));
     }
 
     /**
@@ -112,12 +111,12 @@ class Auth implements AuthContract
             return;
         }
 
-        /** @var User $user */
+        /** @var Model $user */
         $model = config('auth.model.class');
         $user  = call_user_func([$model, 'find'], $id);
         //$user = User::find($id);
-        if ($user !== null && !empty($token) && $token === $user->remember_token) {
-            $this->setPrincipal($user->id, $user->name, $user->role);
+        if ($user !== null && !empty($token) && $token === $user->getAttribute('remember_token')) {
+            $this->setPrincipal($user->getId(), $user->getAttribute('name'), $user->getAttribute('role'));
         }
     }
 

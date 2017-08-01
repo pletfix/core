@@ -51,11 +51,11 @@ interface Command
     // Terminal functions
 
     /**
-     * Clear the console
+     * Clear the terminal screen.
      *
      * @return $this;
      */
-    public function clear();
+    public function clearTerminal();
 
     /**
      * Tries to figure out the terminal width in which this application runs.
@@ -74,13 +74,13 @@ interface Command
     ///////////////////////////////////////////////////////////////////////////
     // Standard Input Stream
 
-    /**
-     * Check if data is available on standard input.
-     *
-     * @param int $timeout An optional time to wait for data
-     * @return bool True for data available, false otherwise
-     */
-    public function canRead($timeout = 0);
+//    /**
+//     * Check if data is available on standard input.
+//     *
+//     * @param int $timeout An optional time to wait for data
+//     * @return bool True for data available, false otherwise
+//     */
+//    public function canRead($timeout = 0);
 
     /**
      * Prompts the user for input, and returns it.

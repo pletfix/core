@@ -301,21 +301,6 @@ class Stdio implements StdioContract
     /**
      * @inheritdoc
      */
-    public function clear() // todo nicht schlüssig, ob clear() hier hin gehört (evtl eigene Terminal Klasse bauen)
-    {
-        if (DIRECTORY_SEPARATOR === '/') {
-            passthru('clear');
-        }
-        else {
-            passthru('cls'); // @codeCoverageIgnore
-        }
-
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function format($text, array $styles = [])
     {
         if (!$this->canColor) {
@@ -440,26 +425,6 @@ class Stdio implements StdioContract
     }
 
     /**
-     * @inheritdoc
-     */
-    public function table(array $headers, array $rows)
-    {
-        // todo table ()
-//        $style = clone Table::getStyleDefinition('symfony-style-guide');
-//        $style->setCellHeaderFormat('<info>%s</info>');
-//
-//        $table = new Table($this);
-//        $table->setHeaders($headers);
-//        $table->setRows($rows);
-//        $table->setStyle($style);
-//
-//        $table->render();
-//        $this->newLine();
-
-        return $this;
-    }
-
-    /**
      * Fill each line with spaces, so that all are equal in length.
      *
      * @param string[] $textblock
@@ -482,61 +447,9 @@ class Stdio implements StdioContract
         return $textblock;
     }
 
-// @see https://github.com/symfony/console/blob/3.2/Style/SymfonyStyle.php
-// @see https://github.com/symfony/console/blob/3.0/Helper/ProgressBar.php
-//
-//    /**
-//     * Starts the progress output.
-//     *
-//     * @param int $max Maximum steps (0 if unknown)
-//     */
-//    public function progressStart($max = 0)
-//    {
-////        $this->progressBar = $this->createProgressBar($max);
-////        $this->progressBar->start();
-//    }
-//
-//    /**
-//     * Advances the progress output X steps.
-//     *
-//     * @param int $step Number of steps to advance
-//     */
-//    public function progressAdvance($step = 1)
-//    {
-//        $this->getProgressBar()->advance($step);
-//    }
-//
-//    /**
-//     * Finishes the progress output.
-//     */
-//    public function progressFinish()
-//    {
-//        $this->getProgressBar()->finish();
-//        $this->newLine(2);
-//        $this->progressBar = null;
-//    }
-//
-//    /**
-//     * @param int $max
-//     * @return ProgressBar
-//     */
-//    public function createProgressBar($max = 0)
-//    {
-//        $progressBar = parent::createProgressBar($max);
-//
-//        if ('\\' !== DIRECTORY_SEPARATOR) {
-//            $progressBar->setEmptyBarCharacter('░'); // light shade character \u2591
-//            $progressBar->setProgressCharacter('');
-//            $progressBar->setBarCharacter('▓'); // dark shade character \u2593
-//        }
-//
-//        return $progressBar;
-//    }
-
     ///////////////////////////////////////////////////////////////////////////
     // Error Output
 
-    //todo testen, wozu stderr gut ist
     /**
      * @inheritdoc
      */
@@ -563,10 +476,6 @@ class Stdio implements StdioContract
      */
     public function setStdin($stdin)
     {
-//        if ($this->stdin !== null) {
-//            fclose($this->stdin);
-//        }
-
         $this->stdin = $stdin;
 
         return $this;
@@ -585,9 +494,6 @@ class Stdio implements StdioContract
      */
     public function setStdout($stdout)
     {
-//        if ($this->stdout !== null) {
-//            fclose($this->stdout);
-//        }
         $this->stdout = $stdout;
 
         return $this;
@@ -606,10 +512,6 @@ class Stdio implements StdioContract
      */
     public function setStderr($stderr)
     {
-//        if ($this->stderr !== null) {
-//            fclose($this->stderr);
-//        }
-
         $this->stderr = $stderr;
 
         return $this;

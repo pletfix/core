@@ -2,9 +2,9 @@
 
 namespace Pletfix\Test\Commands;
 
-use Core\Services\AbstractCommand;
+use Core\Services\Command;
 
-class DummyCommand extends AbstractCommand
+class DummyCommand extends Command
 {
     /**
      * The console command name.

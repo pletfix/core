@@ -2,9 +2,9 @@
 
 namespace Core\Commands;
 
-use Core\Services\AbstractCommand;
+use Core\Services\Command;
 
-class AssetCommand extends AbstractCommand
+class AssetCommand extends Command
 {
     /**
      * The console command name.

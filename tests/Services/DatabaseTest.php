@@ -3,8 +3,7 @@
 namespace Core\Tests\Services;
 
 use Core\Exceptions\QueryException;
-use Core\Services\AbstractDatabase;
-use Core\Services\Contracts\Database;
+use Core\Services\Database;
 use Core\Services\PDOs\Builders\Contracts\Builder;
 use Core\Services\PDOs\Schemas\Contracts\Schema;
 use Core\Services\PDOs\SQLite;
@@ -13,7 +12,7 @@ use DateTime;
 use Generator;
 use stdClass;
 
-class AbstractDatabaseTest extends TestCase
+class DatabaseTest extends TestCase
 {
     /**
      * @var Database
@@ -49,7 +48,7 @@ class AbstractDatabaseTest extends TestCase
     public function testConstruct()
     {
         $this->db = new SQLite(['driver' => 'sqlite', 'database' => ':memory:', 'dateformat' => 'Y-m-d H:i:s']);
-        $this->assertInstanceOf(AbstractDatabase::class, $this->db);
+        $this->assertInstanceOf(Database::class, $this->db);
     }
 
     public function testConfig()
@@ -92,37 +91,39 @@ class AbstractDatabaseTest extends TestCase
 
     public function testConnectAndReconnectAndDisconnect()
     {
-        $this->assertInstanceOf(AbstractDatabase::class, $this->db->connect());
-        $this->assertInstanceOf(AbstractDatabase::class, $this->db->connect());
-        $this->assertInstanceOf(AbstractDatabase::class, $this->db->reconnect());
-        $this->assertInstanceOf(AbstractDatabase::class, $this->db->disconnect());
-        $this->assertInstanceOf(AbstractDatabase::class, $this->db->disconnect());
+        $this->assertInstanceOf(Database::class, $this->db->connect());
+        $this->assertInstanceOf(Database::class, $this->db->connect());
+        $this->assertInstanceOf(Database::class, $this->db->reconnect());
+        $this->assertInstanceOf(Database::class, $this->db->disconnect());
+        $this->assertInstanceOf(Database::class, $this->db->disconnect());
 
         $this->db = new SQLite(['driver' => 'sqlite', 'database' => ':memory:', 'persistent' => true]);
-        $this->assertInstanceOf(AbstractDatabase::class, $this->db->connect());
-        $this->assertInstanceOf(AbstractDatabase::class, $this->db->disconnect());
+        $this->assertInstanceOf(Database::class, $this->db->connect());
+        $this->assertInstanceOf(Database::class, $this->db->disconnect());
     }
 
-    public function testErrorCode()
-    {
-        $this->assertSame('00000', $this->db->errorCode());
-    }
-
-    public function testErrorInfo()
-    {
-        $this->assertSame([0 => '00000', 1 => null, 2 => null], $this->db->errorInfo());
-    }
+//    public function testErrorCode()
+//    {
+//        $this->assertSame('00000', $this->db->errorCode());
+//    }
+//
+//    public function testErrorInfo()
+//    {
+//        $this->assertSame([0 => '00000', 1 => null, 2 => null], $this->db->errorInfo());
+//    }
 
     public function testDump()
     {
-        $sql = 'SQL * FROM foo WHERE id=? OR name LIKE ?';
+        $sql1 = 'SQL * FROM foo WHERE id=? OR name LIKE ?';
+        $sql2 = 'SQL * FROM foo WHERE id=:id OR name LIKE :name';
         $expected = "SQL * FROM foo WHERE id=5 OR name LIKE '%bar%'";
 
-        $this->assertSame($expected, $this->db->dump($sql, [5, '%bar%'], true));
+        $this->assertSame($expected, $this->db->dump($sql1, [5, '%bar%'], true));
+        $this->assertSame($expected, $this->db->dump($sql2, [':id' => 5, ':name' => '%bar%'], true));
 
         ob_start();
         try {
-            $this->db->dump($sql, [5, '%bar%']);
+            $this->db->dump($sql1, [5, '%bar%']);
         }
         finally {
             $out = ob_get_clean();

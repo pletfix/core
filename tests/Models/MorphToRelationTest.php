@@ -33,7 +33,7 @@ class MorphToRelationTest extends RelationTestCase
 
         Relation::noConstraints(function () {
             /** @var Picture[] $pictures */
-            $pictures = Picture::whereIs('imageable_type', 'Core\Tests\Models\Employee')->all();
+            $pictures = Picture::where('imageable_type', 'Core\Tests\Models\Employee')->all();
             $builder = $pictures[0]->imageable()->addEagerConstraints($pictures);
             /** @noinspection SqlDialectInspection */
             $this->assertSame('SELECT * FROM "employees" WHERE "id" IN (?, ?, ?)', $builder->toSql());
@@ -41,7 +41,7 @@ class MorphToRelationTest extends RelationTestCase
         });
 
         /** @var Picture[] $pictures */
-        $pictures = Picture::with('imageable')->whereIs('imageable_type', 'Core\Tests\Models\Employee')->all();
+        $pictures = Picture::with('imageable')->where('imageable_type', 'Core\Tests\Models\Employee')->all();
         $this->assertCount(3, $pictures);
         $this->assertInstanceOf(Picture::class, $pictures[0]);
 
@@ -86,7 +86,7 @@ class MorphToRelationTest extends RelationTestCase
 
         Relation::noConstraints(function () {
             /** @var Picture[] $pictures */
-            $pictures = Picture::whereIs('imageable_type', 'Core\Tests\Models\Department')->all();
+            $pictures = Picture::where('imageable_type', 'Core\Tests\Models\Department')->all();
             $builder = $pictures[0]->imageable()->addEagerConstraints($pictures);
             /** @noinspection SqlDialectInspection */
             $this->assertSame('SELECT * FROM "departments" WHERE "id" IN (?, ?)', $builder->toSql());
@@ -94,7 +94,7 @@ class MorphToRelationTest extends RelationTestCase
         });
 
         /** @var Picture[] $pictures */
-        $pictures = Picture::with('imageable')->whereIs('imageable_type', 'Core\Tests\Models\Department')->all();
+        $pictures = Picture::with('imageable')->where('imageable_type', 'Core\Tests\Models\Department')->all();
         $this->assertCount(2, $pictures);
         $this->assertInstanceOf(Picture::class, $pictures[0]);
 

@@ -13,7 +13,7 @@ use InvalidArgumentException;
  * @see https://github.com/auraphp/Aura.SqlSchema/blob/2.x/src/SqlsrvSchema.php Aura.SqlSchema on GitHub
  * @see http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html#mapping-matrix Doctrine's Mapping Matrix
  */
-class SqlServerSchema extends AbstractSchema
+class SqlServerSchema extends Schema
 {
     /**
      * @inheritdoc
@@ -352,7 +352,9 @@ class SqlServerSchema extends AbstractSchema
         $from  = $this->db->quote($table . '.' . $from);
         $to    = $this->db->quote($to);
 
-        $this->db->exec("EXEC sp_rename {$from}, {$to}, 'COLUMN'");
+        if ($from  != $to) {
+            $this->db->exec("EXEC sp_rename {$from}, {$to}, 'COLUMN'");
+        }
 
         return $this;
     }
@@ -420,8 +422,6 @@ class SqlServerSchema extends AbstractSchema
                 $columns = $options['columns'];
                 $unique  = isset($options['unique']) ? $options['unique'] : false;
                 $name = $this->createIndexName($table, $columns, $unique);
-                // todo der Name sollte besser aus der Indexliste gesucht werden.
-                // Momentan wird einfach angenommen, dass der Index wie vom Access Layer vorgegeben heißt.
             }
 
             /** @noinspection SqlNoDataSourceInspection */
@@ -564,24 +564,15 @@ class SqlServerSchema extends AbstractSchema
 
             case 'float':
                 return 'FLOAT';
-//                return 'DOUBLE PRECISION'; // Alias ? (todo klären)
 
             case 'string':
                 return 'NVARCHAR(' . ($size ?: 255) . ')';
-
-//            case 'text':
-//            case 'array':
-//            case 'json':
-//            case 'object':
-////                return 'VARCHAR(MAX)'; // Alias? (todo klären)
-//                return 'TEXT'; // == TEXT
 
             case 'guid':
                 return 'UNIQUEIDENTIFIER';
 
             case 'blob':
-//                return 'VARBINARY(MAX)'; // Alias? (todo klären)
-                return 'IMAGE'; // ==  IMAGE
+                return 'IMAGE';
 
             case 'boolean':
                 return 'BIT';

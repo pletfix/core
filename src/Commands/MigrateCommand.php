@@ -2,9 +2,9 @@
 
 namespace Core\Commands;
 
-use Core\Services\AbstractCommand;
+use Core\Services\Command;
 
-class MigrateCommand extends AbstractCommand
+class MigrateCommand extends Command
 {
     /**
      * The console command name.

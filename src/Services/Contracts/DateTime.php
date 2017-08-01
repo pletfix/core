@@ -174,6 +174,9 @@ interface DateTime extends DateTimeInterface, JsonSerializable
     /**
      * Format the instance as ISO8601
      *
+     * Note: This format is not compatible with ISO-8601! Use DateTime::ATOM or DATE_ATOM instead.
+     * see http://de2.php.net/manual/en/class.datetime.php#datetime.constants.iso8601
+     *
      * @return string
      */
     public function toIso8601String();

@@ -123,7 +123,7 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
      * from(function($builder) { return $builder->from('table1'); }, 't1')
      *
      * // from subquery with placeholders:
-     * from($builder->from('table1')->where('column1 > ?'), 't1', [$foo])
+     * from($builder->from('table1')->whereCondition('column1 > ?'), 't1', [$foo])
      * </pre>
      *
      * @param string|Builder|\Closure $source A table name or a subquery.
@@ -162,7 +162,7 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
      * join(function(Builder $builder) { return $builder->from('table2'); }, 't1.id = t2.table1_id', 't2')
      *
      * // from subquery with placeholders:
-     * join($builder->from('table2')->where('column1 > ?'), 't1.id = t2.table1_id', 't2', [$foo])
+     * join($builder->from('table2')->whereCondition('column1 > ?'), 't1.id = t2.table1_id', 't2', [$foo])
      * </pre>
      *
      * @param string|Builder|\Closure $source A table name or a subquery.
@@ -200,6 +200,21 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
     public function rightJoin($source, $on, $alias = null, array $bindings = []);
 
     /**
+     * Add a comparison operation into the WHERE clause.
+     *
+     * Example:
+     * <pre>
+     * where('column1', 4711, '>')
+     * </pre>
+     *
+     * @param string $column.
+     * @param mixed $value
+     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE'
+     * @return Builder
+     */
+    public function where($column, $value, $operator = '=');
+
+    /**
      * Adds a WHERE condition to the query.
      *
      * You should only use standard SQL operators and functions, so that the database drivers can translate the
@@ -212,31 +227,16 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
      *
      * Examples:
      * <pre>
-     * where('column1 = ? OR t1.column2 LIKE "%?%"', [$foo, $bar])
-     * where('column1 = (SELECT MAX(i) FROM table2 WHERE c1 = ?)', [$foo])
-     * where(function(Builder $builder) { return $builder->where('c1 = ?')->orWhere('c2 = ?'); }, [$foo, $bar])
+     * whereCondition('column1 = ? OR t1.column2 LIKE "%?%"', [$foo, $bar])
+     * whereCondition('column1 = (SELECT MAX(i) FROM table2 WHERE c1 = ?)', [$foo])
+     * whereCondition(function(Builder $builder) { return $builder->whereCondition('c1 = ?')->orWhereCondition('c2 = ?'); }, [$foo, $bar])
      * </pre>
      *
      * @param string|\Closure $condition
      * @param array $bindings
      * @return Builder
      */
-    public function where($condition, array $bindings = []);
-
-    /**
-     * Add a comparison operation into the WHERE clause.
-     *
-     * Example:
-     * <pre>
-     * whereIs('column1', 4711, '>')
-     * </pre>
-     *
-     * @param string $column.
-     * @param mixed $value
-     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE' todo '<>' oder '!=' ?
-     * @return Builder
-     */
-    public function whereIs($column, $value, $operator = '=');
+    public function whereCondition($condition, array $bindings = []);
 
     /**
      * Add a subquery into the WHERE clause.
@@ -246,13 +246,13 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
      * Examples:
      * <pre>
      * whereSubQuery('column1', 'SELECT MAX(i) FROM table2 WHERE c1 = ?', [$foo])
-     * whereSubQuery('column1', database()->createBuilder()->select('MAX(i)')->from('table2')->where('c1 = ?'), [$foo])
-     * whereSubQuery('column1', function(Builder $builder) { return $builder->select('MAX(i)')->from('table2')->where('c1 = ?'); }, [$foo])
+     * whereSubQuery('column1', database()->createBuilder()->select('MAX(i)')->from('table2')->whereCondition('c1 = ?'), [$foo])
+     * whereSubQuery('column1', function(Builder $builder) { return $builder->select('MAX(i)')->from('table2')->whereCondition('c1 = ?'); }, [$foo])
      * </pre>
      *
      * @param string $column
      * @param string|Builder|\Closure $query
-     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE' todo '<>' oder '!=' ?
+     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE'
      * @param array $bindings
      * @return Builder
      */
@@ -266,8 +266,8 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
      * Examples:
      * <pre>
      * whereSubQuery('column1', 'SELECT MAX(i) FROM table2 WHERE c1 = ?', [$foo])
-     * whereSubQuery('column1', database()->createBuilder()->select('MAX(i)')->from('table2')->where('c1 = ?'), [$foo])
-     * whereSubQuery('column1', function(Builder $builder) { return $builder->select('MAX(i)')->from('table2')->where('c1 = ?'); }, [$foo])
+     * whereSubQuery('column1', database()->createBuilder()->select('MAX(i)')->from('table2')->whereCondition('c1 = ?'), [$foo])
+     * whereSubQuery('column1', function(Builder $builder) { return $builder->select('MAX(i)')->from('table2')->whereCondition('c1 = ?'); }, [$foo])
      * </pre>
      *
      * @param string|Builder|\Closure $query
@@ -345,7 +345,7 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
      * @param string $column.
      * @return Builder
      */
-    public function whereIsNull($column);
+    public function whereNull($column);
 
     /**
      * Add "WHERE column IS NOT NULL to the query.
@@ -353,7 +353,7 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
      * @param string $column
      * @return Builder
      */
-    public function whereIsNotNull($column);
+    public function whereNotNull($column);
 
     /**
      * Adds a ORDER BY clause to the query.
@@ -365,9 +365,12 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
      *
      * // as array:
      * orderBy(['column1', 'column2 ASC', 't1.column3 DESC'])
+     *
+     * // as expression:
+     * orderBy('column1 > 5')
+     *
      * </pre>
      *
-     * // todo prüfen, ob auch subqueries möglich sind
      * @param string|array $columns The columns to order by, possible with the direction key word "ASC" (default) or "DESC".
      * @param array $bindings
      * @return Builder
@@ -390,7 +393,14 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
      */
     public function offset($offset);
 
-    // todo find() einfügen
+    /**
+     * Find the model by the primary key.
+     *
+     * @param int $id Value of the primary Key
+     * @param string $key Name of the primary Key
+     * @return mixed
+     */
+    public function find($id, $key = 'id');
 
     /**
      * Execute the query as a "select" statement and return the result.
@@ -503,5 +513,5 @@ interface Relation extends Countable //extends ArrayAccess, Arrayable, Countable
      * @param Model $model
      * @return bool
      */
-    public function delete(Model $model); // todo evtl umbenennen in remove(), um Verwechlung mit QueryBuilder auszuschließen
+    public function delete(Model $model);
 }

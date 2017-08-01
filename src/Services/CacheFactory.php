@@ -74,7 +74,6 @@ class CacheFactory implements CacheFactoryContract
             throw new InvalidArgumentException('Cache driver for store "' . $name . '" is not specified.');
         }
 
-        // todo dynamisch gestalten, driver evtl auch im Plugins suchen
         switch ($config['driver']) { // todo use class name such like "Apcu"
             case 'apc':
                 $provider = new ApcuCache;

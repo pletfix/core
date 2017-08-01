@@ -3,7 +3,7 @@
 namespace Core\Services;
 
 use Core\Commands\HelpCommand;
-use Core\Services\Contracts\Command;
+use Core\Services\Contracts\Command as CommandContract;
 use Core\Services\Contracts\CommandFactory as CommandFactoryContract;
 use RuntimeException;
 
@@ -79,33 +79,48 @@ class CommandFactory implements CommandFactoryContract
     }
 
     /**
+     * Read available commands recursive from given path.
+     *
+     * @param array &$list Receives the command information
+     * @param string $path
+     * @param string $namespace
+     */
+    private function listCommands(array &$list, $path, $namespace)
+    {
+        $classes = [];
+        list_classes($classes, $path, $namespace);
+        foreach ($classes as $class) {
+            /** @var CommandContract $command */
+            $command = new $class;
+            $name = $command->name();
+            $description = trim($command->description() ?: '');
+            $list[$name] = compact('class', 'name', 'description');
+        }
+    }
+
+    /**
      * Create a new command list.
      *
      * @return array
      */
     private function createCommandList()
     {
-        $classes = [];
-        list_classes($classes, __DIR__ . '/../Commands', 'Core\Commands');
-        list_classes($classes, app_path('Commands'), 'App\Commands');
-
         $list = [];
-        foreach ($classes as $class) {
-            /** @var Command $command */
-            $command = new $class;
-            $name = $command->name();
-            $description = trim($command->description() ?: '');
-            $list[$name] = compact('class', 'name', 'description');
-        }
 
+        // read all core commands
+        $this->listCommands($list, __DIR__ . '/../Commands', 'Core\Commands');
+
+        // merge all plugin commands (plugin overrides the core)
         if (file_exists($this->pluginManifestOfCommands)) {
             /** @noinspection PhpIncludeInspection */
-            $list = array_merge(include $this->pluginManifestOfCommands, $list);
+            $list = array_merge($list, include $this->pluginManifestOfCommands);
         }
 
-        ksort($list);
+        // merge all commands defined by application (application overrides all other)
+        $this->listCommands($list, app_path('Commands'), 'App\Commands');
 
-        // todo plugin sollte den core überschreiben können und app die plugins
+        // save the new command list
+        ksort($list);
 
         return $list;
     }

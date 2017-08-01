@@ -11,9 +11,9 @@ use Core\Models\Model;
 use Core\Models\MorphManyRelation;
 use Core\Models\MorphOneRelation;
 use Core\Models\MorphToRelation;
-use Core\Services\AbstractDatabase;
-use Core\Services\Contracts\Database;
+use Core\Services\Contracts\Database as DatabaseContract;
 use Core\Services\Contracts\DatabaseFactory;
+use Core\Services\Database;
 use Core\Services\DI;
 use Core\Services\PDOs\Builders\Builder;
 use Core\Testing\TestCase;
@@ -42,7 +42,7 @@ class ModelTest extends TestCase
         DI::getInstance()->set('database-factory', self::$origFactory, true);
     }
 
-    private function execSqlFile(Database $db, $name)
+    private function execSqlFile(DatabaseContract $db, $name)
     {
         $statements = explode(';', file_get_contents(self::$fixturePath . '/' . $name . '.sql'));
         foreach ($statements as $statement) {
@@ -67,7 +67,7 @@ class ModelTest extends TestCase
             ->setMethods(['store'])
             ->getMockForAbstractClass();
 
-        $db = $this->getMockBuilder(AbstractDatabase::class)
+        $db = $this->getMockBuilder(Database::class)
             ->setConstructorArgs([['database' => '~test']])
             ->setMethods(['createBuilder'])
             ->getMockForAbstractClass();
@@ -83,7 +83,7 @@ class ModelTest extends TestCase
                 'leftJoin',
                 'rightJoin',
                 'where',
-                'whereIs',
+                'whereCondition',
                 'whereSubQuery',
                 'whereExists',
                 'whereNotExists',
@@ -91,8 +91,8 @@ class ModelTest extends TestCase
                 'whereNotIn',
                 'whereBetween',
                 'whereNotBetween',
-                'whereIsNull',
-                'whereIsNotNull',
+                'whereNull',
+                'whereNotNull',
                 'orderBy',
                 'limit',
                 'offset',
@@ -206,6 +206,12 @@ class ModelTest extends TestCase
         $this->assertInstanceOf(Author::class, $model->reload());
         $this->assertSame('Author 1', $model->getAttribute('name'));
         $this->assertSame('Author 1', $model->getOriginal('name'));
+
+        database()->table('authors')->where('id', 1)->delete();
+        $this->assertInstanceOf(Author::class, $model->reload());
+
+        $model = new Author;
+        $this->assertInstanceOf(Author::class, $model->reload());
     }
 
     public function testPrimaryKey()
@@ -268,14 +274,14 @@ class ModelTest extends TestCase
 
     public function testWhere()
     {
-        $this->getMockForBuilder('authors')->expects($this->once())->method('where')->with('name <> ?', ['Peter'])->willReturnSelf();
-        $this->assertInstanceOf(Builder::class, Author::where('name <> ?', ['Peter']));
+        $this->getMockForBuilder('authors')->expects($this->once())->method('where')->with('name', 'Peter', '<>')->willReturnSelf();
+        $this->assertInstanceOf(Builder::class, Author::where('name', 'Peter', '<>'));
     }
 
-    public function testWhereIs()
+    public function testWhereCondition()
     {
-        $this->getMockForBuilder('authors')->expects($this->once())->method('whereIs')->with('name', 'Peter', '<>')->willReturnSelf();
-        $this->assertInstanceOf(Builder::class, Author::whereIs('name', 'Peter', '<>'));
+        $this->getMockForBuilder('authors')->expects($this->once())->method('whereCondition')->with('name <> ?', ['Peter'])->willReturnSelf();
+        $this->assertInstanceOf(Builder::class, Author::whereCondition('name <> ?', ['Peter']));
     }
 
     public function testWhereSubQuery()
@@ -316,13 +322,13 @@ class ModelTest extends TestCase
         $this->assertInstanceOf(Builder::class, Author::whereNotBetween('id', 46, 48));
     }
 
-    public function testWhereIsNull()
+    public function testWhereNull()
     {
-        $this->getMockForBuilder('authors')->expects($this->once())->method('whereIsNull')->with('name')->willReturnSelf();
-        $this->assertInstanceOf(Builder::class, Author::whereIsNull('name'));
+        $this->getMockForBuilder('authors')->expects($this->once())->method('whereNull')->with('name')->willReturnSelf();
+        $this->assertInstanceOf(Builder::class, Author::whereNull('name'));
 
-        $this->getMockForBuilder('authors')->expects($this->once())->method('whereIsNotNull')->with('name')->willReturnSelf();
-        $this->assertInstanceOf(Builder::class, Author::whereIsNotNull('name'));
+        $this->getMockForBuilder('authors')->expects($this->once())->method('whereNotNull')->with('name')->willReturnSelf();
+        $this->assertInstanceOf(Builder::class, Author::whereNotNull('name'));
     }
 
     public function testOrderBy()
@@ -928,7 +934,7 @@ class ModelWithHooks extends ModelWithHooksBefore
     public function afterInsert()
     {
         if ($this->id !== null && $this->str !== null && $this->x === 1) {
-            database()->table('table1')->whereIs('id', $this->id)->update(['x' => 2]);
+            database()->table('table1')->where('id', $this->id)->update(['x' => 2]);
             $this->x = 2;
         }
     }
@@ -936,7 +942,7 @@ class ModelWithHooks extends ModelWithHooksBefore
     public function afterUpdate()
     {
         if ($this->str === 'b' && $this->x === 3) {
-            database()->table('table1')->whereIs('id', $this->id)->update(['x' => 4]);
+            database()->table('table1')->where('id', $this->id)->update(['x' => 4]);
             $this->x = 4;
         }
     }

@@ -57,7 +57,7 @@ class Builder implements BuilderContract
      *
      * @var array
      */
-    protected $flags = []; // todo evtl distinct als boolean verwenden
+    protected $flags = [];
 
     /**
      * Selected columns
@@ -137,8 +137,6 @@ class Builder implements BuilderContract
         'order'  => [],
     ];
 
-    // todo union clause
-
     /**
      * Tables and fields with this name will not be quoted automatically.
      *
@@ -181,7 +179,7 @@ class Builder implements BuilderContract
     public function reset()
     {
         $this->class    = null;
-        $this->with    = [];
+        $this->with     = [];
         $this->flags    = [];
         $this->columns  = [];
         $this->from     = [];
@@ -415,9 +413,44 @@ class Builder implements BuilderContract
     }
 
     /**
+     * Quote a column.
+     *
+     * @param $column
+     * @return string
+     */
+    protected function quoteColumn($column)
+    {
+        if (($pos = strpos($column, '.')) !== false) {
+            return $this->db->quoteName(substr($column, 0, $pos)) . '.' . $this->db->quoteName(substr($column, $pos + 1));
+        }
+
+        return $this->db->quoteName($column);
+    }
+
+    /**
      * @inheritdoc
      */
-    public function where($condition, array $bindings = [], $or = false)
+    public function where($column, $value, $operator = '=', $or = false)
+    {
+        $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
+        $this->where[] = $op . $this->quoteColumn($column) . ' ' . strtoupper($operator) . ' ?';
+        $this->putBindings('where', [$value]);
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function orWhere($column, $value, $operator = '=')
+    {
+        return $this->where($column, $value, $operator, true);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function whereCondition($condition, array $bindings = [], $or = false)
     {
         if (is_callable($condition)) {
             $condition = $condition(new static($this->db));
@@ -437,44 +470,9 @@ class Builder implements BuilderContract
     /**
      * @inheritdoc
      */
-    public function orWhere($condition, array $bindings = [])
+    public function orWhereCondition($condition, array $bindings = [])
     {
-        return $this->where($condition, $bindings, true);
-    }
-
-    /**
-     * Quote a column.
-     *
-     * @param $column
-     * @return string
-     */
-    protected function quoteColumn($column)
-    {
-        if (($pos = strpos($column, '.')) !== false) {
-            return $this->db->quoteName(substr($column, 0, $pos)) . '.' . $this->db->quoteName(substr($column, $pos + 1));
-        }
-
-        return $this->db->quoteName($column);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function whereIs($column, $value, $operator = '=', $or = false)
-    {
-        $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
-        $this->where[] = $op . $this->quoteColumn($column) . ' ' . strtoupper($operator) . ' ?';
-        $this->putBindings('where', [$value]);
-
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function orWhereIs($column, $value, $operator = '=')
-    {
-        return $this->whereIs($column, $value, $operator, true);
+        return $this->whereCondition($condition, $bindings, true);
     }
 
     /**
@@ -627,7 +625,7 @@ class Builder implements BuilderContract
     /**
      * @inheritdoc
      */
-    public function whereIsNull($column, $or = false, $not = false)
+    public function whereNull($column, $or = false, $not = false)
     {
         $op = !empty($this->where) ? ($or ? 'OR ' : 'AND ') : '';
         $this->where[] = $op . $this->quoteColumn($column) . ($not ? ' IS NOT NULL' : ' IS NULL');
@@ -638,25 +636,25 @@ class Builder implements BuilderContract
     /**
      * @inheritdoc
      */
-    public function orWhereIsNull($column)
+    public function orWhereNull($column)
     {
-        return $this->whereIsNull($column, true);
+        return $this->whereNull($column, true);
     }
 
     /**
      * @inheritdoc
      */
-    public function whereIsNotNull($column, $or = false)
+    public function whereNotNull($column, $or = false)
     {
-        return $this->whereIsNull($column, $or, true);
+        return $this->whereNull($column, $or, true);
     }
 
     /**
      * @inheritdoc
      */
-    public function orWhereIsNotNull($column)
+    public function orWhereNotNull($column)
     {
-        return $this->whereIsNotNull($column, true);
+        return $this->whereNotNull($column, true);
     }
 
     /**
@@ -797,7 +795,7 @@ class Builder implements BuilderContract
     /**
      * @inheritdoc
      */
-    public function all() // todo evtl umbenennen in get()
+    public function all()
     {
         $result = $this->db->query($this->toSql(), $this->bindings(), $this->class);
 
@@ -1007,7 +1005,7 @@ class Builder implements BuilderContract
                         $instance->setAttributes(array_merge($data, [$instance->getPrimaryKey() => $result]));
 
                         if ($instance->$hook() === false) {
-                            $db->rollBack();
+                            $db->rollback();
                             return false;
                         }
 
@@ -1055,7 +1053,7 @@ class Builder implements BuilderContract
                         // If a hook returns FALSE, roll back the transaction and return FALSE immediately.
                         foreach ($instances as $i => $instance) {
                             if ($instance->$hook() === false) {
-                                $db->rollBack();
+                                $db->rollback();
                                 return false;
                             }
                         }
@@ -1175,7 +1173,7 @@ class Builder implements BuilderContract
                     foreach ($instances as $i => $instance) {
                         $instance->setAttributes(array_merge($instance->getAttributes(), $data));
                         if ($instance->$hook() === false) {
-                            $db->rollBack();
+                            $db->rollback();
                             return false;
                         }
                     }
@@ -1283,7 +1281,7 @@ class Builder implements BuilderContract
                         unset($attributes[$instance->getPrimaryKey()]);
                         $instance->setAttributes($attributes);
                         if ($instance->$hook() === false) {
-                            $db->rollBack();
+                            $db->rollback();
                             return false;
                         }
                     }
@@ -1321,82 +1319,6 @@ class Builder implements BuilderContract
 
         return $this->db->exec($query, $bindings);
     }
-
-    // @codeCoverageIgnoreStart
-    // todo Truncate is DDL and not DML - hier rauswerfen und statt dessen in Schema einfügen
-
-    /**
-     * @inheritdoc
-     */
-    public function truncate()
-    {
-        if ($this->hasHooks('Delete')) {
-
-            /** @var Hookable[] $instances */
-            $instances = $this->db->table($this->getTable())->asClass($this->class)->all();
-
-            // Invoke the "before" hook for each instance if exist.
-            // If a hook returns FALSE, return FALSE immediately.
-            $hook = 'beforeDelete';
-            if (method_exists($this->class, $hook)) {
-                foreach ($instances as $i => $instance) {
-                    if ($instance->$hook() === false) {
-                        return false;
-                    }
-                }
-            }
-
-            // Execute the database operation and invoke the "after" hook for each instance if exist.
-            $hook = 'afterDelete';
-            if (method_exists($this->class, $hook)) {
-                // A "after" hook exist. We will open a transaction, so we are able to rollback the database operation if
-                // the hook returns FALSE or the hook throw an exception.
-                return $this->db->transaction(function(Database $db) use($instances, $hook) {
-
-                    // todo zumindest by MySQL kann bei Truncate keine Transaktion verwendet werden!
-
-                    $result = $this->doTruncate();
-
-                    // Invoke the "after" hook for each instance if exists.
-                    // If a hook returns FALSE, roll back the transaction and return FALSE immediately.
-                    foreach ($instances as $i => $instance) {
-                        $attributes = $instance->getAttributes();
-                        unset($attributes[$instance->getPrimaryKey()]);
-                        $instance->setAttributes($attributes);
-                        if ($instance->$hook() === false) {
-                            $db->rollBack();
-                            return false;
-                        }
-                    }
-
-                    return $result;
-                });
-            }
-            else {
-                // A "after" hook does not exist, so we don't need a transaction.
-                return $this->doTruncate();
-            }
-        }
-        else {
-            // Execute the operation without hooks.
-            return $this->doTruncate();
-        }
-    }
-
-    /**
-     * Truncate the table.
-     *
-     * @return int
-     */
-    protected function doTruncate()
-    {
-        $table = implode(', ', $this->from);
-
-        return $this->db->exec("TRUNCATE TABLE $table");
-    }
-
-    // todo ENDE - Truncate is DDL and not DML - hier rauswerfen und statt dessen in Schema einfügen
-    // @codeCoverageIgnoreEnd
 
     /**
      * Determine whether the class you specified by asClass() implements the Hookable contract and provides hooks for
@@ -1458,7 +1380,6 @@ class Builder implements BuilderContract
 //            }
 
             if (is_string($alias)) {
-                //if (stripos($column, ' ') !== false) {
                 if (strncasecmp($column, 'SELECT ', 7) === 0) {
                     $column = "($column)";
                 }

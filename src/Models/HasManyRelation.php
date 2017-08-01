@@ -50,7 +50,7 @@ class HasManyRelation extends Relation
     protected function addConstraints()
     {
         $id = $this->model->getAttribute($this->localKey);
-        $this->builder->whereIs($this->foreignKey, $id);
+        $this->builder->where($this->foreignKey, $id);
     }
 
     /**
@@ -81,7 +81,7 @@ class HasManyRelation extends Relation
     {
         // get the foreign entities, group by local id
         $foreignEntities = [];
-        foreach ($this->builder->all() as $foreignEntity) { // todo testen, ob cursor schneller ist
+        foreach ($this->builder->cursor() as $foreignEntity) {
             /** @var ModelContract $foreignEntity */
             $localId = $foreignEntity->getAttribute($this->foreignKey);
             if (!isset($foreignEntities[$localId])) {

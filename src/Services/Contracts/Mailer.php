@@ -259,17 +259,6 @@ interface Mailer
     public function attach($file, $name = null);
 
     /**
-     * Attach in-memory data as an attachment.
-     *
-     * @param string $data The bytes to be attached.
-     * @param string $name
-     * @param string $mimeType MIME type
-     * @return $this
-     * @see https://www.sitepoint.com/web-foundations/mime-types-complete-list List of MIME Types
-     */
-    public function attachData($data, $name, $mimeType);
-
-    /**
      * Remove an already attached entity.
      *
      * @param string $file Path of the file
@@ -298,17 +287,6 @@ interface Mailer
      * @return string The source reference.
      */
     public function embed($file);
-
-    /**
-     * Embed in-memory data in the message and get the CID.
-     *
-     * @param string $data The bytes to be embedded.
-     * @param string $name
-     * @param string $mimeType MIME type
-     * @return string The source reference.
-     * @see https://www.sitepoint.com/web-foundations/mime-types-complete-list List of MIME Types
-     */
-    public function embedData($data, $name, $mimeType);
 
     /**
      * Remove embedded file.
