@@ -69,9 +69,7 @@ If you want to develop at the Pletfix Core, you can create a workbench as follow
         ],
         "files": [
             "library/functions/helpers.php",
-            "workbench/pletfix/core/functions/helpers.php",
-            "workbench/pletfix/core/functions/http_status.php",
-            "workbench/pletfix/core/functions/services.php"
+            "workbench/pletfix/core/helpers.php"
         ],
         "psr-4": {
             "App\\": "app/",

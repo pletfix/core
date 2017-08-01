@@ -164,7 +164,7 @@ class Stdio implements StdioContract
             $this->write($prompt);
 
             // read a value from the stream
-            $result = trim(fgets($this->stdin)); // todo !!! Testen, wenn übergroße Daten eingegeben werden. Muss gepuffert werden?
+            $result = trim(fgets($this->stdin));
 
             // validate the input
             $isEmpty = $result === '' || $result === null;

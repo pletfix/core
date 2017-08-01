@@ -20,7 +20,7 @@
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">./src</directory>
-            <directory suffix=".php">./functions</directory>
+            <file>./helpers.php</file>
         </whitelist>
     </filter>
     <logging>

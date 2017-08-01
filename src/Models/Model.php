@@ -649,7 +649,7 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public function save() // todo sollte besser Exception schmeißen, wenn es nicht klappt
+    public function save()
     {
         if (isset($this->original[$this->key])) {
 
@@ -773,7 +773,7 @@ class Model implements ModelContract
     /**
      * @inheritdoc
      */
-    public function delete() // todo sollte besser Exception schmeißen, wenn es nicht klappt
+    public function delete()
     {
         $id = $this->original[$this->key];
         $builder = $this->builder()->disableHooks()->where($this->key, $id);
@@ -1123,7 +1123,7 @@ class Model implements ModelContract
      *
      * @return array
      */
-    public function toArray() // todo zu naiv? Vergleiche Eloquent\Model@toArray()
+    public function toArray()
     {
         return array_merge($this->attributes, $this->relations);
     }

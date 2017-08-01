@@ -244,7 +244,7 @@ interface Builder extends Countable
      *
      * @param string $column.
      * @param mixed $value
-     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE' todo '<>' oder '!=' ?
+     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE'
      * @param bool $or If false, the condition is added by AND (default), otherwise by OR.
      * @return Builder
      */
@@ -257,7 +257,7 @@ interface Builder extends Countable
      *
      * @param string $column.
      * @param mixed $value
-     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE' todo '<>' oder '!=' ?
+     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE'
      * @return Builder
      */
     public function orWhere($column, $value, $operator = '=');
@@ -313,7 +313,7 @@ interface Builder extends Countable
      *
      * @param string $column
      * @param string|Builder|\Closure $query
-     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE' todo '<>' oder '!=' ?
+     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE'
      * @param array $bindings
      * @param bool $or If false, the condition is added by AND (default), otherwise by OR.
      * @return Builder
@@ -327,7 +327,7 @@ interface Builder extends Countable
      *
      * @param string $column
      * @param string|Builder|\Closure $query
-     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE' todo '<>' oder '!=' ?
+     * @param string $operator '=', '<', '>', '<=', '>=', '<>', '!=', 'IN', 'NOT IN', 'LIKE', 'NOT LIKE'
      * @param array $bindings
      * @return Builder
      */

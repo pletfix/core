@@ -31,9 +31,7 @@
     },
     "autoload": {
         "files": [
-            "functions/helpers.php",
-            "functions/http_status.php",
-            "functions/services.php"
+            "helpers.php"
         ],
         "psr-4": {
             "Core\\": "src/"

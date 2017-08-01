@@ -63,6 +63,30 @@ if (! function_exists('asset')) {
     }
 }
 
+if (!function_exists('asset_manager')) {
+    /**
+     * Get the Asset Manager.
+     *
+     * @return \Core\Services\Contracts\AssetManager
+     */
+    function asset_manager()
+    {
+        return DI::getInstance()->get('asset-manager');
+    }
+}
+
+if (!function_exists('auth')) {
+    /**
+     * Get the authentication object.
+     *
+     * @return \Core\Services\Contracts\Auth
+     */
+    function auth()
+    {
+        return DI::getInstance()->get('auth');
+    }
+}
+
 if (! function_exists('bcrypt')) {
     /**
      * Creates a password hash using the <b>CRYPT_BLOWFISH</b> algorithm.
@@ -118,6 +142,32 @@ if (!function_exists('benchmark')) {
     }
 }
 
+if (!function_exists('cache')) {
+    /**
+     * Get the cache by given store name.
+     *
+     * @param string|null $store
+     * @return \Core\Services\Contracts\Cache
+     */
+    function cache($store = null)
+    {
+        return DI::getInstance()->get('cache-factory')->store($store);
+    }
+}
+
+if (! function_exists('collect')) {
+    /**
+     * Create a collection from the given array.
+     *
+     * @param array $items
+     * @return \Core\Services\Contracts\Collection
+     */
+    function collect($items)
+    {
+        return DI::getInstance()->get('collection', [$items]);
+    }
+}
+
 if (! function_exists('command')) {
     /**
      * Run a console command by name.
@@ -157,6 +207,25 @@ if (!function_exists('config')) {
     }
 }
 
+if (!function_exists('cookie')) {
+    /**
+     * Return a cookie
+     *
+     * @param string|Closure|null $name The name of the cookie.
+     * @param mixed $default
+     * @return \Core\Services\Contracts\Cookie|string
+     */
+    function cookie($name = null, $default = null)
+    {
+        $cookie = DI::getInstance()->get('cookie');
+        if ($name === null) {
+            return $cookie;
+        }
+
+        return $cookie->get($name, $default);
+    }
+}
+
 if (! function_exists('csrf_token')) {
     /**
      * Get a CSRF token value.
@@ -174,6 +243,83 @@ if (! function_exists('csrf_token')) {
         }
 
         return $csrf;
+    }
+}
+
+if (!function_exists('database')) {
+    /**
+     * Get the database by given connection name.
+     *
+     * @param string|null $store
+     * @return \Core\Services\Contracts\Database
+     */
+    function database($store = null)
+    {
+        return DI::getInstance()->get('database-factory')->store($store);
+    }
+}
+
+if (!function_exists('datetime')) {
+    /**
+     * Returns a new DateTime object.
+     *
+     * @param DateTimeInterface|array|int|string|null $dateTime
+     * @param DateTimeZone|string|null $timezone
+     * @param string|null $format
+     * @return \Core\Services\Contracts\DateTime
+     */
+    function datetime($dateTime = null, $timezone = null, $format = null)
+    {
+        /** @var \Core\Services\Contracts\DateTime $service */
+        static $service;
+        if ($service === null) { // promote fast access...
+            $service = DI::getInstance()->get('date-time');
+        }
+
+        if ($dateTime instanceof DateTimeInterface) {
+            return $service::instance($dateTime);
+        }
+
+        if (is_array($dateTime)) {
+            return $service::createFromParts($dateTime, $timezone);
+        }
+
+        if (is_int($dateTime)) {
+            return $service::createFromTimestamp($dateTime, $timezone);
+        }
+
+        if ($format !== null) {
+            if ($format == 'locale') {
+                return $service::createFromLocaleFormat($dateTime, $timezone);
+            }
+            else if ($format == 'locale.date') {
+                return $service::createFromLocaleDateFormat($dateTime, $timezone);
+            }
+            else if ($format == 'locale.time') {
+                return $service::createFromLocaleTimeFormat($dateTime, $timezone);
+            }
+            return $service::createFromFormat($format, $dateTime, $timezone);
+        }
+
+        return new $service($dateTime, $timezone);
+    }
+}
+
+if (!function_exists('di')) {
+    /**
+     * Get the available service instance (or the Dependency Injector if no key is specified).
+     *
+     * @param string $name Name of the service
+     * @param  array $arguments Arguments of the constructor
+     * @return \Core\Services\Contracts\DI|object
+     */
+    function di($name = null, $arguments = [])
+    {
+        if ($name === null) {
+            return DI::getInstance();
+        }
+
+        return DI::getInstance()->get($name, $arguments);
     }
 }
 
@@ -294,6 +440,25 @@ if (! function_exists('error')) {
     }
 }
 
+if (!function_exists('flash')) {
+    /**
+     * Get the Flash object.
+     *
+     * @param string|null $key Key using "dot" notation.
+     * @param mixed $default
+     * @return \Core\Services\Contracts\Flash|mixed
+     */
+    function flash($key = null, $default = null)
+    {
+        $flash = DI::getInstance()->get('flash');
+        if ($key === null) {
+            return $flash;
+        }
+
+        return $flash->get($key, $default);
+    }
+}
+
 //if (!function_exists('format_datetime')) {
 //    /**
 //     * Returns the given datetime formatted by the apps settings.
@@ -332,6 +497,99 @@ if (! function_exists('error')) {
 //        return date_create($value)->format(config('app.date_formats.' . config('app.locale') . '.time'));
 //    }
 //}
+
+if (!function_exists('http_status_text')) {
+    /**
+     * Translate a HTTP Status code to plain text.
+     *
+     * The list of codes is complete according to the HTTP Status Code Registry:
+     * http://www.iana.org/assignments/http-status-codes.
+     *
+     * Last updated: 2016-03-01
+     *
+     * Unless otherwise noted, the status code is defined in RFC2616.
+     *
+     * @param int $status
+     * @return string
+     */
+    function http_status_text($status)
+    {
+        $statusTexts = [
+
+            // 1xx Informational
+            100 => 'Continue',
+            101 => 'Switching Protocols',
+            102 => 'Processing',                        // RFC2518
+
+            // 2xx Success
+            200 => 'OK',
+            201 => 'Created',
+            202 => 'Accepted',
+            203 => 'Non-Authoritative Information',
+            204 => 'No Content',
+            205 => 'Reset Content',
+            206 => 'Partial Content',
+            207 => 'Multi-Status',                      // RFC4918
+            208 => 'Already Reported',                  // RFC5842
+            226 => 'IM Used',                           // RFC3229
+
+            // 3xx Redirection
+            300 => 'Multiple Choices',
+            301 => 'Moved Permanently',
+            302 => 'Found',
+            303 => 'See Other',
+            304 => 'Not Modified',
+            305 => 'Use Proxy',
+            307 => 'Temporary Redirect',
+            308 => 'Permanent Redirect',                // RFC7238
+
+            // 4xx Client Error
+            400 => 'Bad Request',
+            401 => 'Unauthorized',
+            402 => 'Payment Required',
+            403 => 'Forbidden',
+            404 => 'Not Found',
+            405 => 'Method Not Allowed',
+            406 => 'Not Acceptable',
+            407 => 'Proxy Authentication Required',
+            408 => 'Request Timeout',
+            409 => 'Conflict',
+            410 => 'Gone',
+            411 => 'Length Required',
+            412 => 'Precondition Failed',
+            413 => 'Payload Too Large',
+            414 => 'URI Too Long',
+            415 => 'Unsupported Media Type',
+            416 => 'Range Not Satisfiable',
+            417 => 'Expectation Failed',
+            418 => 'I\'m a teapot',                     // RFC2324
+            421 => 'Misdirected Request',               // RFC7540
+            422 => 'Unprocessable Entity',              // RFC4918
+            423 => 'Locked',                            // RFC4918
+            424 => 'Failed Dependency',                 // RFC4918
+            426 => 'Upgrade Required',                  // RFC2817
+            428 => 'Precondition Required',             // RFC6585
+            429 => 'Too Many Requests',                 // RFC6585
+            431 => 'Request Header Fields Too Large',   // RFC6585
+            451 => 'Unavailable For Legal Reasons',     // RFC7725
+
+            // 5xx Server Error
+            500 => 'Internal Server Error',
+            501 => 'Not Implemented',
+            502 => 'Bad Gateway',
+            503 => 'Service Unavailable',
+            504 => 'Gateway Timeout',
+            505 => 'HTTP Version Not Supported',
+            506 => 'Variant Also Negotiates',           // RFC2295
+            507 => 'Insufficient Storage',              // RFC4918
+            508 => 'Loop Detected',                     // RFC5842
+            510 => 'Not Extended',                      // RFC2774
+            511 => 'Network Authentication Required',   // RFC6585
+        ];
+
+        return isset($statusTexts[$status]) ? $statusTexts[$status] : '';
+    }
+}
 
 if (!function_exists('is_absolute_path')) {
     /**
@@ -469,6 +727,18 @@ if (!function_exists('locale')) {
     }
 }
 
+if (!function_exists('logger')) {
+    /**
+     * Get the Logger.
+     *
+     * @return \Psr\Log\LoggerInterface
+     */
+    function logger()
+    {
+        return DI::getInstance()->get('logger');
+    }
+}
+
 if (!function_exists('mail_address')) {
     /**
      * Get the email address without the name.
@@ -483,6 +753,18 @@ if (!function_exists('mail_address')) {
         }
 
         return substr($address, $pos + 1, -1);
+    }
+}
+
+if (!function_exists('mailer')) {
+    /**
+     * Get the Mailer.
+     *
+     * @return \Core\Services\Contracts\Mailer
+     */
+    function mailer()
+    {
+        return DI::getInstance()->get('mailer');
     }
 }
 
@@ -521,6 +803,19 @@ if (! function_exists('message')) {
     }
 }
 
+if (!function_exists('migrator')) {
+    /**
+     * Get the Migrator for the given store.
+     *
+     * @param string|null $store Name of the database store
+     * @return \Core\Services\Contracts\Migrator
+     */
+    function migrator($store = null)
+    {
+        return DI::getInstance()->get('migrator', [$store]);
+    }
+}
+
 if (! function_exists('old')) {
     /**
      * Retrieve an input item from the flash.
@@ -536,6 +831,19 @@ if (! function_exists('old')) {
         }
 
         return flash('input.' . $key, $default);
+    }
+}
+
+if (!function_exists('plugin_manager')) {
+    /**
+     * Get the Plugin Manager.
+     *
+     * @param string $package Name of the plugin with vendor, e.g. foo/bar.
+     * @return \Core\Services\Contracts\PluginManager
+     */
+    function plugin_manager($package)
+    {
+        return DI::getInstance()->get('plugin-manager', [$package]);
     }
 }
 
@@ -601,96 +909,62 @@ if (!function_exists('remove_dir')) {
     }
 }
 
-if (!function_exists('http_status_text')) {
+if (!function_exists('request')) {
     /**
-     * Translate a HTTP Status code to plain text.
+     * Get the Request Object
      *
-     * The list of codes is complete according to the HTTP Status Code Registry:
-     * http://www.iana.org/assignments/http-status-codes.
-     *
-     * Last updated: 2016-03-01
-     *
-     * Unless otherwise noted, the status code is defined in RFC2616.
-     *
-     * @param int $status
-     * @return string
+     * @return \Core\Services\Contracts\Request
      */
-    function http_status_text($status)
+    function request()
     {
-        $statusTexts = [
+        return DI::getInstance()->get('request');
+    }
+}
 
-            // 1xx Informational
-            100 => 'Continue',
-            101 => 'Switching Protocols',
-            102 => 'Processing',                        // RFC2518
+if (!function_exists('response')) {
+    /**
+     * Get the Response Object
+     *
+     * @return \Core\Services\Contracts\Response
+     */
+    function response()
+    {
+        return DI::getInstance()->get('response');
+    }
+}
 
-            // 2xx Success
-            200 => 'OK',
-            201 => 'Created',
-            202 => 'Accepted',
-            203 => 'Non-Authoritative Information',
-            204 => 'No Content',
-            205 => 'Reset Content',
-            206 => 'Partial Content',
-            207 => 'Multi-Status',                      // RFC4918
-            208 => 'Already Reported',                  // RFC5842
-            226 => 'IM Used',                           // RFC3229
+if (!function_exists('session')) {
+    /**
+     * Get the Session.
+     *
+     * @param string|null $key Key using "dot" notation
+     * @param mixed $default
+     * @return \Core\Services\Contracts\Session|mixed
+     */
+    function session($key = null, $default = null)
+    {
+        /** @var \Core\Services\Contracts\Session $session */
+        $session = DI::getInstance()->get('session');
+        if ($key === null) {
+            return $session;
+        }
 
-            // 3xx Redirection
-            300 => 'Multiple Choices',
-            301 => 'Moved Permanently',
-            302 => 'Found',
-            303 => 'See Other',
-            304 => 'Not Modified',
-            305 => 'Use Proxy',
-            307 => 'Temporary Redirect',
-            308 => 'Permanent Redirect',                // RFC7238
+        return $session->get($key, $default);
+    }
+}
 
-            // 4xx Client Error
-            400 => 'Bad Request',
-            401 => 'Unauthorized',
-            402 => 'Payment Required',
-            403 => 'Forbidden',
-            404 => 'Not Found',
-            405 => 'Method Not Allowed',
-            406 => 'Not Acceptable',
-            407 => 'Proxy Authentication Required',
-            408 => 'Request Timeout',
-            409 => 'Conflict',
-            410 => 'Gone',
-            411 => 'Length Required',
-            412 => 'Precondition Failed',
-            413 => 'Payload Too Large',
-            414 => 'URI Too Long',
-            415 => 'Unsupported Media Type',
-            416 => 'Range Not Satisfiable',
-            417 => 'Expectation Failed',
-            418 => 'I\'m a teapot',                     // RFC2324
-            421 => 'Misdirected Request',               // RFC7540
-            422 => 'Unprocessable Entity',              // RFC4918
-            423 => 'Locked',                            // RFC4918
-            424 => 'Failed Dependency',                 // RFC4918
-            426 => 'Upgrade Required',                  // RFC2817
-            428 => 'Precondition Required',             // RFC6585
-            429 => 'Too Many Requests',                 // RFC6585
-            431 => 'Request Header Fields Too Large',   // RFC6585
-            451 => 'Unavailable For Legal Reasons',     // RFC7725
-
-            // 5xx Server Error
-            500 => 'Internal Server Error',
-            501 => 'Not Implemented',
-            502 => 'Bad Gateway',
-            503 => 'Service Unavailable',
-            504 => 'Gateway Timeout',
-            505 => 'HTTP Version Not Supported',
-            506 => 'Variant Also Negotiates',           // RFC2295
-            507 => 'Insufficient Storage',              // RFC4918
-            508 => 'Loop Detected',                     // RFC5842
-            510 => 'Not Extended',                      // RFC2774
-            511 => 'Network Authentication Required',   // RFC6585
-        ];
-
-        return isset($statusTexts[$status]) ? $statusTexts[$status] : '';
+if (!function_exists('stdio')) {
+    /**
+     * Get the standard input/output streams.
+     *
+     * @param resource $stdin  Standard input stream
+     * @param resource $stdout Standard output stream
+     * @param resource $stderr Standard error stream
+     * @return \Core\Services\Contracts\Stdio
+     */
+    function stdio($stdin = null, $stdout = null, $stderr = null)
+    {
+        return DI::getInstance()->get('stdio', [$stdin, $stdout, $stderr]);
     }
 }
 
@@ -721,6 +995,31 @@ if (!function_exists('url')) {
     function url($path = '', $parameters = [])
     {
         return DI::getInstance()->get('request')->baseUrl() . (!empty($path) ? '/' . $path : '') . (!empty($parameters) ? '?' . http_build_query($parameters) : '');
+    }
+}
+
+if (!function_exists('view')) {
+    /**
+     * Get the evaluated view contents for the given view.
+     *
+     * @param string|null $name Name of the view
+     * @param array|\Core\Services\Contracts\Collection $variables
+     * @return string|\Core\Services\Contracts\View
+     */
+    function view($name = null, $variables = [])
+    {
+        if ($name === null) {
+            return DI::getInstance()->get('view');
+        }
+
+        return DI::getInstance()->get('response')->view($name, $variables);
+
+//        $view = DI::getInstance()->get('view');
+//        if ($name === null) {
+//            return $view;
+//        }
+//
+//        return $view->render($name, $variables);
     }
 }
 
