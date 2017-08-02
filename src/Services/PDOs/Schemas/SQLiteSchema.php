@@ -349,6 +349,22 @@ class SQLiteSchema extends Schema
     /**
      * @inheritdoc
      */
+    public function truncateTable($table)
+    {
+        $table = $this->db->quoteName($table);
+
+        $this->db->transaction(function() use($table) {
+            $this->db->exec("DELETE FROM $table");
+            /** @noinspection SqlDialectInspection */
+            $this->db->exec('DELETE FROM sqlite_sequence WHERE name = ?', [trim($table, '"')]);
+        });
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function addColumn($table, $column, array $options)
     {
         $type     = $options['type'];
@@ -413,14 +429,9 @@ class SQLiteSchema extends Schema
     /**
      * @inheritdoc
      */
-    public function addIndex($table, $name, array $options)
+    public function addIndex($table, $columns, array $options = [])
     {
-        if (empty($options['columns'])) {
-            throw new InvalidArgumentException("Cannot add index without columns.");
-        }
-
-        $columns = $options['columns'];
-
+        $columns = (array)$columns;
         $primary = isset($options['primary']) ? $options['primary'] : false;
         if ($primary) {
             // We have to recreate the table...
@@ -430,13 +441,13 @@ class SQLiteSchema extends Schema
             // We can add the index on the regularly way.
             $unique = isset($options['unique']) ? $options['unique'] : false;
             $index  = $unique ? 'UNIQUE INDEX' : 'INDEX';
-            if (is_null($name)) {
-                $name = $this->createIndexName($table, $columns, $unique);
-            }
+            $name   = empty($options['name']) ? $this->createIndexName($table, $columns, $unique) : $options['name'];
+
+            $quotedName    = $this->db->quoteName($name);
             $quotedTable   = $this->db->quoteName($table);
             $quotedColumns = '"' . str_replace(',', '","', str_replace('"', '""', implode(',', $columns))) . '"';
             /** @noinspection SqlNoDataSourceInspection */
-            $this->db->exec("CREATE {$index} {$name} ON {$quotedTable} ($quotedColumns)");
+            $this->db->exec("CREATE {$index} {$quotedName} ON {$quotedTable} ($quotedColumns)");
         }
 
         return $this;
@@ -445,7 +456,7 @@ class SQLiteSchema extends Schema
     /**
      * @inheritdoc
      */
-    public function dropIndex($table, $name, array $options = [])
+    public function dropIndex($table, $columns, array $options = [])
     {
         $primary = isset($options['primary']) ? $options['primary'] : false;
         if ($primary) { // index associated with PRIMARY KEY constraint cannot be dropped
@@ -453,12 +464,14 @@ class SQLiteSchema extends Schema
         }
         else {
             $unique = isset($options['unique']) ? $options['unique'] : false;
-            if (is_null($name)) {
-                if (empty($options['columns'])) {
+            if (empty($options['name'])) {
+                if (empty($columns)) {
                     throw new InvalidArgumentException("Cannot find index without name and columns.");
                 }
-                $columns = $options['columns'];
-                $name = $this->createIndexName($table, $columns, $unique);
+                $name = $this->createIndexName($table, (array)$columns, $unique);
+            }
+            else {
+                $name = $options['name'];
             }
             if ($unique) { // index associated with UNIQUE constraint cannot be dropped
                 $this->recreateTable($table, 'dropIndex', ['name' => $name]);
@@ -598,8 +611,8 @@ class SQLiteSchema extends Schema
             $this->db->exec("DROP TABLE {$oldTable}");
 
             // 5. Create the indexes
-            foreach ($indexes as $name => $attr) {
-                $this->addIndex($table, $name, $attr);
+            foreach ($indexes as $attr) {
+                $this->addIndex($table, $attr['columns'], $attr);
             }
         });
     }

@@ -84,9 +84,6 @@ abstract class Schema implements SchemaContract
      */
     abstract public function createTable($table, array $columns, array $options = []);
 
-    // todo createTempTable($table, $selectStatement)
-    // “create table temp_table as select * from sync;”
-
     /**
      * @inheritdoc
      */
@@ -94,7 +91,7 @@ abstract class Schema implements SchemaContract
     {
         $table = $this->db->quoteName($table);
 
-        $this->db->exec("DROP TABLE {$table}"); // todo geschweifte Klammern müssen nicht sein
+        $this->db->exec("DROP TABLE {$table}");
 
         return $this;
     }
@@ -170,15 +167,11 @@ abstract class Schema implements SchemaContract
     /**
      * @inheritdoc
      */
-    public function addIndex($table, $name, array $options) // todo name zu den optins packen, da nicht zwingend erforderlich
+    public function addIndex($table, $columns, array $options = [])
     {
-        if (empty($options['columns'])) {
-            throw new InvalidArgumentException("Cannot add index without columns.");
-        }
-
+        $columns     = (array)$columns;
         $quotedTable = $this->db->quoteName($table);
 
-        $columns = $options['columns'];
         $quotedColumns = [];
         foreach ($columns as $column) {
             $quotedColumns[] = $this->db->quoteName($column);
@@ -192,11 +185,10 @@ abstract class Schema implements SchemaContract
         else {
             $unique = isset($options['unique']) ? $options['unique'] : false;
             $index  = $unique ? 'UNIQUE' : 'INDEX';
-            if ($name === null) {
-                $name = $this->createIndexName($table, $columns, $unique);
-            }
-            $name = $this->db->quoteName($name);
-            $this->db->exec("ALTER TABLE {$quotedTable} ADD {$index} {$name} ($quotedColumns)");
+            $name   = empty($options['name']) ? $this->createIndexName($table, $columns, $unique) : $options['name'];
+
+            $quotedName = $this->db->quoteName($name);
+            $this->db->exec("ALTER TABLE {$quotedTable} ADD {$index} {$quotedName} ($quotedColumns)");
         }
 
         return $this;
@@ -205,7 +197,7 @@ abstract class Schema implements SchemaContract
     /**
      * @inheritdoc
      */
-    public function dropIndex($table, $name, array $options = []) // todo name zu den optins packen, da nicht zwingend erforderlich
+    public function dropIndex($table, $columns, array $options = [])
     {
         $quotedTable = $this->db->quoteName($table);
 
@@ -214,15 +206,15 @@ abstract class Schema implements SchemaContract
             $this->db->exec("ALTER TABLE {$quotedTable} DROP PRIMARY KEY");
         }
         else {
-            if ($name === null) {
-                if (empty($options['columns'])) {
+            if (empty($options['name'])) {
+                if (empty($columns)) {
                     throw new InvalidArgumentException("Cannot find index without name and columns.");
                 }
-                $columns = $options['columns'];
                 $unique  = isset($options['unique']) ? $options['unique'] : false;
-                $name = $this->createIndexName($table, $columns, $unique);
-                // todo der Name sollte besser aus der Indexliste gesucht werden.
-                // Momentan wird einfach angenommen, dass der Index wie vom Access Layer vorgegeben heißt.
+                $name = $this->createIndexName($table, (array)$columns, $unique);
+            }
+            else {
+                $name = $options['name'];
             }
             $name = $this->db->quoteName($name);
             $this->db->exec("ALTER TABLE {$quotedTable} DROP INDEX {$name}");

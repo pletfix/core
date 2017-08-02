@@ -10,6 +10,16 @@ class MySqlBuilder extends Builder
     /**
      * @inheritdoc
      */
+    protected function insertEmptyRecord()
+    {
+        $table = implode(', ', $this->from);
+
+        $this->db->exec("INSERT INTO $table () VALUES ()");
+    }
+
+    /**
+     * @inheritdoc
+     */
     protected function doDelete()
     {
         $bindings = array_merge($this->bindings['join'], $this->bindings['where'], $this->bindings['order']);

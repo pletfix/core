@@ -24,7 +24,7 @@ class MySqlBuilderTest extends TestCase
     {
         $this->db = $this->getMockBuilder(Database::class)
             ->setConstructorArgs([['database' => '~test']])
-            ->setMethods(['quote', 'exec'])
+            ->setMethods(['quote', 'exec', 'lastInsertId'])
             ->getMockForAbstractClass();
 
         $this->db->expects($this->any())
@@ -34,6 +34,22 @@ class MySqlBuilderTest extends TestCase
             });
 
         $this->builder = new MySqlBuilder($this->db);
+    }
+
+    public function testInsertEmptyData()
+    {
+        /** @noinspection SqlDialectInspection */
+        $this->db->expects($this->once())
+            ->method('exec')
+            ->with('INSERT INTO "table2" () VALUES ()')
+            ->willReturn(0);
+
+        /** @noinspection SqlDialectInspection */
+        $this->db->expects($this->once())
+            ->method('lastInsertId')
+            ->willReturn(88);
+
+        $this->assertSame(88, $this->builder->from('table2')->insert([]));
     }
 
     public function testDelete()

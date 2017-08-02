@@ -208,6 +208,17 @@ class SQLiteSchemaTest extends SchemaTestCase
         $this->assertInstanceOf(SQLiteSchema::class, $this->schema->renameTable('table1', 'table99'));
     }
 
+    public function testTruncateTable()
+    {
+        /** @noinspection SqlDialectInspection */
+        $this->expectsExec([
+            'DELETE FROM "table1"',
+            'DELETE FROM sqlite_sequence WHERE name = \'table1\'',
+        ]);
+
+        $this->assertInstanceOf(SQLiteSchema::class, $this->schema->truncateTable('table1'));
+    }
+
     private function expectGetColumnsAndIndexesOfTable3()
     {
         /** @noinspection SqlDialectInspection */
@@ -268,7 +279,7 @@ class SQLiteSchemaTest extends SchemaTestCase
             'DELETE FROM _comments WHERE table_name = \'table3\'',
             'INSERT INTO "table3" ("string1","string2","integer2") SELECT "string1","string2", \'0\' AS "integer2" FROM t',
             'DROP TABLE t',
-            'CREATE UNIQUE INDEX table3_string1_string2_unique ON "table3" ("string1","string2")',
+            'CREATE UNIQUE INDEX "table3_string1_string2_unique" ON "table3" ("string1","string2")',
         ], false);
 
         $this->assertInstanceOf(SQLiteSchema::class, $this->schema->addColumn('table3', 'integer2', [
@@ -303,7 +314,7 @@ class SQLiteSchemaTest extends SchemaTestCase
             'DELETE FROM _comments WHERE table_name = \'table3\'',
             'INSERT INTO "table3" ("string1","string99") SELECT "string1","string2" FROM t',
             'DROP TABLE t',
-            'CREATE UNIQUE INDEX table3_string1_string99_unique ON "table3" ("string1","string99")',
+            'CREATE UNIQUE INDEX "table3_string1_string99_unique" ON "table3" ("string1","string99")',
         ], false);
 
         $this->assertInstanceOf(SQLiteSchema::class, $this->schema->renameColumn('table3', 'string2', 'string99'));
@@ -328,9 +339,7 @@ class SQLiteSchemaTest extends SchemaTestCase
     {
         $this->expectsExecFile('create_table1_index');
 
-        $this->assertInstanceOf(SQLiteSchema::class, $this->schema->addIndex('table1', null, [
-            'columns' => ['string1', 'string2'],
-        ]));
+        $this->assertInstanceOf(SQLiteSchema::class, $this->schema->addIndex('table1', ['string1', 'string2']));
     }
 
     public function testAddPrimaryIndex()
@@ -343,19 +352,10 @@ class SQLiteSchemaTest extends SchemaTestCase
             'CREATE TABLE "table3" ("string1" VARCHAR(255) NOT NULL COLLATE NOCASE, "string2" VARCHAR(255) NOT NULL COLLATE NOCASE, PRIMARY KEY ("string1","string3"))',
             'INSERT INTO "table3" ("string1","string2") SELECT "string1","string2" FROM t',
             'DROP TABLE t',
-            'CREATE UNIQUE INDEX table3_string1_string2_unique ON "table3" ("string1","string2")',
+            'CREATE UNIQUE INDEX "table3_string1_string2_unique" ON "table3" ("string1","string2")',
         ], false);
 
-        $this->assertInstanceOf(SQLiteSchema::class, $this->schema->addIndex('table3', null, [
-            'columns' => ['string1', 'string3'],
-            'primary'  => true,
-        ]));
-    }
-
-    public function testAddIndexWithoutColumns()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->schema->addIndex('table1', 'index1', []);
+        $this->assertInstanceOf(SQLiteSchema::class, $this->schema->addIndex('table3', ['string1', 'string3'], ['primary' => true]));
     }
 
     public function testDropIndex()
@@ -363,9 +363,7 @@ class SQLiteSchemaTest extends SchemaTestCase
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(['DROP INDEX table1_column1_column2_index']);
 
-        $this->assertInstanceOf(SQLiteSchema::class, $this->schema->dropIndex('table1', null, [
-            'columns' => ['column1', 'column2'],
-        ]));
+        $this->assertInstanceOf(SQLiteSchema::class, $this->schema->dropIndex('table1', ['column1', 'column2']));
     }
 
     public function testDropUniqueIndex()
@@ -381,10 +379,7 @@ class SQLiteSchemaTest extends SchemaTestCase
             'DROP TABLE t',
         ], false);
 
-        $this->assertInstanceOf(SQLiteSchema::class, $this->schema->dropIndex('table3', null, [
-            'columns' => ['string1', 'string2'],
-            'unique'  => true,
-        ]));
+        $this->assertInstanceOf(SQLiteSchema::class, $this->schema->dropIndex('table3', ['string1', 'string2'], ['unique' => true]));
     }
 
     public function testDropPrimaryIndex()
@@ -398,18 +393,24 @@ class SQLiteSchemaTest extends SchemaTestCase
             'DELETE FROM _comments WHERE table_name = \'table3\'',
             'INSERT INTO "table3" ("string1","string2") SELECT "string1","string2" FROM t',
             'DROP TABLE t',
-            'CREATE UNIQUE INDEX table3_string1_string2_unique ON "table3" ("string1","string2")',
+            'CREATE UNIQUE INDEX "table3_string1_string2_unique" ON "table3" ("string1","string2")',
         ], false);
 
-        $this->assertInstanceOf(SQLiteSchema::class, $this->schema->dropIndex('table3', null, [
-            'primary'  => true,
-        ]));
+        $this->assertInstanceOf(SQLiteSchema::class, $this->schema->dropIndex('table3', null, ['primary' => true]));
+    }
+
+    public function testDropIndexWithName()
+    {
+        /** @noinspection SqlDialectInspection */
+        $this->expectsExec(['DROP INDEX index1']);
+
+        $this->assertInstanceOf(SQLiteSchema::class, $this->schema->dropIndex('table1', null, ['name' => 'index1']));
     }
 
     public function testDropIndexWithoutColumnsAndWithoutName()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->schema->dropIndex('table1', null, []);
+        $this->schema->dropIndex('table1', null);
     }
 
     public function testConvertFieldType()

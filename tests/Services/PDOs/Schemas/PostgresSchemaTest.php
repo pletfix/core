@@ -260,7 +260,7 @@ class PostgresSchemaTest extends SchemaTestCase
             'CREATE TABLE "table1" ("string1" VARCHAR(255) NOT NULL, "column1" VARCHAR(255) NOT NULL)',
             'INSERT INTO "table1" ("string1","column1") SELECT "string1", \'\' AS "column1" FROM t',
             'DROP TABLE t',
-            'CREATE INDEX table1_string1_index ON "table1" ("string1")',
+            'CREATE INDEX "table1_string1_index" ON "table1" ("string1")',
         ], false);
 
         $this->assertInstanceOf(PostgresSchema::class, $this->schema->addColumn('table1', 'column1', [
@@ -271,27 +271,14 @@ class PostgresSchemaTest extends SchemaTestCase
     public function testAddIndex()
     {
         $this->expectsExecFile('create_table1_index');
-
-        $this->assertInstanceOf(PostgresSchema::class, $this->schema->addIndex('table1', null, [
-            'columns' => ['string1', 'string2'],
-        ]));
+        $this->assertInstanceOf(PostgresSchema::class, $this->schema->addIndex('table1', ['string1', 'string2']));
     }
 
     public function testAddPrimaryIndex()
     {
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(['ALTER TABLE "table1" ADD PRIMARY KEY ("id")']);
-
-        $this->assertInstanceOf(PostgresSchema::class, $this->schema->addIndex('table1', null, [
-            'columns' => ['id'],
-            'primary'  => true,
-        ]));
-    }
-
-    public function testAddIndexWithoutColumns()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->schema->addIndex('table1', 'index1', []);
+        $this->assertInstanceOf(PostgresSchema::class, $this->schema->addIndex('table1', 'id', ['primary' => true]));
     }
 
     public function testDropIndex()
@@ -299,9 +286,7 @@ class PostgresSchemaTest extends SchemaTestCase
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(['DROP INDEX table1_column1_column2_index']);
 
-        $this->assertInstanceOf(PostgresSchema::class, $this->schema->dropIndex('table1', null, [
-            'columns' => ['column1', 'column2'],
-        ]));
+        $this->assertInstanceOf(PostgresSchema::class, $this->schema->dropIndex('table1', ['column1', 'column2']));
     }
 
     public function testDropUniqueIndex()
@@ -309,10 +294,7 @@ class PostgresSchemaTest extends SchemaTestCase
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(['DROP INDEX table1_column1_unique']);
 
-        $this->assertInstanceOf(PostgresSchema::class, $this->schema->dropIndex('table1', null, [
-            'columns' => ['column1'],
-            'unique'  => true,
-        ]));
+        $this->assertInstanceOf(PostgresSchema::class, $this->schema->dropIndex('table1', 'column1', ['unique' => true]));
     }
 
     public function testDropPrimaryIndex()
@@ -320,9 +302,7 @@ class PostgresSchemaTest extends SchemaTestCase
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(['ALTER TABLE "table1" DROP CONSTRAINT table1_pkey']);
 
-        $this->assertInstanceOf(PostgresSchema::class, $this->schema->dropIndex('table1', null, [
-            'primary'  => true,
-        ]));
+        $this->assertInstanceOf(PostgresSchema::class, $this->schema->dropIndex('table1', null, ['primary' => true]));
     }
 
     public function testDropIndexWithName()
@@ -330,14 +310,13 @@ class PostgresSchemaTest extends SchemaTestCase
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(['DROP INDEX index1']);
 
-        $this->assertInstanceOf(PostgresSchema::class, $this->schema->dropIndex('table1', 'index1', [
-        ]));
+        $this->assertInstanceOf(PostgresSchema::class, $this->schema->dropIndex('table1', null, ['name' => 'index1']));
     }
 
     public function testDropIndexWithoutColumnsAndWithoutName()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->schema->dropIndex('table1', null, []);
+        $this->schema->dropIndex('table1', null);
     }
 
     public function testConvertFieldType()

@@ -55,19 +55,6 @@ class PostgresBuilderTest extends TestCase
         $this->assertSame(88, $this->builder->from('table1')->insert($data));
     }
 
-//    private function expectsQuery($expectedQuery, $expectedBindings, $result, $index = null)
-//    {
-//        $this->db->expects($index === null ? $this->once() : $this->at($index))
-//            ->method('query')
-//            ->willReturnCallback(function($actualQuery, $actualBindings) use ($expectedQuery, $expectedBindings, $result) {
-//                $actualQuery   = trim(preg_replace('/\s+/', ' ', str_replace("\n", '', $actualQuery)), '; ');
-//                $expectedQuery = trim(preg_replace('/\s+/', ' ', str_replace("\n", '', $expectedQuery)), '; ');
-//                $this->assertSame($expectedQuery, $actualQuery);
-//                $this->assertSame($expectedBindings, $actualBindings);
-//                return $result;
-//            });
-//    }
-
     public function testInsertEmptyData()
     {
         $schema = $this->getMockBuilder(PostgresSchema::class)
@@ -84,7 +71,7 @@ class PostgresBuilderTest extends TestCase
             ]);
 
         /** @noinspection SqlDialectInspection */
-        $this->db->expects($this->once())
+        $this->db->expects($this->any())
             ->method('exec')
             ->with('INSERT INTO "table2" ("id") VALUES (nextval(pg_get_serial_sequence(\'table2\', \'id\')))')
             ->willReturn(0);

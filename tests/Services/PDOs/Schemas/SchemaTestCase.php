@@ -52,7 +52,8 @@ class SchemaTestCase extends TestCase
                     $this->assertStringStartsWith($statements[$sequence], $statement);
                 }
                 $sequence++;
-                $this->returnValue(0);
+
+                return 0;
             });
     }
 

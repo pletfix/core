@@ -64,7 +64,7 @@ interface Schema
      * - collation: (string) The collation of the column.
      * - comment:   (string) A hidden comment.
      *
-     * Options have following values:
+     * Options can have following values:
      * - temporary: (bool)   The table is temporary.
      * - collation: (string) The default collation of the table (supported only by MySql).
      * - comment:   (string) A hidden comment.
@@ -110,7 +110,7 @@ interface Schema
     /**
      * Add a new column to the table.
      *
-     * Options have following values:
+     * Options can have following values:
      * - type:      (string) The column data type. Data types are as reported by the database.
      * - size:      (int)    The column size (the maximum number of digits).
      * - scale:     (int)    The number of digits to the right of the numeric point. It must be no larger than size.
@@ -148,35 +148,36 @@ interface Schema
     /**
      * Create an index for a given table.
      *
-     * Options have following values:
-     * - columns    (string[])  List of column names.
+     * Options can have following values:
+     * - name:      (string)    The name of the index. It will be generated automatically if not set. It will be ignored by a primary key.
      * - unique:    (bool)      The index is a unique index.
      * - primary:   (bool)      The index is the primary key.
      *
      * @param string $table Name of the table which the index is for.
-     * @param string|null $name The name of the index. It will be generated automatically if not set. It will be ignored by a primary key.
+     * @param string|string[] $columns One or more columns.
      * @param array $options
      * @return $this
      */
-    public function addIndex($table, $name, array $options); // todo name in options aufnehmen oder als letzten Parameter
+    public function addIndex($table, $columns, array $options = []);
 
     /**
-     * Drop a index from the table.
+     * Drop an index from the table.
      *
-     * Options have following values:
-     * - columns    (string[])  List of column names. Could be null if the index name is given or it's the primary index.
+     * Options can have following values:
+     * - name:      (string)    The name of the index. It will be generated automatically if not set.
      * - unique:    (bool)      The index is a unique index. It's needed to generate the name.
      * - primary:   (bool)      The index is the primary key.
      *
      * @param string $table
-     * @param string|null $name The name of the index. It will be generated automatically if not set.
+     * @param string|string[]|null $columns One or more columns. Could be null if the index name is given or it's the primary index.
      * @param array $options
      * @return $this
      */
-    public function dropIndex($table, $name, array $options = []);
+    public function dropIndex($table, $columns, array $options = []);
 
     /**
      * Get a Zero-Value by given column type.
+     *
      * @param string $type Column Type supported by Database Access Layer
      * @return string|int
      */

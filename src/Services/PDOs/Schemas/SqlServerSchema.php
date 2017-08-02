@@ -362,17 +362,10 @@ class SqlServerSchema extends Schema
     /**
      * @inheritdoc
      */
-    public function addIndex($table, $name, array $options)
+    public function addIndex($table, $columns, array $options = [])
     {
-        // mit Postgres identisch
-
-        if (empty($options['columns'])) {
-            throw new InvalidArgumentException("Cannot add index without columns.");
-        }
-
+        $columns       = (array)$columns;
         $quotedTable   = $this->db->quoteName($table);
-
-        $columns = $options['columns'];
         $quotedColumns = '[' . str_replace(',', '],[', str_replace(']', ']]', implode(',', $columns))) . ']';
 
         $primary = isset($options['primary']) ? $options['primary'] : false;
@@ -383,12 +376,10 @@ class SqlServerSchema extends Schema
             // We can add the index on the regularly way.
             $unique = isset($options['unique']) ? $options['unique'] : false;
             $index  = $unique ? 'UNIQUE INDEX' : 'INDEX';
-            if (is_null($name)) {
-                $name = $this->createIndexName($table, $columns, $unique);
-            }
+            $name   = empty($options['name']) ? $this->createIndexName($table, $columns, $unique) : $options['name'];
 
-            // case sensitive
-            $this->db->exec("CREATE {$index} {$name} ON {$quotedTable} ($quotedColumns)");
+            $quotedName = $this->db->quoteName($name);
+            $this->db->exec("CREATE {$index} {$quotedName} ON {$quotedTable} ($quotedColumns)");
         }
 
         return $this;
@@ -397,7 +388,7 @@ class SqlServerSchema extends Schema
     /**
      * @inheritdoc
      */
-    public function dropIndex($table, $name, array $options = [])
+    public function dropIndex($table, $columns, array $options = [])
     {
         // mit Postgres identisch
 
@@ -415,13 +406,15 @@ class SqlServerSchema extends Schema
             $this->db->exec("ALTER TABLE {$quotedTable} DROP CONSTRAINT {$name}");
         }
         else {
-            if (is_null($name)) {
-                if (empty($options['columns'])) {
+            if (empty($options['name'])) {
+                if (empty($columns)) {
                     throw new InvalidArgumentException("Cannot find index without name and columns.");
                 }
-                $columns = $options['columns'];
                 $unique  = isset($options['unique']) ? $options['unique'] : false;
-                $name = $this->createIndexName($table, $columns, $unique);
+                $name = $this->createIndexName($table, (array)$columns, $unique);
+            }
+            else {
+                $name = $options['name'];
             }
 
             /** @noinspection SqlNoDataSourceInspection */
@@ -470,8 +463,8 @@ class SqlServerSchema extends Schema
             $this->db->exec("DROP TABLE {$oldTable}");
 
             // 5. Create the indexes
-            foreach ($indexes as $name => $attr) {
-                $this->addIndex($table, $name, $attr);
+            foreach ($indexes as $attr) {
+                $this->addIndex($table, $attr['columns'], $attr);
             }
         });
     }

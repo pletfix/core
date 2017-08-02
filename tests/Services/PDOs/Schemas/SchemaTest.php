@@ -436,9 +436,7 @@ class SchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD INDEX "table1_column1_column2_index" ("column1", "column2")')
             ->willReturn(0);
 
-        $this->assertInstanceOf(Schema::class, $this->schema->addIndex('table1', null, [
-            'columns' => ['column1', 'column2'],
-        ]));
+        $this->assertInstanceOf(Schema::class, $this->schema->addIndex('table1', ['column1', 'column2']));
     }
 
     public function testAddUniqueIndex()
@@ -449,10 +447,7 @@ class SchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD UNIQUE "table1_column1_unique" ("column1")')
             ->willReturn(0);
 
-        $this->assertInstanceOf(Schema::class, $this->schema->addIndex('table1', null, [
-            'columns' => ['column1'],
-            'unique'  => true,
-        ]));
+        $this->assertInstanceOf(Schema::class, $this->schema->addIndex('table1', 'column1', ['unique' => true]));
     }
 
     public function testAddPrimaryIndex()
@@ -463,10 +458,7 @@ class SchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD PRIMARY KEY ("column1")')
             ->willReturn(0);
 
-        $this->assertInstanceOf(Schema::class, $this->schema->addIndex('table1', null, [
-            'columns' => ['column1'],
-            'primary'  => true,
-        ]));
+        $this->assertInstanceOf(Schema::class, $this->schema->addIndex('table1', 'column1', ['primary' => true]));
     }
 
     public function testAddIndexWithName()
@@ -477,15 +469,7 @@ class SchemaTest extends TestCase
             ->with('ALTER TABLE "table1" ADD INDEX "index1" ("column1")')
             ->willReturn(0);
 
-        $this->assertInstanceOf(Schema::class, $this->schema->addIndex('table1', 'index1', [
-            'columns' => ['column1'],
-        ]));
-    }
-
-    public function testAddIndexWithoutColumns()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->schema->addIndex('table1', 'index1', []);
+        $this->assertInstanceOf(Schema::class, $this->schema->addIndex('table1', 'column1', ['name' => 'index1']));
     }
 
     public function testDropIndex()
@@ -496,9 +480,7 @@ class SchemaTest extends TestCase
             ->with('ALTER TABLE "table1" DROP INDEX "table1_column1_column2_index"')
             ->willReturn(0);
 
-        $this->assertInstanceOf(Schema::class, $this->schema->dropIndex('table1', null, [
-            'columns' => ['column1', 'column2'],
-        ]));
+        $this->assertInstanceOf(Schema::class, $this->schema->dropIndex('table1', ['column1', 'column2']));
     }
 
     public function testDropUniqueIndex()
@@ -509,10 +491,7 @@ class SchemaTest extends TestCase
             ->with('ALTER TABLE "table1" DROP INDEX "table1_column1_unique"')
             ->willReturn(0);
 
-        $this->assertInstanceOf(Schema::class, $this->schema->dropIndex('table1', null, [
-            'columns' => ['column1'],
-            'unique'  => true,
-        ]));
+        $this->assertInstanceOf(Schema::class, $this->schema->dropIndex('table1', 'column1', ['unique' => true]));
     }
 
     public function testDropPrimaryIndex()
@@ -523,9 +502,7 @@ class SchemaTest extends TestCase
             ->with('ALTER TABLE "table1" DROP PRIMARY KEY')
             ->willReturn(0);
 
-        $this->assertInstanceOf(Schema::class, $this->schema->dropIndex('table1', null, [
-            'primary'  => true,
-        ]));
+        $this->assertInstanceOf(Schema::class, $this->schema->dropIndex('table1', null, ['primary' => true]));
     }
 
     public function testDropIndexWithName()
@@ -536,14 +513,13 @@ class SchemaTest extends TestCase
             ->with('ALTER TABLE "table1" DROP INDEX "index1"')
             ->willReturn(0);
 
-        $this->assertInstanceOf(Schema::class, $this->schema->dropIndex('table1', 'index1', [
-        ]));
+        $this->assertInstanceOf(Schema::class, $this->schema->dropIndex('table1', null, ['name' => 'index1']));
     }
 
     public function testDropIndexWithoutColumnsAndWithoutName()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->schema->dropIndex('table1', null, []);
+        $this->schema->dropIndex('table1', null);
     }
 
     public function testZero()

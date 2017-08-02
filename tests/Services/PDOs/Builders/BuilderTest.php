@@ -833,6 +833,28 @@ class BuilderTest extends TestCase
         $this->assertSame(88, $this->builder->from('table1')->insert($data));
     }
 
+    public function testInsertEmptyRecord()
+    {
+        /** @noinspection SqlDialectInspection */
+        $this->db->expects($this->once())
+            ->method('exec')
+            ->with('INSERT INTO "table1" DEFAULT VALUES')
+            ->willReturn(0);
+
+        /** @noinspection SqlDialectInspection */
+        $this->db->expects($this->once())
+            ->method('lastInsertId')
+            ->willReturn(88);
+
+        $this->assertSame(88, $this->builder->from('table1')->insert([]));
+    }
+
+    public function testInsertEmptyRecordOnBulkMode()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->builder->from('table1')->insert([[], []]);
+    }
+
     public function testUpdate()
     {
         $data = ['a' => 'A', 'b' => 'B'];

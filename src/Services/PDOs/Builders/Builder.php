@@ -147,12 +147,10 @@ class Builder implements BuilderContract
         'ALL', 'AND', 'ANY', 'BETWEEN', 'EXISTS', 'IN', 'LIKE', 'NOT', 'OR', 'SOME',
         'AS', // alias
         'IS', 'NULL', 'TRUE', 'FALSE', // literal
-        //'MOD', 'DIV', //kein Standard, sollte nicht verwendet werden! (nur MySQL?)
+        //'MOD', 'DIV', // no standard (supported by MySQL only)
         'CASE', 'WHEN', 'THEN', 'ELSE', 'END', // if then else
         'ASC', 'DESC', // ordering
     ];
-
-    // todo PostgreSQL: ILIKE und CURRENT_DATE hinzufügen
 
 //    /**
 //     * All of the available clause operators.
@@ -314,10 +312,13 @@ class Builder implements BuilderContract
             $source = $source->toSql();
         }
 
-        // todo u.u. prüfen, ob es ein tabellenname ist und nur compileExpression aufrufen, wenn es ein subquery ist
-        // todo ebenso bei join
-
-        $source = $this->compileExpression($source);
+        if (is_string($source) && preg_match('/^([0-9a-zA-Z$_]+)$/s', trim($source), $match)) { // for maximum performance, first check the most common case.
+            // yes, the source is just a ordinary table name!
+            $source = $this->db->quoteName($source);
+        }
+        else {
+            $source = $this->compileExpression($source);
+        }
 
         if ($alias !== null) {
             if (strncasecmp($source, 'SELECT ', 7) === 0) {
@@ -397,7 +398,13 @@ class Builder implements BuilderContract
             $source = $source->toSql();
         }
 
-        $source = $this->compileExpression($source);
+        if (is_string($source) && preg_match('/^([0-9a-zA-Z$_]+)$/s', trim($source), $match)) { // for maximum performance, first check the most common case.
+            // yes, the source is just a ordinary table name!
+            $source = $this->db->quoteName($source);
+        }
+        else {
+            $source = $this->compileExpression($source);
+        }
 
         if ($alias !== null) {
             if (strncasecmp($source, 'SELECT ', 7) === 0) {
@@ -1074,6 +1081,16 @@ class Builder implements BuilderContract
     }
 
     /**
+     * Insert an empty record.
+     */
+    protected function insertEmptyRecord()
+    {
+        $table = implode(', ', $this->from);
+
+        $this->db->exec("INSERT INTO $table DEFAULT VALUES");
+    }
+
+    /**
      * Insert rows to the table and return the inserted autoincrement sequence value.
      *
      * If you insert multiple rows, the method returns dependent to the driver the first or last inserted id!.
@@ -1083,7 +1100,10 @@ class Builder implements BuilderContract
      */
     protected function doInsert(array $data = [])
     {
-        $table = implode(', ', $this->from);
+        if (empty($data)) {
+            $this->insertEmptyRecord();
+            return $this->db->lastInsertId();
+        }
 
         if (!is_int(key($data))) {
             // single record is inserted
@@ -1095,6 +1115,9 @@ class Builder implements BuilderContract
             // Bulk insert...
             $keys = [];
             foreach ($data as $row) {
+                if (empty($row)) {
+                    throw new InvalidArgumentException('Cannot insert an empty record on bulk mode.');
+                }
                 $keys = array_merge($keys, $row);
             }
             $keys     = array_keys($keys);
@@ -1110,6 +1133,8 @@ class Builder implements BuilderContract
             }
             $params = implode('), (', $temp);
         }
+
+        $table = implode(', ', $this->from);
 
         /** @noinspection SqlDialectInspection */
         $query = "INSERT INTO $table ($columns) VALUES ($params)";
@@ -1361,12 +1386,11 @@ class Builder implements BuilderContract
     {
         $list = [];
         foreach ((array)$columns as $alias => $column) {
-//            // todo testen, ob das Prüfen auf normale Spalte etwas bringt, sonst raus damit
-//            if (is_string($column) && preg_match('/^(?:([0-9a-zA-Z$_]+)\.)?([0-9a-zA-Z$_]+)$/s', trim($column), $match)) { // for maximum performance, first check the most common case..
-//                // yes, the expression is just a column name: "col1" or "t1.col1"!
-//                $column = (!empty($match[1]) ? $this->db->quoteName($match[1]) . '.' : '') . $this->db->quoteName($match[2]);
-//            }
-//            else {
+            if (is_string($column) && preg_match('/^(?:([0-9a-zA-Z$_]+)\.)?([0-9a-zA-Z$_]+)$/s', trim($column), $match)) { // for maximum performance, first check the most common case..
+                // yes, the expression is just a column name: "col1" or "t1.col1"!
+                $column = (!empty($match[1]) ? $this->db->quoteName($match[1]) . '.' : '') . $this->db->quoteName($match[2]);
+            }
+            else {
                 if (is_callable($column)) {
                     $column = $column(new static($this->db));
                 }
@@ -1377,7 +1401,7 @@ class Builder implements BuilderContract
                 }
 
                 $column = $this->compileExpression($column);
-//            }
+            }
 
             if (is_string($alias)) {
                 if (strncasecmp($column, 'SELECT ', 7) === 0) {
