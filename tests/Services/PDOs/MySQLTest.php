@@ -3,17 +3,17 @@
 namespace Core\Tests\Services\PDOs;
 
 use Core\Services\Database;
-use Core\Services\PDOs\Builders\MySqlBuilder;
-use Core\Services\PDOs\MySql;
-use Core\Services\PDOs\Schemas\MySqlSchema;
+use Core\Services\PDOs\Builders\MySQLBuilder;
+use Core\Services\PDOs\MySQL;
+use Core\Services\PDOs\Schemas\MySQLSchema;
 use Core\Testing\TestCase;
 use PDO;
 use PHPUnit_Framework_MockObject_MockObject;
 
-class MySqlTest extends TestCase
+class MySQLTest extends TestCase
 {
     private $config = [
-        'driver'   => 'mysql',
+        'driver'   => 'MySQL',
         'host'     => 'localhost',
         'database' => '~test',
         'username' => 'myuser',
@@ -31,20 +31,20 @@ class MySqlTest extends TestCase
 
     public function testQuoteName()
     {
-        $db = new MySql($this->config);
+        $db = new MySQL($this->config);
         $this->assertSame('`foo``bar`', $db->quoteName('foo`bar'));
     }
     
     public function testSchema()
     {
-        $db = new MySql($this->config);
-        $this->assertInstanceOf(MySqlSchema::class, $db->schema());
+        $db = new MySQL($this->config);
+        $this->assertInstanceOf(MySQLSchema::class, $db->schema());
     }
 
     public function testBuilder()
     {
-        $db = new MySql($this->config);
-        $this->assertInstanceOf(MySqlBuilder::class, $db->builder());
+        $db = new MySQL($this->config);
+        $this->assertInstanceOf(MySQLBuilder::class, $db->builder());
     }
 
     public function testConnectWithDefaultConfig()
@@ -53,7 +53,7 @@ class MySqlTest extends TestCase
         $pdo->expects($this->any())->method('exec')->willReturn(1);
 
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
-        $db = $this->getMockBuilder(MySql::class)
+        $db = $this->getMockBuilder(MySQL::class)
             ->setMethods(['createPDO'])
             ->setConstructorArgs([$this->config])
             ->getMock();
@@ -63,7 +63,7 @@ class MySqlTest extends TestCase
             ->with('mysql:host=localhost;port=3306;dbname=~test', 'myuser', 'psss', $this->options)
             ->willReturn($pdo);
 
-        $this->assertInstanceOf(MySql::class, $db->connect());
+        $this->assertInstanceOf(MySQL::class, $db->connect());
     }
 
     public function testConnectWithOptionalParams()
@@ -75,7 +75,7 @@ class MySqlTest extends TestCase
         $pdo->expects($this->any())->method('exec')->willReturn(1);
 
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
-        $db = $this->getMockBuilder(MySql::class)
+        $db = $this->getMockBuilder(MySQL::class)
             ->setMethods(['createPDO'])
             ->setConstructorArgs([$this->config])
             ->getMock();
@@ -85,6 +85,6 @@ class MySqlTest extends TestCase
             ->with('mysql:host=localhost;port=3306;dbname=~test', 'myuser', 'psss', $this->options)
             ->willReturn($pdo);
 
-        $this->assertInstanceOf(MySql::class, $db->connect());
+        $this->assertInstanceOf(MySQL::class, $db->connect());
     }
 }

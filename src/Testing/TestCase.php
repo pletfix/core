@@ -44,7 +44,7 @@ class TestCase extends PHPUnit_Framework_TestCase
             'default' => '~test',
             'stores' => [
                 '~test' => [
-                    'driver'   => 'sqlite',
+                    'driver'   => 'SQLite',
                     'database' => ':memory:',
                 ],
             ],

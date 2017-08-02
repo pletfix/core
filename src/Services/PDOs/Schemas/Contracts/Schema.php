@@ -66,7 +66,7 @@ interface Schema
      *
      * Options can have following values:
      * - temporary: (bool)   The table is temporary.
-     * - collation: (string) The default collation of the table (supported only by MySql).
+     * - collation: (string) The default collation of the table (supported only by MySQL).
      * - comment:   (string) A hidden comment.
      *
      * @param  string $table

@@ -3,20 +3,20 @@
 namespace Core\Services;
 
 use Core\Services\Contracts\DatabaseFactory as DatabaseFactoryContract;
-use Core\Services\PDOs\MySql;
-use Core\Services\PDOs\Postgres;
+use Core\Services\PDOs\MySQL;
+use Core\Services\PDOs\PostgreSQL;
 use Core\Services\PDOs\SQLite;
-use Core\Services\PDOs\SqlServer;
+use Core\Services\PDOs\MSSQL;
 use InvalidArgumentException;
 
 /**
  * Database Factory
  *
  * Supported Driver:
- * - "mysql"     (MySql)
- * - "pgsql"     (PostgreSQL)
- * - "sqlite"    (SQLite)
- * - "sqlsrv"    (Microsoft SQL Server)
+ * - MSSQL
+ * - MySQL
+ * - PostgreSQL
+ * - SQLite
  */
 class DatabaseFactory implements DatabaseFactoryContract
 {
@@ -64,18 +64,18 @@ class DatabaseFactory implements DatabaseFactoryContract
             throw new InvalidArgumentException('Database driver for store "' . $name . '" is not specified.');
         }
 
-        switch ($config['driver']) { // todo use class name such like "MySQL"
-            case 'mysql':
-                $db = new MySql($config);
+        switch ($config['driver']) {
+            case 'MySQL':
+                $db = new MySQL($config);
                 break;
-            case 'pgsql':
-                $db = new Postgres($config);
+            case 'PostgreSQL':
+                $db = new PostgreSQL($config);
                 break;
-            case 'sqlite':
+            case 'SQLite':
                 $db = new SQLite($config);
                 break;
-            case 'sqlsrv':
-                $db = new SqlServer($config);
+            case 'MSSQL':
+                $db = new MSSQL($config);
                 break;
             default:
                 throw new InvalidArgumentException('Database driver "' . $config['driver'] . '" is not supported.');

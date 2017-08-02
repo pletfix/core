@@ -4,12 +4,12 @@ namespace Core\Tests\Services\PDOs\Builders;
 
 use Core\Services\Database;
 use Core\Services\PDOs\Builders\Contracts\Builder;
-use Core\Services\PDOs\Builders\PostgresBuilder;
-use Core\Services\PDOs\Schemas\PostgresSchema;
+use Core\Services\PDOs\Builders\PostgreSQLBuilder;
+use Core\Services\PDOs\Schemas\PostgreSQLSchema;
 use Core\Testing\TestCase;
 use PHPUnit_Framework_MockObject_MockObject;
 
-class PostgresBuilderTest extends TestCase
+class PostgreSQLBuilderTest extends TestCase
 {
     /**
      * @var Builder
@@ -34,7 +34,7 @@ class PostgresBuilderTest extends TestCase
                 return "'$value'";
             });
 
-        $this->builder = new PostgresBuilder($this->db);
+        $this->builder = new PostgreSQLBuilder($this->db);
     }
 
     public function testInsert()
@@ -57,7 +57,7 @@ class PostgresBuilderTest extends TestCase
 
     public function testInsertEmptyData()
     {
-        $schema = $this->getMockBuilder(PostgresSchema::class)
+        $schema = $this->getMockBuilder(PostgreSQLSchema::class)
             ->setConstructorArgs([$this->db])
             ->setMethods(['columns'])
             ->getMock();
@@ -86,7 +86,7 @@ class PostgresBuilderTest extends TestCase
 
     public function testInsertEmptyDataWithoutIdentity()
     {
-        $schema = $this->getMockBuilder(PostgresSchema::class)
+        $schema = $this->getMockBuilder(PostgreSQLSchema::class)
             ->setConstructorArgs([$this->db])
             ->setMethods(['columns'])
             ->getMock();

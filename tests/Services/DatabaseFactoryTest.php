@@ -2,9 +2,12 @@
 
 namespace Core\Tests\Services;
 
-use Core\Services\Contracts\Database;
 use Core\Services\DatabaseFactory;
 use Core\Services\DI;
+use Core\Services\PDOs\MySQL;
+use Core\Services\PDOs\PostgreSQL;
+use Core\Services\PDOs\SQLite;
+use Core\Services\PDOs\MSSQL;
 use Core\Testing\TestCase;
 use InvalidArgumentException;
 
@@ -20,18 +23,18 @@ class DatabaseFactoryTest extends TestCase
         DI::getInstance()->get('config')->set('database', [
             'default' => 'sqlite',
             'stores' => [
+                'mssql' => [
+                    'driver' => 'MSSQL',
+                ],
                 'mysql' => [
-                    'driver' => 'mysql',
+                    'driver' => 'MySQL',
                 ],
                 'pgsql' => [
-                    'driver' => 'pgsql',
+                    'driver' => 'PostgreSQL',
                 ],
                 'sqlite' => [
-                    'driver'   => 'sqlite',
+                    'driver'   => 'SQLite',
                     'database' => ':memory:',
-                ],
-                'sqlsrv' => [
-                    'driver' => 'sqlsrv',
                 ],
                 'foo1' => [
                 ],
@@ -47,25 +50,25 @@ class DatabaseFactoryTest extends TestCase
         $this->factory = new DatabaseFactory;
     }
 
-    public function testMySqlStore()
+    public function testMySQLStore()
     {
-        $this->assertInstanceOf(Database::class, $this->factory->store('mysql'));
+        $this->assertInstanceOf(MySQL::class, $this->factory->store('mysql'));
     }
 
     public function testPostgreSQL()
     {
-        $this->assertInstanceOf(Database::class, $this->factory->store('pgsql'));
+        $this->assertInstanceOf(PostgreSQL::class, $this->factory->store('pgsql'));
     }
 
     public function testSQLiteStore()
     {
-        $this->assertInstanceOf(Database::class, $this->factory->store());
-        $this->assertInstanceOf(Database::class, $this->factory->store('sqlite'));
+        $this->assertInstanceOf(SQLite::class, $this->factory->store());
+        $this->assertInstanceOf(SQLite::class, $this->factory->store('sqlite'));
     }
 
     public function testSQLServerStore()
     {
-        $this->assertInstanceOf(Database::class, $this->factory->store('sqlsrv'));
+        $this->assertInstanceOf(MSSQL::class, $this->factory->store('mssql'));
     }
 
     public function testStoreNotDefined()

@@ -2,13 +2,13 @@
 
 namespace Core\Tests\Services\PDOs\Schemas;
 
-use Core\Services\PDOs\SqlServer;
-use Core\Services\PDOs\Schemas\SqlServerSchema;
+use Core\Services\PDOs\MSSQL;
+use Core\Services\PDOs\Schemas\MSSQLSchema;
 use InvalidArgumentException;
 
 require_once 'SchemaTestCase.php';
 
-class SqlServerSchemaTest extends SchemaTestCase
+class MSSQLSchemaTest extends SchemaTestCase
 {
     public static function setUpBeforeClass()
     {
@@ -17,7 +17,7 @@ class SqlServerSchemaTest extends SchemaTestCase
 
     protected function setUp()
     {
-        $this->db = $this->getMockBuilder(SqlServer::class)
+        $this->db = $this->getMockBuilder(MSSQL::class)
             ->setConstructorArgs([['database' => '~test', 'username' => 'sa', 'password' => 'psss']])
             ->setMethods(['quote', 'exec', 'query', 'scalar', 'transaction'])
             ->getMockForAbstractClass();
@@ -35,7 +35,7 @@ class SqlServerSchemaTest extends SchemaTestCase
                 return $res;
             });
 
-        $this->schema = new SqlServerSchema($this->db);
+        $this->schema = new MSSQLSchema($this->db);
     }
 
     public function testTables()
@@ -166,7 +166,7 @@ class SqlServerSchemaTest extends SchemaTestCase
     {
         $this->expectsExecFile('create_table1');
 
-        $this->assertInstanceOf(SqlServerSchema::class, $this->schema->createTable('table1', [
+        $this->assertInstanceOf(MSSQLSchema::class, $this->schema->createTable('table1', [
             'id'          => ['type' => 'identity'],
             'small1'      => ['type' => 'smallint',  'nullable' => true, 'default' => 33],
             'integer1'    => ['type' => 'integer',   'default' => -44, 'comment' => 'I am cool!'],
@@ -197,7 +197,7 @@ class SqlServerSchemaTest extends SchemaTestCase
     {
         $this->expectsExecFile('create_table2');
 
-        $this->assertInstanceOf(SqlServerSchema::class, $this->schema->createTable('table2', [
+        $this->assertInstanceOf(MSSQLSchema::class, $this->schema->createTable('table2', [
             'id' => ['type' => 'bigidentity'],
         ]));
     }
@@ -210,7 +210,7 @@ class SqlServerSchemaTest extends SchemaTestCase
             "EXEC sp_addextendedproperty 'MS_Description', '(DC2Type:array)', 'SCHEMA', 'dbo', 'TABLE', 'table1', 'COLUMN', 'array2'",
         ]);
 
-        $this->assertInstanceOf(SqlServerSchema::class, $this->schema->addColumn('table1', 'array2', [
+        $this->assertInstanceOf(MSSQLSchema::class, $this->schema->addColumn('table1', 'array2', [
             'type'    => 'array',
             'nullable' => true,
             'default' => '[7]',
@@ -309,7 +309,7 @@ class SqlServerSchemaTest extends SchemaTestCase
             'CREATE INDEX [table1_string1_index] ON [table1] ([string1])',
         ], false);
 
-        $this->assertInstanceOf(SqlServerSchema::class, $this->schema->addColumn('table1', 'column1', [
+        $this->assertInstanceOf(MSSQLSchema::class, $this->schema->addColumn('table1', 'column1', [
             'type' => 'string',
         ]));
     }
@@ -319,14 +319,14 @@ class SqlServerSchemaTest extends SchemaTestCase
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(["EXEC sp_rename 'table1.string1', 'string99', 'COLUMN'"]);
 
-        $this->assertInstanceOf(SqlServerSchema::class, $this->schema->renameColumn('table1', 'string1', 'string99'));
+        $this->assertInstanceOf(MSSQLSchema::class, $this->schema->renameColumn('table1', 'string1', 'string99'));
     }
 
     public function testAddIndex()
     {
         $this->expectsExecFile('create_table1_index');
 
-        $this->assertInstanceOf(SqlServerSchema::class, $this->schema->addIndex('table1', ['string1', 'string2']));
+        $this->assertInstanceOf(MSSQLSchema::class, $this->schema->addIndex('table1', ['string1', 'string2']));
     }
 
     public function testAddPrimaryIndex()
@@ -334,7 +334,7 @@ class SqlServerSchemaTest extends SchemaTestCase
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(['ALTER TABLE [table1] ADD PRIMARY KEY ([id])']);
 
-        $this->assertInstanceOf(SqlServerSchema::class, $this->schema->addIndex('table1', 'id', ['primary' => true]));
+        $this->assertInstanceOf(MSSQLSchema::class, $this->schema->addIndex('table1', 'id', ['primary' => true]));
     }
 
     public function testDropIndex()
@@ -342,7 +342,7 @@ class SqlServerSchemaTest extends SchemaTestCase
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(['DROP INDEX table1_column1_column2_index ON [table1]']);
 
-        $this->assertInstanceOf(SqlServerSchema::class, $this->schema->dropIndex('table1', ['column1', 'column2']));
+        $this->assertInstanceOf(MSSQLSchema::class, $this->schema->dropIndex('table1', ['column1', 'column2']));
     }
 
     public function testDropUniqueIndex()
@@ -350,7 +350,7 @@ class SqlServerSchemaTest extends SchemaTestCase
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(['DROP INDEX table1_column1_unique ON [table1]']);
 
-        $this->assertInstanceOf(SqlServerSchema::class, $this->schema->dropIndex('table1', 'column1', ['unique' => true]));
+        $this->assertInstanceOf(MSSQLSchema::class, $this->schema->dropIndex('table1', 'column1', ['unique' => true]));
     }
 
     public function testDropPrimaryIndex()
@@ -369,7 +369,7 @@ class SqlServerSchemaTest extends SchemaTestCase
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(['ALTER TABLE [table1] DROP CONSTRAINT PK__table1__3213E83F3C69FB99']);
 
-        $this->assertInstanceOf(SqlServerSchema::class, $this->schema->dropIndex('table1', null, ['primary' => true]));
+        $this->assertInstanceOf(MSSQLSchema::class, $this->schema->dropIndex('table1', null, ['primary' => true]));
     }
 
     public function testDropIndexWithName()
@@ -377,7 +377,7 @@ class SqlServerSchemaTest extends SchemaTestCase
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(['DROP INDEX index1 ON [table1]']);
 
-        $this->assertInstanceOf(SqlServerSchema::class, $this->schema->dropIndex('table1', null, ['name' => 'index1']));
+        $this->assertInstanceOf(MSSQLSchema::class, $this->schema->dropIndex('table1', null, ['name' => 'index1']));
     }
 
     public function testDropIndexWithoutColumnsAndWithoutName()

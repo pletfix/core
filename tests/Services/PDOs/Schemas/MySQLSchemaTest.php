@@ -2,13 +2,13 @@
 
 namespace Core\Tests\Services\PDOs\Schemas;
 
-use Core\Services\PDOs\MySql;
-use Core\Services\PDOs\Schemas\MySqlSchema;
+use Core\Services\PDOs\MySQL;
+use Core\Services\PDOs\Schemas\MySQLSchema;
 use InvalidArgumentException;
 
 require_once 'SchemaTestCase.php';
 
-class MySqlSchemaTest extends SchemaTestCase
+class MySQLSchemaTest extends SchemaTestCase
 {
     public static function setUpBeforeClass()
     {
@@ -17,7 +17,7 @@ class MySqlSchemaTest extends SchemaTestCase
 
     protected function setUp()
     {
-        $this->db = $this->getMockBuilder(MySql::class)
+        $this->db = $this->getMockBuilder(MySQL::class)
             ->setConstructorArgs([['database' => '~test']])
             ->setMethods(['quote', 'version', 'exec', 'query'])
             ->getMockForAbstractClass();
@@ -32,7 +32,7 @@ class MySqlSchemaTest extends SchemaTestCase
             ->method('version')
             ->willReturn('5.5.5-10.1.21-MariaDB');
 
-        $this->schema = new MySqlSchema($this->db);
+        $this->schema = new MySQLSchema($this->db);
     }
     
     public function testTables()
@@ -96,7 +96,7 @@ class MySqlSchemaTest extends SchemaTestCase
     {
         $this->expectsExecFile('create_table1');
 
-        $this->assertInstanceOf(MySqlSchema::class, $this->schema->createTable('table1', [
+        $this->assertInstanceOf(MySQLSchema::class, $this->schema->createTable('table1', [
             'id'          => ['type' => 'identity'],
             'small1'      => ['type' => 'smallint',  'nullable' => true, 'default' => 33],
             'integer1'    => ['type' => 'integer',   'default' => -44, 'comment' => 'I am cool!'],
@@ -131,7 +131,7 @@ class MySqlSchemaTest extends SchemaTestCase
             DEFAULT CHARACTER SET latin1 COLLATE latin1_general_ci ENGINE = InnoDB
         ']);
 
-        $this->assertInstanceOf(MySqlSchema::class, $this->schema->createTable('temp1', [
+        $this->assertInstanceOf(MySQLSchema::class, $this->schema->createTable('temp1', [
             'id' => ['type' => 'identity'],
         ], ['charset' => 'latin1', 'collation' => 'latin1_general_ci', 'engine' => 'InnoDB', 'temporary' => true]));
     }
@@ -147,7 +147,7 @@ class MySqlSchemaTest extends SchemaTestCase
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(['RENAME TABLE `table1` TO `table99`']);
 
-        $this->assertInstanceOf(MySqlSchema::class, $this->schema->renameTable('table1', 'table99'));
+        $this->assertInstanceOf(MySQLSchema::class, $this->schema->renameTable('table1', 'table99'));
     }
 
     public function testRenameColumn()
@@ -156,7 +156,7 @@ class MySqlSchemaTest extends SchemaTestCase
         /** @noinspection SqlDialectInspection */
         $this->expectsExec(["ALTER TABLE `table1` CHANGE COLUMN `string1` `string99` VARCHAR(255) NOT NULL DEFAULT 'Panama' COLLATE utf8_unicode_ci COMMENT 'lola'"]);
 
-        $this->assertInstanceOf(MySqlSchema::class, $this->schema->renameColumn('table1', 'string1', 'string99'));
+        $this->assertInstanceOf(MySQLSchema::class, $this->schema->renameColumn('table1', 'string1', 'string99'));
     }
 
     public function testRenameNotExistColumn()

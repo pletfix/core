@@ -634,10 +634,10 @@ class HelpersTest extends TestCase
         /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->assertInstanceOf(\Core\Services\Contracts\Database::class, database());
 
-        DI::getInstance()->get('config')->set('database.stores.~foo', ['driver' => 'sqlite']);
+        DI::getInstance()->get('config')->set('database.stores.~foo', ['driver' => 'SQLite']);
         DI::getInstance()->set('database-factory', DatabaseFactory::class, true);
 
-        $this->assertSame('sqlite', database('~foo')->config('driver'));
+        $this->assertSame('SQLite', database('~foo')->config('driver'));
 
         $this->expectException(InvalidArgumentException::class);
         database('~bar');

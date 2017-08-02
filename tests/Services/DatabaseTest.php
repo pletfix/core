@@ -21,7 +21,7 @@ class DatabaseTest extends TestCase
 
     protected function setUp()
     {
-        $this->db = new SQLite(['driver' => 'sqlite', 'database' => ':memory:']);
+        $this->db = new SQLite(['driver' => 'SQLite', 'database' => ':memory:']);
     }
 
     protected function tearDown()
@@ -47,14 +47,14 @@ class DatabaseTest extends TestCase
 
     public function testConstruct()
     {
-        $this->db = new SQLite(['driver' => 'sqlite', 'database' => ':memory:', 'dateformat' => 'Y-m-d H:i:s']);
+        $this->db = new SQLite(['driver' => 'SQLite', 'database' => ':memory:', 'dateformat' => 'Y-m-d H:i:s']);
         $this->assertInstanceOf(Database::class, $this->db);
     }
 
     public function testConfig()
     {
-        $this->assertSame(['database' => ':memory:', 'driver'   => 'sqlite'], $this->db->config());
-        $this->assertSame('sqlite', $this->db->config('driver'));
+        $this->assertSame(['database' => ':memory:', 'driver'   => 'SQLite'], $this->db->config());
+        $this->assertSame('SQLite', $this->db->config('driver'));
     }
 
     public function testSchema()
@@ -97,7 +97,7 @@ class DatabaseTest extends TestCase
         $this->assertInstanceOf(Database::class, $this->db->disconnect());
         $this->assertInstanceOf(Database::class, $this->db->disconnect());
 
-        $this->db = new SQLite(['driver' => 'sqlite', 'database' => ':memory:', 'persistent' => true]);
+        $this->db = new SQLite(['driver' => 'SQLite', 'database' => ':memory:', 'persistent' => true]);
         $this->assertInstanceOf(Database::class, $this->db->connect());
         $this->assertInstanceOf(Database::class, $this->db->disconnect());
     }

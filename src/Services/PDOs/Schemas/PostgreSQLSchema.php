@@ -13,7 +13,7 @@ use InvalidArgumentException;
  * @see https://github.com/auraphp/Aura.SqlSchema/blob/2.x/src/PgsqlSchema.php Aura.SqlSchema on GitHub
  * @see http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html#mapping-matrix Doctrine's Mapping Matrix
  */
-class PostgresSchema extends Schema
+class PostgreSQLSchema extends Schema
 {
     /**
      * @inheritdoc

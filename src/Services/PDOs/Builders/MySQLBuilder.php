@@ -3,9 +3,9 @@
 namespace Core\Services\PDOs\Builders;
 
 /**
- * MySql Query Builder
+ * MySQL Query Builder
  */
-class MySqlBuilder extends Builder
+class MySQLBuilder extends Builder
 {
     /**
      * @inheritdoc

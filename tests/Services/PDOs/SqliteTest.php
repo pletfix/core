@@ -15,7 +15,7 @@ use PHPUnit_Framework_MockObject_MockObject;
 class SQLiteTest extends TestCase
 {
     private $config = [
-        'driver'   => 'sqlite',
+        'driver'   => 'SQLite',
         'database' => ':memory:',
     ];
 

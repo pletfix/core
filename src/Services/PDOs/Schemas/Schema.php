@@ -399,7 +399,7 @@ abstract class Schema implements SchemaContract
                 return 'TEXT';
 
             case 'guid':
-                return 'UUID'; // Postgres converts to lowercase letters, SQLServer to uppercase!
+                return 'UUID'; // PostgreSQL converts to lowercase letters, MSSQL to uppercase!
 
             case 'binary':
                 // size in bytes:

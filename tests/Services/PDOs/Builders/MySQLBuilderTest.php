@@ -4,11 +4,11 @@ namespace Core\Tests\Services\PDOs\Builders;
 
 use Core\Services\Database;
 use Core\Services\PDOs\Builders\Contracts\Builder;
-use Core\Services\PDOs\Builders\MySqlBuilder;
+use Core\Services\PDOs\Builders\MySQLBuilder;
 use Core\Testing\TestCase;
 use PHPUnit_Framework_MockObject_MockObject;
 
-class MySqlBuilderTest extends TestCase
+class MySQLBuilderTest extends TestCase
 {
     /**
      * @var Builder
@@ -33,7 +33,7 @@ class MySqlBuilderTest extends TestCase
                 return "'$value'";
             });
 
-        $this->builder = new MySqlBuilder($this->db);
+        $this->builder = new MySQLBuilder($this->db);
     }
 
     public function testInsertEmptyData()

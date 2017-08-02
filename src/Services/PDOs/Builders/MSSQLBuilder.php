@@ -5,6 +5,6 @@ namespace Core\Services\PDOs\Builders;
 /**
  * Microsoft SQL Server Query Builder
  */
-class SqlServerBuilder extends Builder
+class MSSQLBuilder extends Builder
 {
 }

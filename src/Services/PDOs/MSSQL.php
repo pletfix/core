@@ -3,8 +3,8 @@
 namespace Core\Services\PDOs;
 
 use Core\Services\Database;
-use Core\Services\PDOs\Builders\SqlServerBuilder;
-use Core\Services\PDOs\Schemas\SqlServerSchema;
+use Core\Services\PDOs\Builders\MSSQLBuilder;
+use Core\Services\PDOs\Schemas\MSSQLSchema;
 use PDO;
 
 /**
@@ -15,7 +15,7 @@ use PDO;
  * @see http://php.net/manual/en/ref.pdo-sqlsrv.php Installing PDO Driver PDO_SQLSRV
  * @see https://github.com/illuminate/database/blob/5.3/Connectors/SqlServerConnector.php Laravel's 5.3 SqlServerConnector on GitHub by Taylor Otwell
  */
-class SqlServer extends Database
+class MSSQL extends Database
 {
     /**
      * @inheritdoc
@@ -74,7 +74,7 @@ class SqlServer extends Database
      */
     protected function createSchema()
     {
-        return new SqlServerSchema($this);
+        return new MSSQLSchema($this);
     }
 
     /**
@@ -82,7 +82,7 @@ class SqlServer extends Database
      */
     protected function createBuilder()
     {
-        return new SqlServerBuilder($this);
+        return new MSSQLBuilder($this);
     }
 
     /**

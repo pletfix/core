@@ -3,17 +3,17 @@
 namespace Core\Tests\Services\PDOs;
 
 use Core\Services\Database;
-use Core\Services\PDOs\Builders\SqlServerBuilder;
-use Core\Services\PDOs\Schemas\SqlServerSchema;
-use Core\Services\PDOs\SqlServer;
+use Core\Services\PDOs\Builders\MSSQLBuilder;
+use Core\Services\PDOs\Schemas\MSSQLSchema;
+use Core\Services\PDOs\MSSQL;
 use Core\Testing\TestCase;
 use PDO;
 use PHPUnit_Framework_MockObject_MockObject;
 
-class SqlServerTest extends TestCase
+class MSSQLTest extends TestCase
 {
     private $config = [
-        'driver'   => 'sqlsrv',
+        'driver'   => 'MSSQL',
         'host'     => 'localhost',
         'database' => '~test',
         'username' => 'sa',
@@ -30,26 +30,26 @@ class SqlServerTest extends TestCase
 
     public function testVersion()
     {
-        $db = new SqlServer($this->config);
+        $db = new MSSQL($this->config);
         $this->assertFalse(is_string($db->version()), 'get version');
     }
 
     public function testQuoteName()
     {
-        $db = new SqlServer($this->config);
+        $db = new MSSQL($this->config);
         $this->assertSame('[foo[]]bar]', $db->quoteName('foo[]bar'));
     }
 
     public function testSchema()
     {
-        $db = new SqlServer($this->config);
-        $this->assertInstanceOf(SqlServerSchema::class, $db->schema());
+        $db = new MSSQL($this->config);
+        $this->assertInstanceOf(MSSQLSchema::class, $db->schema());
     }
 
     public function testBuilder()
     {
-        $db = new SqlServer($this->config);
-        $this->assertInstanceOf(SqlServerBuilder::class, $db->builder());
+        $db = new MSSQL($this->config);
+        $this->assertInstanceOf(MSSQLBuilder::class, $db->builder());
     }
 
     public function testConnectWithRealAvailabledDriver()
@@ -57,7 +57,7 @@ class SqlServerTest extends TestCase
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
-        $db = $this->getMockBuilder(SqlServer::class)
+        $db = $this->getMockBuilder(MSSQL::class)
             ->setMethods(['createPDO'])
             ->setConstructorArgs([$this->config])
             ->getMock();
@@ -66,7 +66,7 @@ class SqlServerTest extends TestCase
             ->method('createPDO')
             ->willReturn($pdo);
 
-        $this->assertInstanceOf(SqlServer::class, $db->connect());
+        $this->assertInstanceOf(MSSQL::class, $db->connect());
     }
 
     public function testConnectWithDblibDriver()
@@ -74,7 +74,7 @@ class SqlServerTest extends TestCase
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
-        $db = $this->getMockBuilder(SqlServer::class)
+        $db = $this->getMockBuilder(MSSQL::class)
             ->setMethods(['createPDO', 'getAvailableDrivers'])
             ->setConstructorArgs([$this->config])
             ->getMock();
@@ -88,7 +88,7 @@ class SqlServerTest extends TestCase
             ->method('getAvailableDrivers')
             ->willReturn(['dblib']);
 
-        $this->assertInstanceOf(SqlServer::class, $db->connect());
+        $this->assertInstanceOf(MSSQL::class, $db->connect());
     }
 
     public function testConnectWithDblibDriverAndOptionalParams()
@@ -100,7 +100,7 @@ class SqlServerTest extends TestCase
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
-        $db = $this->getMockBuilder(SqlServer::class)
+        $db = $this->getMockBuilder(MSSQL::class)
             ->setMethods(['createPDO', 'getAvailableDrivers'])
             ->setConstructorArgs([$this->config])
             ->getMock();
@@ -114,7 +114,7 @@ class SqlServerTest extends TestCase
             ->method('getAvailableDrivers')
             ->willReturn(['dblib']);
 
-        $this->assertInstanceOf(SqlServer::class, $db->connect());
+        $this->assertInstanceOf(MSSQL::class, $db->connect());
     }
 
     public function testConnectWithOdbcDriver()
@@ -124,7 +124,7 @@ class SqlServerTest extends TestCase
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
-        $db = $this->getMockBuilder(SqlServer::class)
+        $db = $this->getMockBuilder(MSSQL::class)
             ->setMethods(['createPDO', 'getAvailableDrivers'])
             ->setConstructorArgs([$this->config])
             ->getMock();
@@ -138,7 +138,7 @@ class SqlServerTest extends TestCase
             ->method('getAvailableDrivers')
             ->willReturn(['odbc']);
 
-        $this->assertInstanceOf(SqlServer::class, $db->connect());
+        $this->assertInstanceOf(MSSQL::class, $db->connect());
     }
 
     public function testConnectWithSqlSrvDriver()
@@ -148,7 +148,7 @@ class SqlServerTest extends TestCase
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
-        $db = $this->getMockBuilder(SqlServer::class)
+        $db = $this->getMockBuilder(MSSQL::class)
             ->setMethods(['createPDO', 'getAvailableDrivers'])
             ->setConstructorArgs([$this->config])
             ->getMock();
@@ -162,7 +162,7 @@ class SqlServerTest extends TestCase
             ->method('getAvailableDrivers')
             ->willReturn([]);
 
-        $this->assertInstanceOf(SqlServer::class, $db->connect());
+        $this->assertInstanceOf(MSSQL::class, $db->connect());
     }
 
     public function testConnectWithSqlSrvDriverAndOptionalParams()
@@ -176,7 +176,7 @@ class SqlServerTest extends TestCase
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
-        $db = $this->getMockBuilder(SqlServer::class)
+        $db = $this->getMockBuilder(MSSQL::class)
             ->setMethods(['createPDO', 'getAvailableDrivers'])
             ->setConstructorArgs([$this->config])
             ->getMock();
@@ -190,6 +190,6 @@ class SqlServerTest extends TestCase
             ->method('getAvailableDrivers')
             ->willReturn([]);
 
-        $this->assertInstanceOf(SqlServer::class, $db->connect());
+        $this->assertInstanceOf(MSSQL::class, $db->connect());
     }
 }

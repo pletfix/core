@@ -3,18 +3,18 @@
 namespace Core\Tests\Services\PDOs;
 
 use Core\Services\Database;
-use Core\Services\PDOs\Builders\PostgresBuilder;
-use Core\Services\PDOs\Postgres;
-use Core\Services\PDOs\Schemas\PostgresSchema;
+use Core\Services\PDOs\Builders\PostgreSQLBuilder;
+use Core\Services\PDOs\PostgreSQL;
+use Core\Services\PDOs\Schemas\PostgreSQLSchema;
 use Core\Testing\TestCase;
 use PDO;
 use PDOStatement;
 use PHPUnit_Framework_MockObject_MockObject;
 
-class PostgresTest extends TestCase
+class PostgreSQLTest extends TestCase
 {
     private $config = [
-        'driver'   => 'pgsql',
+        'driver'   => 'PostgreSQL',
         'host'     => 'localhost',
         'database' => '~test',
         'username' => 'pguser',
@@ -31,14 +31,14 @@ class PostgresTest extends TestCase
 
     public function testSchema()
     {
-        $db = new Postgres($this->config);
-        $this->assertInstanceOf(PostgresSchema::class, $db->schema());
+        $db = new PostgreSQL($this->config);
+        $this->assertInstanceOf(PostgreSQLSchema::class, $db->schema());
     }
 
     public function testBuilder()
     {
-        $db = new Postgres($this->config);
-        $this->assertInstanceOf(PostgresBuilder::class, $db->builder());
+        $db = new PostgreSQL($this->config);
+        $this->assertInstanceOf(PostgreSQLBuilder::class, $db->builder());
     }
 
     public function testConnectWithDefaultConfig()
@@ -47,7 +47,7 @@ class PostgresTest extends TestCase
         $pdo->expects($this->any())->method('exec')->willReturn(0);
 
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
-        $db = $this->getMockBuilder(Postgres::class)
+        $db = $this->getMockBuilder(PostgreSQL::class)
             ->setMethods(['createPDO'])
             ->setConstructorArgs([$this->config])
             ->getMock();
@@ -57,7 +57,7 @@ class PostgresTest extends TestCase
             ->with('pgsql:host=localhost;dbname=~test;port=5432;sslmode=prefer', 'pguser', 'psss', $this->options)
             ->willReturn($pdo);
 
-        $this->assertInstanceOf(Postgres::class, $db->connect());
+        $this->assertInstanceOf(PostgreSQL::class, $db->connect());
     }
 
     public function testConnectWithOptionalParams()
@@ -73,7 +73,7 @@ class PostgresTest extends TestCase
         $pdo->expects($this->any())->method('exec')->willReturn(0);
 
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
-        $db = $this->getMockBuilder(Postgres::class)
+        $db = $this->getMockBuilder(PostgreSQL::class)
             ->setMethods(['createPDO'])
             ->setConstructorArgs([$this->config])
             ->getMock();
@@ -83,7 +83,7 @@ class PostgresTest extends TestCase
             ->with('pgsql:host=localhost;dbname=~test;port=5432;sslmode=prefer;sslcert=/path/to/client-cert.pem;sslkey=/path/to/client-key.pem;sslrootcert=/path/to/server-ca.pem', 'pguser', 'psss', $this->options)
             ->willReturn($pdo);
 
-        $this->assertInstanceOf(Postgres::class, $db->connect());
+        $this->assertInstanceOf(PostgreSQL::class, $db->connect());
     }
 
     public function testExec()
@@ -96,7 +96,7 @@ class PostgresTest extends TestCase
         $pdoStatement->expects($this->once())->method('rowCount')->willReturn(2);
 
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
-        $db = $this->getMockBuilder(Postgres::class)
+        $db = $this->getMockBuilder(PostgreSQL::class)
             ->setMethods(['perform'])
             ->setConstructorArgs([$this->config])
             ->getMock();
@@ -113,7 +113,7 @@ class PostgresTest extends TestCase
     public function testLastInsertId()
     {
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
-        $db = $this->getMockBuilder(Postgres::class)
+        $db = $this->getMockBuilder(PostgreSQL::class)
             ->setMethods(['scalar'])
             ->setConstructorArgs([$this->config])
             ->getMock();

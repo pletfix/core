@@ -13,7 +13,7 @@ use InvalidArgumentException;
  * @see https://github.com/auraphp/Aura.SqlSchema/blob/2.x/src/SqlsrvSchema.php Aura.SqlSchema on GitHub
  * @see http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html#mapping-matrix Doctrine's Mapping Matrix
  */
-class SqlServerSchema extends Schema
+class MSSQLSchema extends Schema
 {
     /**
      * @inheritdoc
@@ -247,7 +247,7 @@ class SqlServerSchema extends Schema
         /** @noinspection SqlNoDataSourceInspection */
         $sql = "CREATE TABLE {$quotedTable} ({$definition})";
 
-        // and this is SqlServer specific...
+        // and this is MSSQL specific...
 
         $this->db->transaction(function() use($sql, $table, $columns, $options) {
 
@@ -390,8 +390,6 @@ class SqlServerSchema extends Schema
      */
     public function dropIndex($table, $columns, array $options = [])
     {
-        // mit Postgres identisch
-
         $quotedTable = $this->db->quoteName($table);
 
         $primary = isset($options['primary']) ? $options['primary'] : false;

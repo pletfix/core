@@ -6,10 +6,10 @@ use Core\Services\Contracts\Database;
 /**
  * PostgreSQL Query Builder
  */
-class PostgresBuilder extends Builder
+class PostgreSQLBuilder extends Builder
 {
     /**
-     * PostgresBuilder constructor.
+     * PostgreSQLBuilder constructor.
      *
      * @param Database $db
      */

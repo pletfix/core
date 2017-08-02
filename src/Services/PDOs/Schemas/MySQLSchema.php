@@ -5,7 +5,7 @@ namespace Core\Services\PDOs\Schemas;
 use InvalidArgumentException;
 
 /**
- * MySql Database Schema
+ * MySQL Database Schema
  *
  * Functions tables() and columns() are based on Aura.SqlSchema
  * Function compileFieldType() based on Dontrine's Mapping Matrix.
@@ -13,7 +13,7 @@ use InvalidArgumentException;
  * @see https://github.com/auraphp/Aura.SqlSchema/blob/2.x/src/MysqlSchema.php Aura.SqlSchema on GitHub
  * @see http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/types.html#mapping-matrix Doctrine's Mapping Matrix
  */
-class MySqlSchema extends Schema
+class MySQLSchema extends Schema
 {
     /**
      * @inheritdoc
@@ -190,7 +190,7 @@ class MySqlSchema extends Schema
             $sql = "CREATE TABLE {$quotedTable} ({$definition})";
         }
 
-        // and this is MySql specific...
+        // and this is MySQL specific...
 
         $options   = array_merge($this->db->config(), $options);
         $charset   = !empty($options['charset']) ? $options['charset'] : null;
@@ -269,7 +269,7 @@ class MySqlSchema extends Schema
     protected function compileFieldType($type, $size, $scale)
     {
         switch (strtolower($type)) {
-            case 'json':   // needs type-hint by MySql < '5.7.8'
+            case 'json':   // needs type-hint by MySQL < '5.7.8'
                 $version = $this->db->version();
                 return $version >= '5.7.8' ? 'JSON' : 'TEXT';
 

@@ -3,19 +3,19 @@
 namespace Core\Services\PDOs;
 
 use Core\Services\Database;
-use Core\Services\PDOs\Builders\MySqlBuilder;
-use Core\Services\PDOs\Schemas\MySqlSchema;
+use Core\Services\PDOs\Builders\MySQLBuilder;
+use Core\Services\PDOs\Schemas\MySQLSchema;
 use PDO;
 
 /**
- * MySql Access Layer
+ * MySQL Access Layer
  *
  * This class based on Laravel's 5.3 MySqlConnector (License MIT)
  *
  * @see http://php.net/manual/en/ref.pdo-mysql.php Installing PDO Driver PDO_MYSQL
  * @see https://github.com/illuminate/database/blob/5.3/Connectors/MySqlConnector.php Laravel's 5.3 MySqlConnector on GitHub by Taylor Otwell
  */
-class MySql extends Database
+class MySQL extends Database
 {
     /**
      * @inheritdoc
@@ -46,7 +46,7 @@ class MySql extends Database
      */
     protected function createSchema()
     {
-        return new MySqlSchema($this);
+        return new MySQLSchema($this);
     }
 
     /**
@@ -54,7 +54,7 @@ class MySql extends Database
      */
     protected function createBuilder()
     {
-        return new MySqlBuilder($this);
+        return new MySQLBuilder($this);
     }
 
     /**
