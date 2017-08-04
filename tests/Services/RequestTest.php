@@ -72,7 +72,7 @@ class RequestTest extends TestCase
 
     public function testFormInput()
     {
-        $this->assertSame(['post1' => 'POST1', 'post2' => 'POST2', 'foo' => 'bar'], $this->r->input());
+        $this->assertSame(['foo' => 'bar', 'post1' => 'POST1', 'post2' => 'POST2'], $this->r->input());
         $this->assertSame('bar', $this->r->input('foo'));
     }
 
