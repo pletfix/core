@@ -597,7 +597,7 @@ class HelpersTest extends TestCase
         /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->assertInstanceOf(\Core\Services\Contracts\Cache::class, cache());
 
-        DI::getInstance()->get('config')->set('cache.stores.~foo', ['driver' => 'array']);
+        DI::getInstance()->get('config')->set('cache.stores.~foo', ['driver' => 'Array']);
         /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
         $this->assertInstanceOf(\Core\Services\Contracts\Cache::class, cache('~foo'));
 

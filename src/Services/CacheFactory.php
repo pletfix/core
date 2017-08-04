@@ -16,11 +16,11 @@ use Redis;
  * Cache Factory
  *
  * Supported Driver:
- * - "apc"          (requires ext/apc)
- * - "array"        (in memory, lifetime of the request)
- * - "file"         (not optimal for high concurrency)
- * - "memcached"    (requires ext/memcached)
- * - "redis"        (requires ext/phpredis)
+ * - APCu         (requires ext/apc)
+ * - Array        (in memory, lifetime of the request)
+ * - File         (not optimal for high concurrency)
+ * - Memcached    (requires ext/memcached)
+ * - Redis        (requires ext/phpredis)
  *
  * @see https://github.com/doctrine/cache Doctrine Cache on GitHub
  */
@@ -74,23 +74,23 @@ class CacheFactory implements CacheFactoryContract
             throw new InvalidArgumentException('Cache driver for store "' . $name . '" is not specified.');
         }
 
-        switch ($config['driver']) { // todo use class name such like "Apcu"
-            case 'apc':
+        switch ($config['driver']) {
+            case 'APCu':
                 $provider = new ApcuCache;
                 break;
-            case 'array':
+            case 'Array':
                 $provider = new ArrayCache;
                 break;
-            case 'file':
+            case 'File':
                 $provider = new FilesystemCache($config['path']);
                 break;
-            case 'memcached':
+            case 'Memcached':
                 $memcached = new Memcached();
                 $memcached->addServer($config['host'], $config['port'], $config['weight']);
                 $provider = new MemcachedCache();
                 $provider->setMemcached($memcached);
                 break;
-            case 'redis':
+            case 'Redis':
                 $redis = new Redis;
                 $redis->connect($config['host'], $config['port'], $config['timeout']);
                 $provider = new RedisCache;

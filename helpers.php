@@ -854,7 +854,7 @@ if (! function_exists('redirect')) {
      * @param string $path
      * @param array $parameters
      * @param array $flash
-     * @param int $status
+     * @param int $status 301: permanently, 302: temporarily (default), 303: other
      * @param array $headers
      * @return Response
      */

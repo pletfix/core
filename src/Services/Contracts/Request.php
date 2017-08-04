@@ -96,15 +96,6 @@ interface Request //extends ServerRequestInterface
      */
     public function file($key = null, $default = null);
 
-//    /**
-//     * Get a HTTP header item.
-//     *
-//     * @param string|null $key
-//     * @param string|null $default
-//     * @return string|array
-//     */
-//    public function header($key = null, $default = null);
-
     /**
      * Gets the raw HTTP request body of the request.
      *
@@ -135,13 +126,6 @@ interface Request //extends ServerRequestInterface
      * @return bool
      */
     public function isSecure();
-
-//    /**
-//     * Determine if the request is the result of an AJAX call.
-//     *
-//     * @return bool
-//     */
-//    public function isAjax();
 
     /**
      * Determine if the request is sending JSON.

@@ -21,23 +21,23 @@ class CacheFactoryTest extends TestCase
             'default' => 'file',
             'stores' => [
                 'apc' => [
-                    'driver' => 'apc',
+                    'driver' => 'APCu',
                 ],
                 'array' => [
-                    'driver' => 'array',
+                    'driver' => 'Array',
                 ],
                 'file' => [
-                    'driver' => 'file',
+                    'driver' => 'File',
                     'path' => storage_path('cache/doctrine'),
                 ],
                 'memcached' => [
-                    'driver' => 'memcached',
+                    'driver' => 'Memcached',
                     'host' => '127.0.0.1',
                     'port' => 11211,
                     'weight' => 100,
                 ],
                 'redis' => [
-                    'driver' => 'redis',
+                    'driver' => 'Redis',
                     'host' => '127.0.0.1',
                     'port' => 6379,
                     'timeout' => 0.0,
@@ -45,7 +45,7 @@ class CacheFactoryTest extends TestCase
                 'foo1' => [
                 ],
                 'foo2' => [
-                    'driver' => 'wrong',
+                    'driver' => 'Wrong',
                 ],
             ],
         ]);
@@ -62,7 +62,7 @@ class CacheFactoryTest extends TestCase
         $this->assertInstanceOf(Cache::class, $this->factory->store('file'));
     }
 
-    public function testApcStore()
+    public function testAPCuStore()
     {
         $this->assertInstanceOf(Cache::class, $this->factory->store('apc'));
     }
