@@ -17,7 +17,7 @@ class Csrf implements MiddlewareContract
         if (in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'])) {
             $token = $request->input('_token') ?: (isset($_SERVER['HTTP_X_CSRF_TOKEN']) ? $_SERVER['HTTP_X_CSRF_TOKEN'] : null);
             if ($token !== csrf_token()) {
-                abort(Response::HTTP_FORBIDDEN);
+                abort(Response::HTTP_FORBIDDEN, 'Your CSRF token is invalid.');
             } // @codeCoverageIgnore
         }
 

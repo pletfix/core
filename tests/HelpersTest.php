@@ -33,11 +33,6 @@ class HelpersTest extends TestCase
         DI::getInstance()->set('database-factory', self::$origDBFactory, true);
     }
 
-    public function testHttpStatus()
-    {
-        $this->assertSame('Bad Request', http_status_text(Response::HTTP_BAD_REQUEST));
-    }
-
     // Paths
 
     public function testAppPath()
@@ -344,6 +339,16 @@ class HelpersTest extends TestCase
         $this->assertEquals(['foo1' => 'bar1'], error());
     }
 
+    public function testGuessFileExtension()
+    {
+        $this->assertSame('png', guess_file_extension('image/png'));
+    }
+
+    public function testHttpStatus()
+    {
+        $this->assertSame('Bad Request', http_status_text(Response::HTTP_BAD_REQUEST));
+    }
+
     public function testIsAbsolutePath()
     {
         $this->assertTrue(is_absolute_path('/tmp'));
@@ -494,6 +499,11 @@ class HelpersTest extends TestCase
         $this->assertEquals('bar2', message('foodef2'));
     }
 
+    public function testMimeType()
+    {
+        $this->assertSame('image/png', mime_type(__DIR__ . '/_data/images/logo_50x50.png'));
+    }
+
     public function testOld()
     {
         $this->assertEquals('foodef3', old('foo3', 'foodef3'));
@@ -507,9 +517,8 @@ class HelpersTest extends TestCase
         $request = $this->getMockBuilder(Request::class)->setMethods(['baseUrl'])->getMock();
         $request->expects($this->any())->method('baseUrl')->willReturn('my_base_url');
         DI::getInstance()->set('request', $request, true);
-        $this->assertInstanceOf(Response::class, redirect('foo', ['bar' => 4711, 'batz' => 'butz'], ['redirectFlash' => 4712]));
+        $this->assertInstanceOf(Response::class, redirect('foo', ['bar' => 4711, 'batz' => 'butz']));
         $this->assertRedirectedTo('my_base_url/foo?bar=4711&batz=butz');
-        $this->assertSame(4712, flash()->age()->get('redirectFlash'));
     }
 
     public function testRemoveDir()

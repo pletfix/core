@@ -108,7 +108,7 @@ interface Response
     public function output($content, $status = Response::HTTP_OK, $headers = []);
 
     /**
-     * Get the evaluated view contents for the given view.
+     * Render the output by the given view.
      *
      * @param string $name Name of the view
      * @param array $variables
@@ -119,12 +119,45 @@ interface Response
     public function view($name, array $variables = [], $status = Response::HTTP_OK, $headers = []);
 
     /**
+     * Get a new JSON response.
+     *
+     * @param mixed $data
+     * @param int $status The response status code
+     * @param array $headers An array of response headers
+     * @param int $options Bitmask consisting. The behaviour of these constants is described on http://php.net/manual/en/function.json-encode.php.
+     * @return $this
+     */
+    public function json($data = [], $status = 200, array $headers = [], $options = 0);
+
+    /**
+     * Get a new file download response.
+     *
+     * @param string $file The path to the file.
+     * @param string $name The file name that is seen by the user downloading.
+     * @param array $headers An array of response headers.
+     * @return $this
+     */
+    public function download($file, $name = null, array $headers = []);
+
+    /**
+     * Get the raw contents of a binary file.
+     *
+     * It may be used to display a file, such as an image or PDF, directly in the user's browser instead of initiating
+     * a download.
+     *
+     * @param string $file The path to the file.
+     * @param array $headers An array of response headers.
+     * @return $this
+     */
+    public function file($file, array $headers = []);
+
+    /**
      * Get a redirect response to the given URL.
      *
      * @param string $url
      * @param int $status 301: permanently, 302: temporarily (default), 303: other
      * @param array $headers An array of response headers
-     * @return Response
+     * @return $this
      */
     public function redirect($url, $status = Response::HTTP_FOUND, $headers = []);
 
@@ -133,7 +166,6 @@ interface Response
      *
      * @param int $code HTTP status code.
      * @return $this
-     * // @throws \Exception If invalid status code
      */
     public function status($code);
 
@@ -161,10 +193,10 @@ interface Response
     public function header($name, $value = null);
 
     /**
-     * Returns the headers from the response.
+     * Returns the header from the response.
      *
      * @param string|null $name Header name
-     * @return array
+     * @return array|string
      */
     public function getHeader($name = null);
 
@@ -195,4 +227,48 @@ interface Response
      * Sends a HTTP response.
      */
     public function send();
+
+    /**
+     * Flash a piece of data to the session.
+     *
+     * @param string|null $key Key using "dot" notation.
+     * @param mixed $value
+     * @return $this
+     */
+    public function withFlash($key, $value);
+
+    /**
+     * Flash an array of input to the session.
+     *
+     * Omit the argument to flash all of the current input.
+     *
+     * @param array $input
+     * @return $this
+     */
+    public function withInput(array $input = null);
+
+    /**
+     * Flash a message to the session.
+     *
+     * @param string $message
+     * @return $this
+     */
+    public function withMessage($message);
+
+    /**
+     * Flash a list of error messages to the session.
+     *
+     * @param array $messages
+     * @return $this
+     */
+    public function withErrors(array $messages);
+
+    /**
+     * Flash an error message to the session.
+     *
+     * @param string $message
+     * @param string|null $key
+     * @return $this
+     */
+    public function withError($message, $key = null);
 }

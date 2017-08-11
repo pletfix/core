@@ -71,6 +71,39 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
+    public function json($data = [], $status = 200, array $headers = [], $options = 0)
+    {
+        return $this->output(json_encode($data, $options), $status, $headers);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function download($file, $name = null, array $headers = [])
+    {
+        $this->headers['Content-Disposition'] = 'attachment; filename="' . ($name ?: basename($file)) . '"';
+
+        return $this->file($file, $headers);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function file($file, array $headers = [])
+    {
+        $this->headers['Content-Type']  = mime_type($file) ?: 'application/octet-stream';
+        $this->headers['Accept-Ranges'] = 'bytes';
+        $this->headers['Cache-Control'] = 'public';
+        //$this->headers['Expires']       = 0;
+        $this->headers['Last-Modified'] = gmdate('D, d M Y H:i:s T', filemtime($file)); // Fri, 02 Dec 2016 16:54:13 GMT
+        //$this->headers['Content-Length'] = filesize($file); // the content length is set automatically by the send() method
+
+        return $this->output(file_get_contents($file), Response::HTTP_OK, $headers);
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function redirect($url, $status = ResponseContract::HTTP_FOUND, $headers = [])
     {
         if (!empty($headers)) {
@@ -236,11 +269,11 @@ class Response implements ResponseContract
         foreach ($this->headers as $field => $value) {
             if (is_array($value)) {
                 foreach ($value as $v) {
-                    header($field.': ' . $v, false);
+                    header($field . ': ' . $v, false);
                 }
             }
             else {
-                header($field.': ' . $value);
+                header($field . ': ' . $value);
             }
         }
 
@@ -248,6 +281,65 @@ class Response implements ResponseContract
         if (($length = strlen($this->content)) > 0) {
             header('Content-Length: ' . $length);
         }
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function withFlash($key, $value)
+    {
+        if (is_array($value)) {
+            DI::getInstance()->get('flash')->merge($key, $value);
+        }
+        else {
+            DI::getInstance()->get('flash')->set($key, $value);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function withInput(array $input = null)
+    {
+        if ($input === null) {
+            $input = DI::getInstance()->get('request')->input();
+        }
+
+        DI::getInstance()->get('flash')->set('input', $input);
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function withMessage($message)
+    {
+        DI::getInstance()->get('flash')->set('message', $message);
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function withErrors(array $messages)
+    {
+        DI::getInstance()->get('flash')->merge('errors', $messages);
+
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function withError($message, $key = null)
+    {
+        DI::getInstance()->get('flash')->merge('errors', [$key ?: 0 => $message]);
 
         return $this;
     }

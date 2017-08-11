@@ -48,7 +48,7 @@ if (! function_exists('asset')) {
      */
     function asset($file)
     {
-        static $manifest = null;
+        static $manifest;
         if ($manifest === null) {
             $manifestFile = manifest_path('assets/manifest.php');
             /** @noinspection PhpIncludeInspection */
@@ -59,7 +59,7 @@ if (! function_exists('asset')) {
             $file = $manifest[$file];
         }
 
-        return request()->baseUrl() . '/' . $file;
+        return DI::getInstance()->get('request')->baseUrl() . '/' . $file;
     }
 }
 
@@ -498,6 +498,29 @@ if (!function_exists('flash')) {
 //    }
 //}
 
+if (!function_exists('guess_file_extension')) {
+    /**
+     * Return the file extension based on the mime type.
+     *
+     * If the mime type is unknown, returns null.
+     *
+     * A full listing of MIME types and their corresponding extensions may be found at the following location:
+     * http://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types
+     *
+     * @param string $mimeType
+     * @return string
+     */
+    function guess_file_extension($mimeType)
+    {
+        static $extensions;
+        if ($extensions === null) {
+            $extensions = include __DIR__ . '/data/mime_types.php';
+        }
+
+        return isset($extensions[$mimeType]) ? $extensions[$mimeType] : null;
+    }
+}
+
 if (!function_exists('http_status_text')) {
     /**
      * Translate a HTTP Status code to plain text.
@@ -816,6 +839,28 @@ if (!function_exists('migrator')) {
     }
 }
 
+if (!function_exists('mime_type')) {
+    /**
+     * Get the MIME Type of the given file.
+     *
+     * The file must be exists.
+     *
+     * @param string $file
+     * @return bool|string
+     */
+    function mime_type($file)
+    {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo === false) {
+            return false; // @codeCoverageIgnore
+        }
+        $mimetype = finfo_file($finfo, $file);
+        finfo_close($finfo);
+
+        return $mimetype;
+    }
+}
+
 if (! function_exists('old')) {
     /**
      * Retrieve an input item from the flash.
@@ -851,19 +896,14 @@ if (! function_exists('redirect')) {
     /**
      * Get a redirect response to the given path.
      *
-     * @param string $path
-     * @param array $parameters
-     * @param array $flash
+     * @param string $path Path relative to request()->baseUrl()
+     * @param array $parameters GET parameters
      * @param int $status 301: permanently, 302: temporarily (default), 303: other
      * @param array $headers
      * @return Response
      */
-    function redirect($path, $parameters = [], $flash = [], $status = 302, $headers = [])
+    function redirect($path, $parameters = [], $status = 302, $headers = [])
     {
-        if (!empty($flash)) {
-            DI::getInstance()->get('flash')->merge(null, $flash);
-        }
-
 //        if (substr($path, 0, 8) !== 'https://' && substr($path, 0, 7) !== 'http://') {
 //            $url = DI::getInstance()->get('request')->baseUrl() . (!empty($path) ? '/' . $path : '') . (!empty($parameters) ? '?' . http_build_query($parameters) : '');
 //        }
@@ -931,6 +971,17 @@ if (!function_exists('response')) {
     {
         return DI::getInstance()->get('response');
     }
+
+    // todo vielleicht noch diese Möglichkeit zulasen
+//    /**
+//     * Return a new response from the application.
+//     *
+//     * @param  string  $content
+//     * @param  int     $status
+//     * @param  array   $headers
+//     * @return \Core\Services\Contracts\Response
+//     */
+//    function response($content = '', $status = 200, array $headers = [])
 }
 
 if (!function_exists('session')) {
@@ -1000,11 +1051,13 @@ if (!function_exists('url')) {
 
 if (!function_exists('view')) {
     /**
-     * Get the evaluated view contents for the given view.
+     * Create a response with the given view.
+     *
+     * If no arguments are passed, the function returns a new View instance.
      *
      * @param string|null $name Name of the view
      * @param array|\Core\Services\Contracts\Collection $variables
-     * @return string|\Core\Services\Contracts\View
+     * @return \Core\Services\Contracts\View|Response
      */
     function view($name = null, $variables = [])
     {
@@ -1013,13 +1066,6 @@ if (!function_exists('view')) {
         }
 
         return DI::getInstance()->get('response')->view($name, $variables);
-
-//        $view = DI::getInstance()->get('view');
-//        if ($name === null) {
-//            return $view;
-//        }
-//
-//        return $view->render($name, $variables);
     }
 }
 
@@ -1158,7 +1204,7 @@ if (!function_exists('plural')) {
     function plural($word)
     {
         static $uncountable;
-        if (!isset($uncountable)) {
+        if ($uncountable === null) {
             $uncountable = [
                 'audio',
                 'bison',
@@ -1409,7 +1455,7 @@ if (!function_exists('utf8_to_ascii')) {
     function utf8_to_ascii($value)
     {
         static $charsArray;
-        if (!isset($charsArray)) {
+        if ($charsArray === null) {
             $charsArray = [
                 // ASCII => UTF-8
                 '0'    => ['°', '₀', '۰'],

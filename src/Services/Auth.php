@@ -27,8 +27,7 @@ class Auth implements AuthContract
         $field  = $config['identity']; // usually "email" or "name"
         $value  = $credentials[$field];
         $user   = call_user_func([$model, 'where'], $field, $value)->first();
-        //$user = User::where($field, $value)->first();
-        
+
         $password = $credentials['password'];
         if ($user === null || !password_verify($password, $user->password)) {
             return false;
