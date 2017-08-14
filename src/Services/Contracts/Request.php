@@ -2,12 +2,10 @@
 
 namespace Core\Services\Contracts;
 
-//use Psr\Http\Message\ServerRequestInterface;
-
 /**
  * The Request class represents an HTTP request.
  */
-interface Request //extends ServerRequestInterface
+interface Request
 {
     /**
      * Get the full URL for the request.
@@ -88,13 +86,34 @@ interface Request //extends ServerRequestInterface
     public function cookie($key = null, $default = null);
 
     /**
-     * Retrieve a file from the request.
+     * Get an uploaded file by given key.
      *
-     * @param string|null $key
-     * @param string|null $default
-     * @return object|array|null
+     * If the key does not exist in $_FILES, null is returned.
+     *
+     * @param string $key The key of $_FILES
+     * @param int $index Could be used if multiple files have been uploaded under the same key
+     * @return UploadedFile|null
      */
-    public function file($key = null, $default = null);
+    public function file($key, $index = 0);
+
+    /**
+     * Get the uploaded files by given key.
+     *
+     * If the key does not exist in $_FILES, an empty array is returned.
+     *
+     * @param string $key
+     * @return UploadedFile[]
+     */
+    public function files($key);
+
+//    /**
+//     * Get a HTTP header item.
+//     *
+//     * @param string|null $key
+//     * @param string|null $default
+//     * @return string|array
+//     */
+//    public function header($key = null, $default = null);
 
     /**
      * Gets the raw HTTP request body of the request.
@@ -126,6 +145,18 @@ interface Request //extends ServerRequestInterface
      * @return bool
      */
     public function isSecure();
+
+    /**
+     * Determine if the request is the result of an AJAX call.
+     *
+     * It works if your JavaScript library sets an X-Requested-With HTTP header.
+     * It is known to work with common JavaScript frameworks:
+     *
+     * @link http://en.wikipedia.org/wiki/List_of_Ajax_frameworks#JavaScript
+     *
+     * @return bool
+     */
+    public function isAjax();
 
     /**
      * Determine if the request is sending JSON.

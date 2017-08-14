@@ -502,13 +502,13 @@ if (!function_exists('guess_file_extension')) {
     /**
      * Return the file extension based on the mime type.
      *
-     * If the mime type is unknown, returns null.
+     * If the mime type is unknown, returns false.
      *
      * A full listing of MIME types and their corresponding extensions may be found at the following location:
      * http://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types
      *
      * @param string $mimeType
-     * @return string
+     * @return string|false
      */
     function guess_file_extension($mimeType)
     {
@@ -517,7 +517,7 @@ if (!function_exists('guess_file_extension')) {
             $extensions = include __DIR__ . '/data/mime_types.php';
         }
 
-        return isset($extensions[$mimeType]) ? $extensions[$mimeType] : null;
+        return isset($extensions[$mimeType]) ? $extensions[$mimeType] : false;
     }
 }
 
@@ -843,18 +843,18 @@ if (!function_exists('mime_type')) {
     /**
      * Get the MIME Type of the given file.
      *
-     * The file must be exists.
+     * Returns false, if the file does not exist or the mime type is unknown.
      *
      * @param string $file
-     * @return bool|string
+     * @return string|false
      */
     function mime_type($file)
     {
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $finfo = finfo_open(FILEINFO_MIME_TYPE); // todo mit @?
         if ($finfo === false) {
             return false; // @codeCoverageIgnore
         }
-        $mimetype = finfo_file($finfo, $file);
+        $mimetype = @finfo_file($finfo, $file); // todo mit @?
         finfo_close($finfo);
 
         return $mimetype;

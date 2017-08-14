@@ -119,7 +119,7 @@ interface Response
     public function view($name, array $variables = [], $status = Response::HTTP_OK, $headers = []);
 
     /**
-     * Get a new JSON response.
+     * Get a JSON response.
      *
      * @param mixed $data
      * @param int $status The response status code
@@ -130,7 +130,7 @@ interface Response
     public function json($data = [], $status = 200, array $headers = [], $options = 0);
 
     /**
-     * Get a new file download response.
+     * Get a file download response.
      *
      * @param string $file The path to the file.
      * @param string $name The file name that is seen by the user downloading.

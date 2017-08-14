@@ -3,15 +3,17 @@
 namespace Core\Services;
 
 use Core\Services\Contracts\Request as RequestContract;
+use Core\Services\Contracts\UploadedFile;
 
 /**
  * The Request class represents an HTTP request.
  *
- * Method baseUrl() based on the post "Get the full URL in PHP" at stackoverflow.
- * method() based on Symfony's Request Object.
+ * Method baseUrl() is based on the post "Get the full URL in PHP" at stackoverflow.
+ * method() and isAjax() are based on the getMethod() and the isXmlHttpRequest() methods by Symfony's Request Object.
+ * header() is adapted from Symfony's ServerBag (http-foundation/ServerBag.php).
  *
- * @see http://stackoverflow.com/questions/6768793/get-the-full-url-in-php
- * @see https://github.com/symfony/http-foundation/blob/3.2/Request.php
+ * @see http://stackoverflow.com/questions/6768793/get-the-full-url-in-php Post on stackoverflow
+ * @see https://github.com/symfony/http-foundation/blob/3.2/Request.php Symfony's Request Object on GitHub
  */
 class Request implements RequestContract
 {
@@ -35,6 +37,22 @@ class Request implements RequestContract
      * @var array
      */
     private $input;
+
+    /**
+     * Uploaded files from the request.
+     *
+     * @var UploadedFile[]
+     */
+    private $files = [];
+
+//    /**
+//     * HTTP header.
+//     *
+//     * The header is taken from $_SERVER.
+//     *
+//     * @var array
+//     */
+//    private $headers;
 
     /**
      * The body of the request.
@@ -156,14 +174,131 @@ class Request implements RequestContract
     /**
      * @inheritdoc
      */
-    public function file($key = null, $default = null)
+    public function file($key, $index = 0)
     {
-        if ($key === null) {
-            return $_FILES;
+        $files = $this->files($key);
+
+        return isset($files[$index]) ? $files[$index] : null;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function files($key)
+    {
+        if (!isset($this->files[$key])) {
+            if (!isset($_FILES[$key]['error'])) {
+                return [];
+            }
+            $this->files[$key] = [];
+            if (is_array($_FILES[$key]['error'])) {
+                foreach ($_FILES[$key]['error'] as $i => $error) {
+                    $this->files[$key][$i] = new \Core\Services\UploadedFile($_FILES[$key]['tmp_name'][$i], $_FILES[$key]['name'][$i], $_FILES[$key]['error'][$i]);
+                }
+            }
+            else {
+                $this->files[$key][0] = new \Core\Services\UploadedFile($_FILES[$key]['tmp_name'], $_FILES[$key]['name'], $_FILES[$key]['error']);
+            }
         }
 
-        return isset($_FILES[$key]) ? $_FILES[$key] : $default;
+        return $this->files[$key];
     }
+
+//    /**
+//     * Get a HTTP header item.
+//     *
+//     * @param string|null $key
+//     * @param string|null $default
+//     * @return string|array
+//     */
+//    public function header($key = null, $default = null) // evtl wieder raus nehmen, zu kompliziert
+//    {
+//        if ($this->headers === null) {
+//            $headers = [];
+//
+//            $contentHeaders = ['CONTENT_LENGTH' => true, 'CONTENT_MD5' => true, 'CONTENT_TYPE' => true];
+//            foreach ($_SERVER as $key => $value) {
+//                if (0 === strpos($key, 'HTTP_')) {
+//                    $headers[substr($key, 5)] = $value;
+//                }
+//                // CONTENT_* are not prefixed with HTTP_
+//                elseif (isset($contentHeaders[$key])) {
+//                    $headers[$key] = $value;
+//                }
+//            }
+//
+//            if (isset($_SERVER['PHP_AUTH_USER'])) {
+//                $headers['PHP_AUTH_USER'] = $_SERVER['PHP_AUTH_USER'];
+//                $headers['PHP_AUTH_PW']   = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
+//            }
+//            else {
+//                /*
+//                 * php-cgi under Apache does not pass HTTP Basic user/pass to PHP by default
+//                 * For this workaround to work, add these lines to your .htaccess file:
+//                 * RewriteCond %{HTTP:Authorization} ^(.+)$
+//                 * RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+//                 *
+//                 * A sample .htaccess file:
+//                 * RewriteEngine On
+//                 * RewriteCond %{HTTP:Authorization} ^(.+)$
+//                 * RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+//                 * RewriteCond %{REQUEST_FILENAME} !-f
+//                 * RewriteRule ^(.*)$ app.php [QSA,L]
+//                 */
+//
+//                $authorizationHeader = null;
+//                if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+//                    $authorizationHeader = $_SERVER['HTTP_AUTHORIZATION'];
+//                }
+//                else if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+//                    $authorizationHeader = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+//                }
+//
+//                if (null !== $authorizationHeader) {
+//                    if (0 === stripos($authorizationHeader, 'basic ')) {
+//                        // Decode AUTHORIZATION header into PHP_AUTH_USER and PHP_AUTH_PW when authorization header is basic
+//                        $exploded = explode(':', base64_decode(substr($authorizationHeader, 6)), 2);
+//                        if (count($exploded) == 2) {
+//                            list($headers['PHP_AUTH_USER'], $headers['PHP_AUTH_PW']) = $exploded;
+//                        }
+//                    }
+//                    else if (empty($_SERVER['PHP_AUTH_DIGEST']) && (0 === stripos($authorizationHeader, 'digest '))) {
+//                        // In some circumstances PHP_AUTH_DIGEST needs to be set
+//                        $headers['PHP_AUTH_DIGEST'] = $authorizationHeader;
+//                        $_SERVER['PHP_AUTH_DIGEST'] = $authorizationHeader;
+//                    }
+//                    else if (0 === stripos($authorizationHeader, 'bearer ')) {
+//                        /*
+//                         * XXX: Since there is no PHP_AUTH_BEARER in PHP predefined variables,
+//                         *      I'll just set $headers['AUTHORIZATION'] here.
+//                         *      http://php.net/manual/en/reserved.variables.server.php
+//                         */
+//                        $headers['AUTHORIZATION'] = $authorizationHeader;
+//                    }
+//                }
+//            }
+//
+//            if (isset($headers['AUTHORIZATION'])) {
+//                return $headers;
+//            }
+//
+//            // PHP_AUTH_USER/PHP_AUTH_PW
+//            if (isset($headers['PHP_AUTH_USER'])) {
+//                $headers['AUTHORIZATION'] = 'Basic '.base64_encode($headers['PHP_AUTH_USER'].':'.$headers['PHP_AUTH_PW']);
+//            }
+//            elseif (isset($headers['PHP_AUTH_DIGEST'])) {
+//                $headers['AUTHORIZATION'] = $headers['PHP_AUTH_DIGEST'];
+//            }
+//
+//            $this->headers = $headers;
+//        }
+//
+//        if ($key === null) {
+//            return $this->headers;
+//        }
+//
+//        return isset($this->headers[$key]) ? $this->headers[$key] : $default;
+//    }
 
     /**
      * @inheritdoc
@@ -214,6 +349,15 @@ class Request implements RequestContract
     public function isSecure()
     {
         return !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function isAjax()
+    {
+//        return isset($_SERVER['X-Requested-With']) && $_SERVER['X-Requested-With'] == 'XMLHttpRequest';
+        return isset($_SERVER['X-REQUESTED-WITH']) && $_SERVER['X-REQUESTED-WITH'] == 'XMLHttpRequest';
     }
 
     /**
