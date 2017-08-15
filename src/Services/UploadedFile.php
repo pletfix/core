@@ -4,7 +4,6 @@ namespace Core\Services;
 
 use Core\Exceptions\UploadException;
 use Core\Services\Contracts\UploadedFile as UploadedFileContract;
-use InvalidArgumentException;
 
 /**
  * The Request class represents an HTTP request.
@@ -42,16 +41,11 @@ class UploadedFile implements UploadedFileContract
      * @param string $path The full temporary path to the file
      * @param string $name The original file name
      * @param int $error The UPLOAD_ERR_XXX constant
-     * @throws InvalidArgumentException if $name is not accepted.
      */
     public function __construct($path, $name, $error)
     {
-        if (strpos($name, DIRECTORY_SEPARATOR) !== false) {
-            throw new InvalidArgumentException('Name of the uploaded file is not accepted.');
-        }
-
         $this->path  = $path;
-        $this->name  = $name;
+        $this->name  = basename(str_replace('\\', '/', $name)); // basename() may prevent filesystem traversal attacks, see http://php.net/manual/en/function.move-uploaded-file.php
         $this->error = $error;
     }
 
@@ -182,6 +176,7 @@ class UploadedFile implements UploadedFileContract
      * Returns the maximum size of an uploaded file as configured in php.ini.
      *
      * @return int The maximum size of an uploaded file in bytes
+     * @codeCoverageIgnore
      */
     private function getMaxFileSize()
     {
@@ -203,10 +198,10 @@ class UploadedFile implements UploadedFileContract
         }
 
         switch (substr($iniMax, -1)) {
-            case 't': $max *= 1024;   break;
-            case 'g': $max *= 1024^2; break;
-            case 'm': $max *= 1024^3; break;
-            case 'k': $max *= 1024^4; break;
+            case 't': $max *= 1024^4; break;
+            case 'g': $max *= 1024^3; break;
+            case 'm': $max *= 1024^2; break;
+            case 'k': $max *= 1024;   break;
         }
 
         return $max;

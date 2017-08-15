@@ -1,0 +1,8 @@
+<?php
+
+namespace Core\Services;
+
+function is_uploaded_file($filename)
+{
+    return basename($filename) == 'tempfile';
+}

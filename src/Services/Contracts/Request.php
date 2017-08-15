@@ -88,23 +88,13 @@ interface Request
     /**
      * Get an uploaded file by given key.
      *
+     * If multiple files have been uploaded under the key, an array of the uploaded files is returned.
      * If the key does not exist in $_FILES, null is returned.
      *
-     * @param string $key The key of $_FILES
-     * @param int $index Could be used if multiple files have been uploaded under the same key
-     * @return UploadedFile|null
+     * @param string $key The key of $_FILES, using "dot" notation.
+     * @return UploadedFile|array|null
      */
-    public function file($key, $index = 0);
-
-    /**
-     * Get the uploaded files by given key.
-     *
-     * If the key does not exist in $_FILES, an empty array is returned.
-     *
-     * @param string $key
-     * @return UploadedFile[]
-     */
-    public function files($key);
+    public function file($key);
 
 //    /**
 //     * Get a HTTP header item.

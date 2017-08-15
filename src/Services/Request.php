@@ -43,7 +43,7 @@ class Request implements RequestContract
      *
      * @var UploadedFile[]
      */
-    private $files = [];
+    private $files;
 
 //    /**
 //     * HTTP header.
@@ -174,34 +174,59 @@ class Request implements RequestContract
     /**
      * @inheritdoc
      */
-    public function file($key, $index = 0)
+    public function file($key)
     {
-        $files = $this->files($key);
-
-        return isset($files[$index]) ? $files[$index] : null;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function files($key)
-    {
-        if (!isset($this->files[$key])) {
-            if (!isset($_FILES[$key]['error'])) {
-                return [];
-            }
-            $this->files[$key] = [];
-            if (is_array($_FILES[$key]['error'])) {
-                foreach ($_FILES[$key]['error'] as $i => $error) {
-                    $this->files[$key][$i] = new \Core\Services\UploadedFile($_FILES[$key]['tmp_name'][$i], $_FILES[$key]['name'][$i], $_FILES[$key]['error'][$i]);
-                }
-            }
-            else {
-                $this->files[$key][0] = new \Core\Services\UploadedFile($_FILES[$key]['tmp_name'], $_FILES[$key]['name'], $_FILES[$key]['error']);
+        if (!isset($this->files)) {
+            $this->files = [];
+            foreach ($_FILES as $key => $file) {
+                $this->files[$key] = $this->convertFile($file);
             }
         }
 
-        return $this->files[$key];
+        if (strpos($key, '.') === false) {
+            return isset($this->files[$key]) ? $this->files[$key] : null;
+        }
+
+        $subitems = $this->files;
+        foreach (explode('.', $key) as $subkey) {
+            if (!isset($subitems[$subkey])) {
+                return null;
+            }
+            $subitems = $subitems[$subkey];
+        }
+
+        return $subitems;
+    }
+
+    /**
+     * Convert PHP's $_FILES to UploadedFile instances.
+     *
+     * @param array $file
+     * @return \Core\Services\UploadedFile|array
+     */
+    private function convertFile(array $file)
+    {
+        if (!isset($file['name']) || !isset($file['type']) || !isset($file['tmp_name']) || !isset($file['error']) || !isset($file['size'])) {
+            return null;
+        }
+
+        if (is_array($file['error'])) {
+            $result = [];
+            foreach ($file['error'] as $key => $error) {
+                $result[$key] = $this->convertFile([
+                    'name'     => $file['name'][$key],
+                    'type'     => $file['type'][$key],
+                    'tmp_name' => $file['tmp_name'][$key],
+                    'error'    => $file['error'][$key],
+                    'size'     => $file['size'][$key],
+                ]);
+            }
+        }
+        else {
+            $result = new \Core\Services\UploadedFile($file['tmp_name'], $file['name'], $file['error']);
+        }
+
+        return $result;
     }
 
 //    /**

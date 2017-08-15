@@ -1,0 +1,8 @@
+<?php
+
+namespace Core\Services;
+
+function move_uploaded_file($filename, $destination)
+{
+    return basename($destination) == 'logo.png';
+}
