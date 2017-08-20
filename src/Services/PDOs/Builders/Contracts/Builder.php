@@ -599,7 +599,10 @@ interface Builder extends Countable
     public function orderBy($columns, array $bindings = []);
 
     /**
-     * Sets a limit count on the query.
+     * Sets a limit count for the result set.
+     *
+     * Note, that LIMIT does not see the query, it is just see the result set. Therefore, LIMIT has no effect on the
+     * calculation of aggregate functions such like MIN or MAX.
      *
      * @param int $limit The number of rows to select.
      * @return Builder
@@ -607,7 +610,10 @@ interface Builder extends Countable
     public function limit($limit);
 
     /**
-     * Sets a limit offset on the query.
+     * Sets a limit offset for the result set.
+     *
+     * Note, that OFFSET does not see the query, it is just see the result set. Therefore, OFFSET has no effect on the
+     * calculation of aggregate functions such like MIN or MAX.
      *
      * @param int $offset Start returning after this many rows.
      * @return Builder

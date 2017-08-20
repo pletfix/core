@@ -879,6 +879,22 @@ if (! function_exists('old')) {
     }
 }
 
+if (!function_exists('paginator')) {
+    /**
+     * Create a Paginator.
+     *
+     * @param int $total The total number of items.
+     * @param int $limit The number of items per page.
+     * @param int|null $currentPage The current page.
+     * @return \Core\Services\Contracts\Paginator
+     * @internal param string $path
+     */
+    function paginator($total, $limit = 20, $currentPage = null)
+    {
+        return DI::getInstance()->get('paginator', [$total, $limit, $currentPage]);
+    }
+}
+
 if (!function_exists('plugin_manager')) {
     /**
      * Get the Plugin Manager.

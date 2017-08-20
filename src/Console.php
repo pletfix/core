@@ -14,7 +14,7 @@ class Console
      *
      * @var string
      */
-    const VERSION = '0.6.1';
+    const VERSION = '0.7.2';
 
     /**
      * Base path of the application.

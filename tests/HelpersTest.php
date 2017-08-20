@@ -3,6 +3,7 @@
 namespace Core\Tests\Functions;
 
 use Core\Services\Contracts\Collection;
+use Core\Services\Contracts\Paginator;
 use Core\Services\Contracts\Response;
 use Core\Services\DatabaseFactory;
 use Core\Services\DI;
@@ -214,6 +215,18 @@ class HelpersTest extends TestCase
         $this->assertEquals('my_base_url/' . $value, asset($key));
     }
 
+    public function testAssetManager()
+    {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\AssetManager::class, asset_manager());
+    }
+
+    public function testAuth()
+    {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Auth::class, auth());
+    }
+
     public function testBcrypt()
     {
         $plain = 'geheim';
@@ -236,6 +249,28 @@ class HelpersTest extends TestCase
         }
         $this->assertNull($result);
         $this->assertStringStartsWith('Delay:', $out);
+    }
+
+    public function testCache()
+    {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Cache::class, cache());
+
+        DI::getInstance()->get('config')->set('cache.stores.~foo', ['driver' => 'Array']);
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Cache::class, cache('~foo'));
+
+        $this->expectException(InvalidArgumentException::class);
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        cache('~bar');
+    }
+
+    public function testCollect()
+    {
+        $c = collect(['a', 'b']);
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Collection::class, $c);
+        $this->assertSame(['a', 'b'], $c->all());
     }
 
     public function testCommand()
@@ -273,12 +308,106 @@ class HelpersTest extends TestCase
         $this->assertNotEmpty($result);
     }
 
+    public function testCookie()
+    {
+        $c = cookie();
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Cookie::class, $c);
+        $c->set('~foo', 'bar');
+        try {
+            $this->assertSame('bar', cookie('~foo', 'baz'));
+        }
+        finally {
+            $c->delete('~foo');
+        }
+        $this->assertSame('baz', cookie('~foo', 'baz'));
+    }
+
     public function testCsrfToken()
     {
         $t1 = csrf_token();
         $t2 = csrf_token();
         $this->assertEquals(40, strlen($t1));
         $this->assertEquals($t1, $t2);
+    }
+
+    public function testDatabase()
+    {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Database::class, database());
+
+        DI::getInstance()->get('config')->set('database.stores.~foo', ['driver' => 'SQLite']);
+        DI::getInstance()->set('database-factory', DatabaseFactory::class, true);
+
+        $this->assertSame('SQLite', database('~foo')->config('driver'));
+
+        $this->expectException(InvalidArgumentException::class);
+        database('~bar');
+    }
+
+    public function testDatetime()
+    {
+        $now = time();
+        $todayString = strftime('%Y-%m-%d', $now);
+
+        $dt = datetime();
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame($todayString, $dt->toDateString());
+
+        $dt = datetime(new \DateTime('now'));
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame($todayString, $dt->toDateString());
+
+        $dt = datetime($now);
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame($todayString, $dt->toDateString());
+
+        $dt = datetime([2017, 3, 4, 5, 6, 7]);
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame('2017-03-04 05:06:07', $dt->toDateTimeString());
+
+        $dt::setLocaleFormat([
+            'datetime' => 'Y-m-d H:i',
+            'date'     => 'Y-m-d',
+            'time'     => 'H:i',
+        ]);
+
+        $dt = datetime('2017-03-04 05:06', null, 'locale');
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame('2017-03-04 05:06:00', $dt->toDateTimeString());
+
+        $dt = datetime('2017-03-04', null, 'locale.date');
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame('2017-03-04', $dt->toDateString());
+
+        $dt = datetime('05:06', null, 'locale.time');
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame($todayString . ' 05:06:00', $dt->toDateTimeString());
+
+        $dt = datetime('201703040506', null, 'Ymdhi');
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
+        $this->assertSame('2017-03-04 05:06:00', $dt->toDateTimeString());
+    }
+
+    public function testDi()
+    {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\DI::class, di());
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Config::class, di('config'));
+        /** @var Collection $c */
+        $c = di('collection', [['foo', 'bar']]);
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Collection::class, $c);
+        $this->assertSame(['foo', 'bar'], $c->all());
     }
 
     public function testDump()
@@ -376,6 +505,42 @@ class HelpersTest extends TestCase
         $this->assertSame($isWin, is_windows());
     }
 
+    public function testListClasses()
+    {
+        $path = storage_path('~test');
+        @mkdir($path);
+        @mkdir($path . '/Foo');
+        @touch($path . '/Foo/MyClass4Controller.php');
+        @touch($path . '/Foo/MyClass5Controller.php');
+        @touch($path . '/Foo/MyClass6.php');
+        @touch($path . '/MyClass1Controller.php');
+        @touch($path . '/MyClass2Controller.php');
+        @touch($path . '/MyClass3.php');
+        try {
+            $result = [];
+            list_classes($result, $path, 'MyNamespace');
+            $this->assertEquals(6, count($result));
+            $this->assertEquals('MyNamespace\Foo\MyClass4Controller', $result[0]);
+            $this->assertEquals('MyNamespace\MyClass3', $result[5]);
+
+            $result = [];
+            list_classes($result, $path, 'MyNamespace', 'Controller');
+            $this->assertEquals(4, count($result));
+            $this->assertEquals('MyNamespace\Foo\MyClass4Controller', $result[0]);
+            $this->assertEquals('MyNamespace\MyClass2Controller', $result[3]);
+        }
+        finally {
+            @unlink($path . '/Foo/MyClass4Controller.php');
+            @unlink($path . '/Foo/MyClass5Controller.php');
+            @unlink($path . '/Foo/MyClass6.php');
+            @unlink($path . '/MyClass1Controller.php');
+            @unlink($path . '/MyClass2Controller.php');
+            @unlink($path . '/MyClass3.php');
+            @rmdir($path . '/Foo');
+            @rmdir($path);
+        }
+    }
+
     public function testListFiles()
     {
         $path = storage_path('~test');
@@ -433,46 +598,10 @@ class HelpersTest extends TestCase
         }
     }
 
-    public function testMailAddress()
+    public function testLogger()
     {
-        $this->assertSame('user@example.com', mail_address('User <user@example.com>'));
-        $this->assertSame('user@example.com', mail_address('user@example.com'));
-    }
-
-    public function testListClasses()
-    {
-        $path = storage_path('~test');
-        @mkdir($path);
-        @mkdir($path . '/Foo');
-        @touch($path . '/Foo/MyClass4Controller.php');
-        @touch($path . '/Foo/MyClass5Controller.php');
-        @touch($path . '/Foo/MyClass6.php');
-        @touch($path . '/MyClass1Controller.php');
-        @touch($path . '/MyClass2Controller.php');
-        @touch($path . '/MyClass3.php');
-        try {
-            $result = [];
-            list_classes($result, $path, 'MyNamespace');
-            $this->assertEquals(6, count($result));
-            $this->assertEquals('MyNamespace\Foo\MyClass4Controller', $result[0]);
-            $this->assertEquals('MyNamespace\MyClass3', $result[5]);
-
-            $result = [];
-            list_classes($result, $path, 'MyNamespace', 'Controller');
-            $this->assertEquals(4, count($result));
-            $this->assertEquals('MyNamespace\Foo\MyClass4Controller', $result[0]);
-            $this->assertEquals('MyNamespace\MyClass2Controller', $result[3]);
-        }
-        finally {
-            @unlink($path . '/Foo/MyClass4Controller.php');
-            @unlink($path . '/Foo/MyClass5Controller.php');
-            @unlink($path . '/Foo/MyClass6.php');
-            @unlink($path . '/MyClass1Controller.php');
-            @unlink($path . '/MyClass2Controller.php');
-            @unlink($path . '/MyClass3.php');
-            @rmdir($path . '/Foo');
-            @rmdir($path);
-        }
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Psr\Log\LoggerInterface::class, logger());
     }
 
     public function testMakeDir()
@@ -492,11 +621,29 @@ class HelpersTest extends TestCase
         }
     }
 
+    public function testMailAddress()
+    {
+        $this->assertSame('user@example.com', mail_address('User <user@example.com>'));
+        $this->assertSame('user@example.com', mail_address('user@example.com'));
+    }
+
+    public function testMailer()
+    {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Mailer::class, mailer());
+    }
+
     public function testMessage()
     {
         $this->assertEquals('foodef2', message('foodef2'));
         flash()->set('message', 'bar2')->age();
         $this->assertEquals('bar2', message('foodef2'));
+    }
+
+    public function testMigrator()
+    {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Migrator::class, migrator());
     }
 
     public function testMimeType()
@@ -510,6 +657,21 @@ class HelpersTest extends TestCase
         flash()->set('input.foo3', 'bar3')->age();
         $this->assertEquals('bar3', old('foo3', 'foodef3'));
         $this->assertEquals(['foo3' => 'bar3'], old());
+    }
+
+    public function testPaginator()
+    {
+        $p = paginator(10, 5, 2);
+        $this->assertInstanceOf(Paginator::class, $p);
+        $this->assertSame(10, $p->total());
+        $this->assertSame(5, $p->limit());
+        $this->assertSame(2, $p->currentPage());
+    }
+
+    public function testPluginManager()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        plugin_manager('~foo/~bar');
     }
 
     public function testRedirect()
@@ -546,6 +708,33 @@ class HelpersTest extends TestCase
             @rmdir($path . '/foo');
             @rmdir($path);
         }
+    }
+
+    public function testResponse()
+    {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Response::class, response());
+    }
+
+    public function testRequest()
+    {
+        $request = $this->getMockBuilder(Request::class)->setMethods(['baseUrl'])->getMock();
+        $request->expects($this->any())->method('baseUrl')->willReturn('my_base_url');
+        DI::getInstance()->set('request', $request, true);
+        $this->assertInstanceOf(Request::class, request());
+    }
+
+    public function testSession()
+    {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Session::class, session());
+        $this->assertSame('bar', session('foo', 'bar'));
+    }
+
+    public function testStdio()
+    {
+        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
+        $this->assertInstanceOf(\Core\Services\Contracts\Stdio::class, stdio());
     }
 
     public function testT()
@@ -585,188 +774,6 @@ class HelpersTest extends TestCase
         $this->assertEquals('my_base_url', url());
         $this->assertEquals('my_base_url/foo', url('foo'));
         $this->assertEquals('my_base_url/foo?bar=4711&batz=butz', url('foo', ['bar' => 4711, 'batz' => 'butz']));
-    }
-
-    // Services
-
-    public function testAssetManager()
-    {
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\AssetManager::class, asset_manager());
-    }
-
-    public function testAuth()
-    {
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\Auth::class, auth());
-    }
-
-    public function testCache()
-    {
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\Cache::class, cache());
-
-        DI::getInstance()->get('config')->set('cache.stores.~foo', ['driver' => 'Array']);
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\Cache::class, cache('~foo'));
-
-        $this->expectException(InvalidArgumentException::class);
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        cache('~bar');
-    }
-
-    public function testCollect()
-    {
-        $c = collect(['a', 'b']);
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\Collection::class, $c);
-        $this->assertSame(['a', 'b'], $c->all());
-    }
-
-    public function testCookie()
-    {
-        $c = cookie();
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\Cookie::class, $c);
-        $c->set('~foo', 'bar');
-        try {
-            $this->assertSame('bar', cookie('~foo', 'baz'));
-        }
-        finally {
-            $c->delete('~foo');
-        }
-        $this->assertSame('baz', cookie('~foo', 'baz'));
-    }
-
-    public function testDatabase()
-    {
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\Database::class, database());
-
-        DI::getInstance()->get('config')->set('database.stores.~foo', ['driver' => 'SQLite']);
-        DI::getInstance()->set('database-factory', DatabaseFactory::class, true);
-
-        $this->assertSame('SQLite', database('~foo')->config('driver'));
-
-        $this->expectException(InvalidArgumentException::class);
-        database('~bar');
-    }
-
-    public function testDatetime()
-    {
-        $now = time();
-        $todayString = strftime('%Y-%m-%d', $now);
-
-        $dt = datetime();
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
-        $this->assertSame($todayString, $dt->toDateString());
-
-        $dt = datetime(new \DateTime('now'));
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
-        $this->assertSame($todayString, $dt->toDateString());
-
-        $dt = datetime($now);
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
-        $this->assertSame($todayString, $dt->toDateString());
-
-        $dt = datetime([2017, 3, 4, 5, 6, 7]);
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
-        $this->assertSame('2017-03-04 05:06:07', $dt->toDateTimeString());
-
-        $dt::setLocaleFormat([
-            'datetime' => 'Y-m-d H:i',
-            'date'     => 'Y-m-d',
-            'time'     => 'H:i',
-        ]);
-
-        $dt = datetime('2017-03-04 05:06', null, 'locale');
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
-        $this->assertSame('2017-03-04 05:06:00', $dt->toDateTimeString());
-
-        $dt = datetime('2017-03-04', null, 'locale.date');
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
-        $this->assertSame('2017-03-04', $dt->toDateString());
-
-        $dt = datetime('05:06', null, 'locale.time');
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
-        $this->assertSame($todayString . ' 05:06:00', $dt->toDateTimeString());
-
-        $dt = datetime('201703040506', null, 'Ymdhi');
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\DateTime::class, $dt);
-        $this->assertSame('2017-03-04 05:06:00', $dt->toDateTimeString());
-    }
-
-    public function testDi()
-    {
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\DI::class, di());
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\Config::class, di('config'));
-        /** @var Collection $c */
-        $c = di('collection', [['foo', 'bar']]);
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\Collection::class, $c);
-        $this->assertSame(['foo', 'bar'], $c->all());
-    }
-
-    public function testLogger()
-    {
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Psr\Log\LoggerInterface::class, logger());
-    }
-
-    public function testMailer()
-    {
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\Mailer::class, mailer());
-    }
-
-    public function testMigrator()
-    {
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\Migrator::class, migrator());
-    }
-
-    public function testPluginManager()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        plugin_manager('~foo/~bar');
-
-    }
-
-    public function testRequest()
-    {
-        $request = $this->getMockBuilder(Request::class)->setMethods(['baseUrl'])->getMock();
-        $request->expects($this->any())->method('baseUrl')->willReturn('my_base_url');
-        DI::getInstance()->set('request', $request, true);
-        $this->assertInstanceOf(Request::class, request());
-    }
-
-    public function testResponse()
-    {
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\Response::class, response());
-    }
-
-    public function testSession()
-    {
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\Session::class, session());
-        $this->assertSame('bar', session('foo', 'bar'));
-    }
-
-    public function testStdio()
-    {
-        /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection */
-        $this->assertInstanceOf(\Core\Services\Contracts\Stdio::class, stdio());
     }
 
     public function testView()

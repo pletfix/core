@@ -162,11 +162,11 @@ class BuilderTest extends TestCase
         $this->assertSame('SELECT "like" LIKE "%d" AS "c1"', $sql);
 
         $sql = $this->builder->reset()->select("c1 * -- max(d)\ncount(-- d)\n*)")->toSql();
-        $this->assertSame("SELECT \"c1\" * -- max(d)\nCOUNT(-- d)\n*)", $sql);
+        $this->assertSame('SELECT "c1" * COUNT(*)', $sql);
 
-        $sql = $this->builder->reset()->select(['c1' => "(select max(-- i)\n'dd)') from table2)"])->toSql();
+        $sql = $this->builder->reset()->select(['c1' => "(select max(-- i)\n'dd') from table2)"])->toSql();
         /** @noinspection SqlDialectInspection */
-        $this->assertSame("SELECT (select max(-- i)\n'dd)') from table2) AS \"c1\"", $sql);
+        $this->assertSame("SELECT (select max(-- i)\n'dd') from table2) AS \"c1\"", $sql);
     }
 
     public function testFrom()
@@ -771,6 +771,50 @@ class BuilderTest extends TestCase
         $this->assertSame(4711, $this->builder->from('table1')->count());
     }
 
+    public function testCountWithArgument()
+    {
+        /** @noinspection SqlDialectInspection */
+        $this->db->expects($this->once())
+            ->method('scalar')
+            ->with('SELECT COUNT("name") FROM "table1"')
+            ->willReturn(4711);
+
+        $this->assertSame(4711, $this->builder->from('table1')->count('name'));
+    }
+
+    public function testCountWithOneColumnInStatement()
+    {
+        /** @noinspection SqlDialectInspection */
+        $this->db->expects($this->once())
+            ->method('scalar')
+            ->with('SELECT COUNT("table1"."name") FROM "table1"')
+            ->willReturn(4711);
+
+        $this->assertSame(4711, $this->builder->from('table1')->select('table1.name')->count());
+    }
+
+    public function testCountWithMultipleColumnsInStatement()
+    {
+        /** @noinspection SqlDialectInspection */
+        $this->db->expects($this->once())
+            ->method('scalar')
+            ->with('SELECT COUNT(*) FROM "table1"')
+            ->willReturn(4711);
+
+        $this->assertSame(4711, $this->builder->from('table1')->select('name, email')->count());
+    }
+
+    public function testCountWithAsterixInStatement()
+    {
+        /** @noinspection SqlDialectInspection */
+        $this->db->expects($this->once())
+            ->method('scalar')
+            ->with('SELECT COUNT(*) FROM "table1"')
+            ->willReturn(4711);
+
+        $this->assertSame(4711, $this->builder->from('table1')->select('table1.*')->count());
+    }
+
     public function testMax()
     {
         /** @noinspection SqlDialectInspection */
@@ -798,10 +842,10 @@ class BuilderTest extends TestCase
         /** @noinspection SqlDialectInspection */
         $this->db->expects($this->once())
             ->method('scalar')
-            ->with('SELECT AVG("column1") FROM "table1"')
+            ->with('SELECT AVG("column1") FROM "table1" WHERE "name" = ?')
             ->willReturn(4711);
 
-        $this->assertSame(4711, $this->builder->from('table1')->avg('column1'));
+        $this->assertSame(4711, $this->builder->from('table1')->where('name', 'Frank')->avg('column1'));
     }
 
     public function testSum()
@@ -813,6 +857,39 @@ class BuilderTest extends TestCase
             ->willReturn(4711);
 
         $this->assertSame(4711, $this->builder->from('table1')->sum('column1'));
+    }
+
+    public function testSumWithFunctionInStatement()
+    {
+        /** @noinspection SqlDialectInspection */
+        $this->db->expects($this->once())
+            ->method('scalar')
+            ->with('SELECT SUM(ROUND("column1", 2)) FROM "table1"')
+            ->willReturn(4711);
+
+        $this->assertSame(4711, $this->builder->from('table1')->select('round(column1, 2)')->sum());
+    }
+
+    public function testSumWithCommentInStatement()
+    {
+        /** @noinspection SqlDialectInspection */
+        $this->db->expects($this->once())
+            ->method('scalar')
+            ->with('SELECT SUM("column1") FROM "table1"')
+            ->willReturn(4711);
+
+        $this->assertSame(4711, $this->builder->from('table1')->select('column1-- , column2')->sum());
+    }
+
+    public function testSumWithAlias()
+    {
+        /** @noinspection SqlDialectInspection */
+        $this->db->expects($this->once())
+            ->method('scalar')
+            ->with('SELECT SUM("age" > ?) FROM "table1"')
+            ->willReturn(4711);
+
+        $this->assertSame(4711, $this->builder->from('table1')->select('age > ? AS old', [30])->sum());
     }
 
     public function testInsert()

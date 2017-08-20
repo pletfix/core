@@ -401,7 +401,7 @@ abstract class Database implements DatabaseContract
     public function rollback()
     {
         if ($this->transactions <= 1) {
-            $this->pdo->rollback();
+            $this->pdo->rollBack();
         }
         else {
             if ($this->supportsSavepoints) {

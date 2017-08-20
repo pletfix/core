@@ -904,7 +904,45 @@ class Builder implements BuilderContract
     // Aggregate Functions
 
     /**
+     * Determine if the statement has exactly one column.
+     *
+     * @return bool
+     */
+    private function hasExactlyOneColumn()
+    {
+        if (count($this->columns) != 1 || strpos($this->columns[0], '*') !== false) {
+            return false;
+        }
+
+        if (strpos($this->columns[0], ',') === false) {
+            return true;
+        }
+
+        // The column expression includes a comma. Is this a separator for columns or for function arguments?
+        $column = $this->columns[0];
+        $n = strlen($column);
+        $braces = 0;
+        for ($i = 0; $i < $n; $i++) {
+            $ch = $column[$i];
+            if ($braces == 0 && $ch == ',') {
+                return false; // comma separator found!
+            }
+            else if ($ch == '(') {
+                $braces++;
+            }
+            else if ($ch == ')') {
+                $braces--;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Execute an aggregate function.
+     *
+     * Note, that ORDER BY and LIMIT generally have no effect on the calculation of aggregate functions.
+     * Furthermore, GROUP BY and HAVING BY are omit too, because we wish calculate a aggregate value about all records.
      *
      * @param string $function
      * @param string|null $column
@@ -913,10 +951,23 @@ class Builder implements BuilderContract
     protected function aggregate($function, $column = null)
     {
         if ($column === null) {
-            $column = count($this->columns) == 1 && strpos($this->columns[0], '*') === false ? $this->columns[0] : '*';
+            if ($this->hasExactlyOneColumn()) {
+                if (($pos = strpos($this->columns[0], ' AS ')) !== false) {
+                    $column = substr($this->columns[0], 0, $pos);
+                }
+                else {
+                    $column = $this->columns[0];
+                }
+                $bindings = $this->bindings['select'];
+            }
+            else {
+                $column   = '*';
+                $bindings = [];
+            }
         }
         else {
-            $column = $this->db->quoteName($column);
+            $column   = $this->db->quoteName($column);
+            $bindings = [];
         }
 
         $flags = !empty($this->flags) ? implode(' ', $this->flags) . ' ' : '';
@@ -924,13 +975,15 @@ class Builder implements BuilderContract
         $query = 'SELECT ' . $function . '(' . $flags . $column . ')'
             . $this->buildFrom()
             . $this->buildJoin()
-            . $this->buildWhere()
-            . $this->buildGroupBy()
-            . $this->buildHaving()
-            . $this->buildOrderBy()
-            . $this->buildLimit();
+            . $this->buildWhere();
 
-        $result = $this->db->scalar($query, $this->bindings());
+        foreach (['from', 'join', 'where'] as $clause) {
+            if (!empty($this->bindings[$clause])) {
+                $bindings = array_merge($bindings, $this->bindings[$clause]);
+            }
+        }
+
+        $result = $this->db->scalar($query, $bindings);
 
         return $result ?: 0;
     }
@@ -1378,7 +1431,7 @@ class Builder implements BuilderContract
     /**
      * Render the column list.
      *
-     * @param string|array|BuilderContract|Closure $columns One or more columns or subquery.
+     * @param string|array $columns One or more columns or subquery.
      * @param string $clause Key for the binding list: "select", "group" or "order"
      * @return array
      */
@@ -1530,9 +1583,12 @@ class Builder implements BuilderContract
                 ++$i;
             }
             else if ($ch == '-' && $i + 2 < $n && $expr[$i + 1] == '-' && $expr[$i + 2] == ' ') { // comment
-                $i += 2;
-                while (++$i < $n && $expr[$i] != PHP_EOL);
-                ++$i;
+                $j = $i + 2;
+                while (++$j < $n && $expr[$j] != PHP_EOL);
+                ++$j;
+                // Remove the comment
+                $expr = substr($expr, 0, $i) . substr($expr, $j);
+                $n -= $j - $i; // difference of characters after replacing
             }
             else {
                 ++$i;
@@ -1635,7 +1691,7 @@ class Builder implements BuilderContract
     }
 
     /**
-     * Builds the `LIMIT ... OFFSET` clause of the statement.
+     * Builds the `LIMIT ... OFFSET` clause for the SELECT statement.
      *
      * @return string
      */
