@@ -55,10 +55,17 @@ class MSSQL extends Database
 
     /**
      * @inheritdoc
+     * @see https://www.mssqltips.com/sqlservertip/1140/how-to-tell-what-sql-server-version-you-are-running/
      */
     public function version()
     {
-        return false;
+        static $version;
+        if ($version === null) {
+            $v = $this->scalar('SELECT @@VERSION');
+            $version = (strpos($v, 'Microsoft SQL Server ') === 0) ? substr($v, 21, 4) : $v;
+        }
+
+        return $version;
     }
 
     /**

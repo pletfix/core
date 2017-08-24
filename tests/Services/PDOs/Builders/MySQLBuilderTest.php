@@ -5,6 +5,7 @@ namespace Core\Tests\Services\PDOs\Builders;
 use Core\Services\Database;
 use Core\Services\PDOs\Builders\Contracts\Builder;
 use Core\Services\PDOs\Builders\MySQLBuilder;
+use Core\Services\PDOs\MySQL;
 use Core\Testing\TestCase;
 use PHPUnit_Framework_MockObject_MockObject;
 
@@ -22,7 +23,7 @@ class MySQLBuilderTest extends TestCase
 
     protected function setUp()
     {
-        $this->db = $this->getMockBuilder(Database::class)
+        $this->db = $this->getMockBuilder(MySQL::class)
             ->setConstructorArgs([['database' => '~test']])
             ->setMethods(['quote', 'exec', 'lastInsertId'])
             ->getMockForAbstractClass();
@@ -41,7 +42,7 @@ class MySQLBuilderTest extends TestCase
         /** @noinspection SqlDialectInspection */
         $this->db->expects($this->once())
             ->method('exec')
-            ->with('INSERT INTO "table2" () VALUES ()')
+            ->with('INSERT INTO `table2` () VALUES ()')
             ->willReturn(0);
 
         /** @noinspection SqlDialectInspection */
@@ -57,7 +58,7 @@ class MySQLBuilderTest extends TestCase
         /** @noinspection SqlDialectInspection */
         $this->db->expects($this->once())
             ->method('exec')
-            ->with('DELETE FROM "table1" WHERE "c" = ?', ['C'])
+            ->with('DELETE FROM `table1` WHERE `c` = ?', ['C'])
             ->willReturn(1);
 
         $this->assertSame(1, $this->builder

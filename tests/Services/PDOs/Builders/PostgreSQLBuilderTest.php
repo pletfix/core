@@ -5,6 +5,7 @@ namespace Core\Tests\Services\PDOs\Builders;
 use Core\Services\Database;
 use Core\Services\PDOs\Builders\Contracts\Builder;
 use Core\Services\PDOs\Builders\PostgreSQLBuilder;
+use Core\Services\PDOs\PostgreSQL;
 use Core\Services\PDOs\Schemas\PostgreSQLSchema;
 use Core\Testing\TestCase;
 use PHPUnit_Framework_MockObject_MockObject;
@@ -23,7 +24,7 @@ class PostgreSQLBuilderTest extends TestCase
 
     protected function setUp()
     {
-        $this->db = $this->getMockBuilder(Database::class)
+        $this->db = $this->getMockBuilder(PostgreSQL::class)
             ->setConstructorArgs([['database' => '~test']])
             ->setMethods(['quote', 'exec', 'lastInsertId'])
             ->getMockForAbstractClass();

@@ -12,14 +12,14 @@ class MSSQLSchemaTest extends SchemaTestCase
 {
     public static function setUpBeforeClass()
     {
-        self::$fixturePath = __DIR__  . '/../../../_data/fixtures/sqlserver';
+        self::$fixturePath = __DIR__  . '/../../../_data/fixtures/mssql';
     }
 
     protected function setUp()
     {
         $this->db = $this->getMockBuilder(MSSQL::class)
             ->setConstructorArgs([['database' => '~test', 'username' => 'sa', 'password' => 'psss']])
-            ->setMethods(['quote', 'exec', 'query', 'scalar', 'transaction'])
+            ->setMethods(['quote', 'exec', 'query', 'scalar', 'transaction', 'version'])
             ->getMockForAbstractClass();
 
         $this->db->expects($this->any())
@@ -41,7 +41,7 @@ class MSSQLSchemaTest extends SchemaTestCase
     public function testTables()
     {
         /** @noinspection PhpIncludeInspection */
-        $fixture = include __DIR__  . '/../../../_data/fixtures/sqlserver/get_default_collation.php';
+        $fixture = include self::$fixturePath . '/get_default_collation.php';
         $this->db->expects($this->once())->method('scalar')->with($fixture['query'])->willReturn($fixture['result']);
         $this->expectsQueryFile('show_tables', 1);
         $this->expectsQueryFile('show_table_comments', 2);
@@ -224,6 +224,10 @@ class MSSQLSchemaTest extends SchemaTestCase
             ->method('scalar')
             ->with('SELECT COUNT(*) FROM [table1]')
             ->willReturn(5);
+
+        $this->db->expects($this->any())
+            ->method('version')
+            ->willReturn('2008');
 
         //$this->expectsQueryFile('show_table1_column_comments', 1);
         /** @noinspection SqlDialectInspection */

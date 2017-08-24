@@ -66,7 +66,7 @@ class DatabaseFactoryTest extends TestCase
         $this->assertInstanceOf(SQLite::class, $this->factory->store('sqlite'));
     }
 
-    public function testSQLServerStore()
+    public function testMSSQLStore()
     {
         $this->assertInstanceOf(MSSQL::class, $this->factory->store('mssql'));
     }

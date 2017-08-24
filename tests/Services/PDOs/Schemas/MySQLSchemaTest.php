@@ -40,8 +40,8 @@ class MySQLSchemaTest extends SchemaTestCase
         $this->expectsQueryFile('show_tables');
 
         $this->assertSame([
-            'table1' => ['name' => 'table1', 'collation' => 'utf8_unicode_ci',   'comment' => 'A test table.'],
-            'table2' => ['name' => 'table2', 'collation' => 'latin1_general_cs', 'comment' => null],
+            'table1' => ['name' => 'table1', 'collation' => 'utf8_unicode_ci', 'comment' => 'A test table.'],
+            'table2' => ['name' => 'table2', 'collation' => 'utf8_unicode_ci', 'comment' => null],
         ], $this->schema->tables());
     }
 

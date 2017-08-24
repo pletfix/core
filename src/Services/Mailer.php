@@ -759,7 +759,7 @@ class Mailer implements MailerContract
     private static function getMimeTypeOfImage($image)
     {
         static $mimes;
-        if (!isset($mimes)) {
+        if ($mimes === null) {
             $mimes = [
                 'cod'  => 'image/cis-cod',
                 'ras'  => 'image/cmu-raster',

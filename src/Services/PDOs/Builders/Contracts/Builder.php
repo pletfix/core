@@ -527,7 +527,7 @@ interface Builder extends Countable
     public function orWhereNotNull($column);
 
     /**
-     * Adds GROUP BY clause to the query.
+     * Adds GROUP BY clause to the SELECT query.
      *
      * Examples:
      * <pre>
@@ -545,7 +545,7 @@ interface Builder extends Countable
     public function groupBy($columns, array $bindings = []);
 
     /**
-     * Adds a HAVING condition to the query.
+     * Adds a HAVING condition to the SELECT query.
      *
      * You should only use standard SQL operators and functions, so that the database drivers can translate the
      * expression correctly.
@@ -567,7 +567,7 @@ interface Builder extends Countable
     public function having($condition, array $bindings = [], $or = false);
 
     /**
-     * Adds a HAVING condition to the query by OR.
+     * Adds a HAVING condition to the SELECT query by OR.
      *
      * See the <pre>where</pre> method for details and examples.
      *
@@ -578,7 +578,7 @@ interface Builder extends Countable
     public function orHaving($condition, array $bindings = []);
 
     /**
-     * Adds a ORDER BY clause to the query.
+     * Adds a ORDER BY clause to the SELECT query.
      *
      * Examples:
      * <pre>
@@ -599,7 +599,7 @@ interface Builder extends Countable
     public function orderBy($columns, array $bindings = []);
 
     /**
-     * Sets a limit count for the result set.
+     * Sets a limit count for the result set of the SELECT query.
      *
      * Note, that LIMIT does not see the query, it is just see the result set. Therefore, LIMIT has no effect on the
      * calculation of aggregate functions such like MIN or MAX.
@@ -610,7 +610,7 @@ interface Builder extends Countable
     public function limit($limit);
 
     /**
-     * Sets a limit offset for the result set.
+     * Sets a limit offset for the result set of the SELECT query.
      *
      * Note, that OFFSET does not see the query, it is just see the result set. Therefore, OFFSET has no effect on the
      * calculation of aggregate functions such like MIN or MAX.

@@ -1282,7 +1282,7 @@ class Builder implements BuilderContract
             throw new InvalidArgumentException('Cannot update an empty record.');
         }
 
-        $bindings = array_merge($this->bindings['join'], $this->bindings['where'], $this->bindings['order']);
+        $bindings = array_merge($this->bindings['join'], $this->bindings['where']);
         $settings = [];
         $values   = [];
         if (empty($bindings) || is_int(key($bindings))) { // Prevent PDO-Error: "Invalid parameter number: mixed named and positional parameters"
@@ -1308,16 +1308,14 @@ class Builder implements BuilderContract
         }
 
         $from     = ' ' . implode(', ', $this->from);
-        $bindings = array_merge($this->bindings['join'], $values, $this->bindings['where'], $this->bindings['order']);
+        $bindings = array_merge($this->bindings['join'], $values, $this->bindings['where']);
         $settings = ' SET ' . implode(', ', $settings);
 
         $query = 'UPDATE'
             . $from
             . $this->buildJoin()
             . $settings
-            . $this->buildWhere()
-            . $this->buildOrderBy()
-            . $this->buildLimit();
+            . $this->buildWhere();
 
         return $this->db->exec($query, $bindings);
     }
@@ -1386,14 +1384,12 @@ class Builder implements BuilderContract
      */
     protected function doDelete()
     {
-        $bindings = array_merge($this->bindings['join'], $this->bindings['where'], $this->bindings['order']);
+        $bindings = array_merge($this->bindings['join'], $this->bindings['where']);
 
         $query = 'DELETE'
             . $this->buildFrom()
             . $this->buildJoin()
-            . $this->buildWhere()
-            . $this->buildOrderBy()
-            . $this->buildLimit();
+            . $this->buildWhere();
 
         return $this->db->exec($query, $bindings);
     }
@@ -1691,7 +1687,7 @@ class Builder implements BuilderContract
     }
 
     /**
-     * Builds the `LIMIT ... OFFSET` clause for the SELECT statement.
+     * Builds the `LIMIT ... OFFSET` clause.
      *
      * @return string
      */

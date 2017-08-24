@@ -30,8 +30,18 @@ class MSSQLTest extends TestCase
 
     public function testVersion()
     {
-        $db = new MSSQL($this->config);
-        $this->assertFalse(is_string($db->version()), 'get version');
+        /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
+        $db = $this->getMockBuilder(MSSQL::class)
+            ->setMethods(['scalar'])
+            ->setConstructorArgs([$this->config])
+            ->getMock();
+
+        $db->expects($this->once())
+            ->method('scalar')
+            ->with('SELECT @@VERSION')
+            ->willReturn('Microsoft SQL Server 2014 - 12.0.2000.8 (Intel X86)');
+
+        $this->assertSame('2014', $db->version());
     }
 
     public function testQuoteName()

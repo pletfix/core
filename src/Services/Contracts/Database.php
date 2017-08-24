@@ -71,7 +71,7 @@ interface Database
     /**
      * Connects to the database.
      *
-     * @return $this;
+     * @return $this
      */
     public function connect();
 

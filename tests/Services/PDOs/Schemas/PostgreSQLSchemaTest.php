@@ -12,7 +12,7 @@ class PostgreSQLSchemaTest extends SchemaTestCase
 {
     public static function setUpBeforeClass()
     {
-        self::$fixturePath = __DIR__  . '/../../../_data/fixtures/postgres';
+        self::$fixturePath = __DIR__  . '/../../../_data/fixtures/postgresql';
     }
 
     protected function setUp()

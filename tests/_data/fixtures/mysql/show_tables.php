@@ -42,7 +42,7 @@
       'Create_time' => '2017-06-21 22:58:07',
       'Update_time' => NULL,
       'Check_time' => NULL,
-      'Collation' => 'latin1_general_cs',
+      'Collation' => 'utf8_unicode_ci',
       'Checksum' => NULL,
       'Create_options' => '',
       'Comment' => '',
