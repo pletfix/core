@@ -350,14 +350,16 @@ abstract class Database implements DatabaseContract
             $result = $callback($this);
             $this->commit();
         }
+        // @codeCoverageIgnoreStart
         catch (Throwable $e) { // Error or Exception (executed only in PHP 7, will not match in PHP 5)
-            $this->rollback(); // @codeCoverageIgnore
-            throw $e;          // @codeCoverageIgnore
+            $this->rollback();
+            throw $e;
         }
         catch (Exception $e) { // Once PHP 5 support is no longer needed, this block can be removed.
-            $this->rollback(); // @codeCoverageIgnore
-            throw $e;          // @codeCoverageIgnore
+            $this->rollback();
+            throw $e;
         }
+        // @codeCoverageIgnoreEnd
 
         return $result;
     }

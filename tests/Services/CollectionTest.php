@@ -1277,15 +1277,15 @@ class CollectionTest extends TestCase
         $this->assertEquals(0, $c->sum('foo'));
     }
 
-    public function testValueRetrieverAcceptsDotNotation()
-    {
-        $c = new Collection([
-            (object) ['id' => 1, 'foo' => ['bar' => 'B']], (object) ['id' => 2, 'foo' => ['bar' => 'A']],
-        ]);
-
-        $c = $c->sortBy('foo.bar');
-        $this->assertEquals([2, 1], $c->pluck('id')->all());
-    }
+//    public function testValueRetrieverAcceptsDotNotation()
+//    {
+//        $c = new Collection([
+//            (object) ['id' => 1, 'foo' => ['bar' => 'B']], (object) ['id' => 2, 'foo' => ['bar' => 'A']],
+//        ]);
+//
+//        $c = $c->sortBy('foo.bar');
+//        $this->assertEquals([2, 1], $c->pluck('id')->all());
+//    }
 
     public function testPullRetrievesItemFromCollection()
     {

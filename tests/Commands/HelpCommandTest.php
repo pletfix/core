@@ -94,7 +94,7 @@ class HelpCommandTest extends TestCase
     public function testPrintHelpWithSeveralSuggestions()
     {
         $stdio = $this->getMockBuilder(Stdio::class)->setMethods(['error'])->getMock();
-        $stdio->expects($this->once())->method('error')->with("Command \"foo\" is not defined.\nDid you mean one of these?\n  - foo:baz\n  - foo:bar")->willReturnSelf();
+        $stdio->expects($this->once())->method('error')->with("Command \"foo\" is not defined.\nDid you mean one of these?\n  - foo:bar\n  - foo:baz")->willReturnSelf();
 
         $command = new HelpCommand(['foo'], $stdio);
         $exitCode = $command->run();

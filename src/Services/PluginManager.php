@@ -15,14 +15,14 @@ use RuntimeException;
 class PluginManager implements PluginManagerContract
 {
     /**
-     * Name of the vendor
+     * Name of the package (with vendor, e.g. foo/bar).
      *
      * @var string
      */
-    protected $vendor;
+    private $package;
 
     /**
-     * Name of the plugin (without vendor)
+     * Name of the plugin (without vendor, "pletfix-" and "-plugin").
      *
      * @var string
      */
@@ -83,8 +83,8 @@ class PluginManager implements PluginManagerContract
             }
         }
 
-        $this->vendor   = substr($package, 0, $pos);
-        $this->plugin   = substr($package, $pos + 1);
+        $this->package = $package;
+        $this->plugin  = str_replace('pletfix-', '', str_replace('-plugin', '', substr($package, $pos + 1)));
     }
 
     /**
@@ -95,8 +95,9 @@ class PluginManager implements PluginManagerContract
         // Determine if a plugin with the same name is already registered.
         $packages = $this->getRegisteredPackages();
         foreach ($packages as $package => $path) {
-            if (substr($package, strpos($package, '/') + 1) == $this->plugin) {
-                throw new PluginException('Plugin with the name "' . $this->plugin . '" already registered.');
+            $plugin  = str_replace('pletfix-', '', str_replace('-plugin', '', substr($package, strpos($package, '/') + 1)));
+            if ($plugin == $this->plugin) {
+                throw new PluginException('Plugin with the name "' . $this->plugin . '" is already registered.');
             }
         }
 
@@ -111,8 +112,8 @@ class PluginManager implements PluginManagerContract
     public function update()
     {
         $packages = $this->getRegisteredPackages();
-        if (!isset($packages[$this->vendor . '/' . $this->plugin])) {
-            throw new PluginException('Package "' . $this->vendor . '/' . $this->plugin . '" is not registered.');
+        if (!isset($packages[$this->package])) {
+            throw new PluginException('Package "' . $this->package . '" is not registered.');
         }
 
         $this->publish(true);
@@ -126,8 +127,8 @@ class PluginManager implements PluginManagerContract
     public function unregister()
     {
         $packages = $this->getRegisteredPackages();
-        if (!isset($packages[$this->vendor . '/' . $this->plugin])) {
-            throw new PluginException('Package "' . $this->vendor . '/' . $this->plugin . '" is not registered.');
+        if (!isset($packages[$this->package])) {
+            throw new PluginException('Package "' . $this->package . '" is not registered.');
         }
 
         $this->publish(false);
@@ -142,7 +143,7 @@ class PluginManager implements PluginManagerContract
     {
         $packages = $this->getRegisteredPackages();
 
-        return isset($packages[$this->vendor . '/' . $this->plugin]);
+        return isset($packages[$this->package]);
     }
 
     /**
@@ -782,11 +783,11 @@ class PluginManager implements PluginManagerContract
 
         if ($register) {
             $relativePath = substr($this->path, strlen(base_path()) + 1);
-            $packages[$this->vendor . '/' . $this->plugin] = $relativePath;
+            $packages[$this->package] = $relativePath;
             ksort($packages);
         }
         else {
-            unset($packages[$this->vendor . '/' . $this->plugin]);
+            unset($packages[$this->package]);
         }
 
         return $packages;

@@ -36,7 +36,7 @@ class AssetCommand extends Command
      */
     protected $options = [
         'no-minify' => ['type' => 'bool',   'short' => 'n', 'description' => 'Do not minimize the file.'],
-        'plugin'    => ['type' => 'string', 'short' => 'p', 'default' => null, 'description' => 'Name of the plugin (without vendor) which the the assets are from.'],
+        'plugin'    => ['type' => 'string', 'short' => 'p', 'default' => null, 'description' => 'Name of the plugin (without vendor) which the assets are from.'],
         'remove'    => ['type' => 'bool',   'short' => 'r', 'description' => 'Remove the assets'],
     ];
 
@@ -47,7 +47,7 @@ class AssetCommand extends Command
     {
         $dest   = $this->input('dest');
         $minify = !$this->input('no-minify');
-        $plugin = $this->input('plugin');
+        $plugin  = str_replace('pletfix-', '', str_replace('-plugin', '', $this->input('plugin')));
 
         if ($this->input('remove')) {
             asset_manager()->remove($dest, $plugin);

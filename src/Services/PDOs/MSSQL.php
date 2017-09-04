@@ -101,6 +101,11 @@ class MSSQL extends Database
 
         $drivers = $this->getAvailableDrivers();
         if (in_array('dblib', $drivers)) {
+            // Convert the GUIDs from binary to a string (see https://github.com/php/php-src/pull/2001)
+            if (defined('PDO::DBLIB_ATTR_STRINGIFY_UNIQUEIDENTIFIER')) { // attribute was added since PHP 7.0.11
+                /** @noinspection PhpUndefinedClassConstantInspection */
+                $options[PDO::DBLIB_ATTR_STRINGIFY_UNIQUEIDENTIFIER] = true; // @codeCoverageIgnore
+            }
             $dsn = $this->getDblibDsn($config);
         }
         elseif (isset($config['odbc']) && in_array('odbc', $drivers)) {
