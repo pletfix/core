@@ -4,6 +4,7 @@ namespace Core\Services;
 
 use Core\Services\Contracts\Delegate as DelegateContract;
 use Core\Middleware\Contracts\Middleware;
+use InvalidArgumentException;
 
 class Delegate implements DelegateContract
 {
@@ -47,15 +48,15 @@ class Delegate implements DelegateContract
      *
      * @var string
      */
-    private $pluginManifestOfClasses;
+    private $pluginManifestOfMiddleware;
 
     /**
      * Create a new Delegate instance.
-     * @param string|null $pluginManifestOfClasses
+     * @param string|null $pluginManifestOfMiddleware
      */
-    public function __construct($pluginManifestOfClasses = null)
+    public function __construct($pluginManifestOfMiddleware = null)
     {
-        $this->pluginManifestOfClasses = $pluginManifestOfClasses ?: manifest_path('plugins/classes.php');
+        $this->pluginManifestOfMiddleware = $pluginManifestOfMiddleware ?: manifest_path('plugins/middleware.php');
     }
 
     /**
@@ -67,14 +68,6 @@ class Delegate implements DelegateContract
 
         return $this;
     }
-
-//    /**
-//     * @inheritdoc
-//     */
-//    public function addMiddleware($class)
-//    {
-//        $this->middleware[] = $class;
-//    }
 
     /**
      * @inheritdoc
@@ -112,8 +105,11 @@ class Delegate implements DelegateContract
                 else if (($pluginMiddleware = $this->getPluginMiddleware($class)) !== null) {
                     $class = $pluginMiddleware;
                 }
-                else {
+                else if (file_exists(__DIR__ . '/../Middleware/' .  str_replace('\\', '/', $class) . '.php')) {
                     $class = '\\Core\\Middleware\\' . $class;
+                }
+                else {
+                    throw new InvalidArgumentException('Middleware "' . $class . '" not found.');
                 }
             }
 
@@ -146,16 +142,10 @@ class Delegate implements DelegateContract
     private function getPluginMiddleware($class)
     {
         if ($this->pluginMiddleware === null) {
-            if (file_exists($this->pluginManifestOfClasses)) {
-                /** @noinspection PhpIncludeInspection */
-                $classes = include $this->pluginManifestOfClasses;
-                $this->pluginMiddleware = isset($classes['Middleware']) ? $classes['Middleware'] : [];
-            }
-            else {
-                $this->pluginMiddleware = [];
-            }
+            /** @noinspection PhpIncludeInspection */
+            $this->pluginMiddleware = file_exists($this->pluginManifestOfMiddleware) ? include $this->pluginManifestOfMiddleware : [];
         }
 
-        return isset($this->pluginMiddleware[$class]) ? $this->pluginMiddleware[$class] : null;
+        return isset($this->pluginMiddleware[$class]) && count($this->pluginMiddleware[$class]) == 1 ? $this->pluginMiddleware[$class][0] : null;
     }
 }

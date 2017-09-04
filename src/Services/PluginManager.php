@@ -43,13 +43,6 @@ class PluginManager implements PluginManagerContract
     private $namespace;
 
     /**
-     * List of enabled packages.
-     * 
-     * @var array
-     */
-    private $packages;
-
-    /**
      * Path of the Manifest.
      *
      * @var string
@@ -90,22 +83,8 @@ class PluginManager implements PluginManagerContract
             }
         }
 
-        $manifest = $this->getManifest('packages');
-        /** @noinspection PhpIncludeInspection */
-        $this->packages = @file_exists($manifest) ? include $manifest : [];
         $this->vendor   = substr($package, 0, $pos);
         $this->plugin   = substr($package, $pos + 1);
-    }
-
-    /**
-     * Get the manifest by given name.
-     *
-     * @param $name
-     * @return string
-     */
-    private function getManifest($name)
-    {
-        return $this->manifestPath . '/' . $name .'.php';
     }
 
     /**
@@ -114,8 +93,9 @@ class PluginManager implements PluginManagerContract
     public function register()
     {
         // Determine if a plugin with the same name is already registered.
-        foreach ($this->packages as $package => $path) {
-            if (strpos($package, DIRECTORY_SEPARATOR . $this->plugin) !== false) {
+        $packages = $this->getRegisteredPackages();
+        foreach ($packages as $package => $path) {
+            if (substr($package, strpos($package, '/') + 1) == $this->plugin) {
                 throw new PluginException('Plugin with the name "' . $this->plugin . '" already registered.');
             }
         }
@@ -130,8 +110,9 @@ class PluginManager implements PluginManagerContract
      */
     public function update()
     {
-        if (!isset($this->packages[$this->vendor . DIRECTORY_SEPARATOR . $this->plugin])) {
-            throw new PluginException('Package "' . $this->vendor . DIRECTORY_SEPARATOR . $this->plugin . '" is not registered.');
+        $packages = $this->getRegisteredPackages();
+        if (!isset($packages[$this->vendor . '/' . $this->plugin])) {
+            throw new PluginException('Package "' . $this->vendor . '/' . $this->plugin . '" is not registered.');
         }
 
         $this->publish(true);
@@ -144,8 +125,9 @@ class PluginManager implements PluginManagerContract
      */
     public function unregister()
     {
-        if (!isset($this->packages[$this->vendor . DIRECTORY_SEPARATOR . $this->plugin])) {
-            throw new PluginException('Package "' . $this->vendor . DIRECTORY_SEPARATOR . $this->plugin . '" is not registered.');
+        $packages = $this->getRegisteredPackages();
+        if (!isset($packages[$this->vendor . '/' . $this->plugin])) {
+            throw new PluginException('Package "' . $this->vendor . '/' . $this->plugin . '" is not registered.');
         }
 
         $this->publish(false);
@@ -158,7 +140,9 @@ class PluginManager implements PluginManagerContract
      */
     public function isRegistered()
     {
-        return isset($this->packages[$this->vendor . DIRECTORY_SEPARATOR . $this->plugin]);
+        $packages = $this->getRegisteredPackages();
+
+        return isset($packages[$this->vendor . '/' . $this->plugin]);
     }
 
     /**
@@ -176,7 +160,9 @@ class PluginManager implements PluginManagerContract
         $this->publishLanguages($register);
         $this->publishViews($register);
         $this->publishRoutes($register);
-        $this->publishClasses($register);
+        $this->publishControllers($register);
+        $this->publishMiddleware($register);
+        $this->publishDrivers($register);
         $this->publishServices($register);
         $this->publishBootstraps($register);
         $this->enablePackage($register);
@@ -442,7 +428,7 @@ class PluginManager implements PluginManagerContract
         $basePathLength  = strlen(base_path()) + 1;
         foreach ($files as $file) {
             if (substr($file, -10) == '.blade.php') {
-                $name = str_replace(DIRECTORY_SEPARATOR, '.', substr($file, $visitPathLength, -10));
+                $name = $this->plugin . '.' . str_replace(DIRECTORY_SEPARATOR, '.', substr($file, $visitPathLength, -10));
                 if ($register) {
                     $list[$name] = substr($file, $basePathLength);
                 }
@@ -451,6 +437,145 @@ class PluginManager implements PluginManagerContract
                 }
             }
         }
+        $this->saveArray($manifest, $list);
+    }
+
+    /**
+     * Update manifest "controllers.php"
+     *
+     * @param bool $register
+     */
+    private function publishControllers($register)
+    {
+        $this->publishClasses($register, 'Controllers');
+    }
+
+    /**
+     * Update manifest "middleware.php"
+     *
+     * @param bool $register
+     */
+    private function publishMiddleware($register)
+    {
+        $this->publishClasses($register, 'Middleware');
+    }
+
+    /**
+     * Update manifest "classes.php"
+     *
+     * @param bool $register
+     * @param string $subfolder
+     */
+    private function publishClasses($register, $subfolder)
+    {
+        // read middleware from folder
+        $path = $this->path . '/src/' . $subfolder;
+        if (!@file_exists($path)) {
+            return;
+        }
+
+        $classes = [];
+        $ns = $this->namespace . $subfolder;
+        list_classes($classes, $path, $ns);
+
+        // update manifest
+
+        $manifest = $this->getManifest(lcfirst($subfolder));
+        /** @noinspection PhpIncludeInspection */
+        $list = @file_exists($manifest) ? include $manifest : [];
+        $len = strlen($ns);
+        foreach ($classes as $class) {
+            if (strpos($class, '\\Contracts\\') !== false) {
+                continue; // contracts
+            }
+            $name = substr($class, $len + 1);
+            if ($register) {
+                if (!isset($list[$name])) {
+                    $list[$name] = [];
+                }
+                if (($i = array_search($class, $list[$name])) === false) {
+                    $list[$name][] = $class;
+                }
+            }
+            else {
+                if (isset($list[$name]) && ($i = array_search($class, $list[$name])) !== false) {
+                    unset($list[$name][$i]);
+                    if (empty($list[$name])) {
+                        unset($list[$name]);
+                    }
+                    else {
+                        $list[$name] = array_values($list[$name]);
+                    }
+                }
+            }
+        }
+
+        $this->saveArray($manifest, $list);
+    }
+
+    /**
+     * Update manifest "drivers.php"
+     *
+     * @param bool $register
+     */
+    private function publishDrivers($register)
+    {
+        // read middleware from folder
+        $path = $this->path . '/src/Drivers';
+        if (!@file_exists($path)) {
+            return;
+        }
+
+        $classes = [];
+        $ns = $this->namespace . 'Drivers';
+        list_classes($classes, $path, $ns);
+
+        // update manifest
+
+        $manifest = $this->getManifest('drivers');
+        /** @noinspection PhpIncludeInspection */
+        $list = @file_exists($manifest) ? include $manifest : [];
+        $len = strlen($ns);
+        foreach ($classes as $class) {
+            if (strpos($class, '\\Contracts\\') !== false) {
+                continue; // contracts
+            }
+            $name = substr($class, $len + 1);
+            if (($pos = strpos($name, '\\')) !== false) {
+                $group = substr($name, 0, $pos);
+                $name  = substr($name, $pos + 1);
+            }
+            else {
+                $group = '';
+            }
+
+            if ($register) {
+                if (!isset($list[$group])) {
+                    $list[$group] = [];
+                }
+                if (!isset($list[$group][$name])) {
+                    $list[$group][$name] = [];
+                }
+                if (($i = array_search($class, $list[$group][$name])) === false) {
+                    $list[$group][$name][] = $class;
+                }
+            }
+            else {
+                if (isset($list[$group][$name]) && ($i = array_search($class, $list[$group][$name])) !== false) {
+                    unset($list[$group][$name][$i]);
+                    if (empty($list[$group][$name])) {
+                        unset($list[$group][$name]);
+                    }
+                    else {
+                        $list[$group][$name] = array_values($list[$group][$name]);
+                    }
+                    if (empty($list[$group])) {
+                        unset($list[$group]);
+                    }
+                }
+            }
+        }
+
         $this->saveArray($manifest, $list);
     }
 
@@ -466,19 +591,12 @@ class PluginManager implements PluginManagerContract
         }
 
         // Read enabled packages and add/remove the current plugin.
-    
+
         $packages = $this->listPackages($register);
 
         // update manifest
 
-        $dest = '<?php' . PHP_EOL;
-        if (!empty($packages)) {
-            $dest .= PHP_EOL .
-                'use Core\Services\Contracts\Route;' . PHP_EOL
-                . PHP_EOL .
-                '$route = \Core\Application::route();' . PHP_EOL;
-        }
-
+        $dest = '';
         foreach ($packages as $package => $path) {
             $file = base_path($path . '/config/routes.php');
             if (!@file_exists($file)) {
@@ -503,6 +621,12 @@ class PluginManager implements PluginManagerContract
             $src = trim(preg_replace('/use Core\\\\Services\\\\Contracts\\\\Route;/', '', $src));
 
             // append content to summery file
+            if ($dest == '') {
+                $dest = PHP_EOL .
+                    'use Core\Services\Contracts\Route;' . PHP_EOL
+                    . PHP_EOL .
+                    '$route = \Core\Application::route();' . PHP_EOL;
+            }
             $dest .= PHP_EOL .
                 '///////////////////////////////////////////////////////////////////////////////' . PHP_EOL .
                 '// ' . $package . PHP_EOL .
@@ -510,61 +634,7 @@ class PluginManager implements PluginManagerContract
                 $src . PHP_EOL;
         }
 
-        $this->saveContent($this->getManifest('routes'), $dest);
-    }
-
-    /**
-     * Update manifest "classes.php"
-     *
-     * @param bool $register
-     */
-    private function publishClasses($register)
-    {
-        // read classes from folder
-        $path = $this->path . '/src';
-        if (!@file_exists($path)) {
-            return;
-        }
-
-        $classes = [];
-        list_classes($classes, $path, rtrim($this->namespace, '\\'));
-
-        // update manifest
-        $manifest = $this->getManifest('classes');
-        /** @noinspection PhpIncludeInspection */
-        $list = @file_exists($manifest) ? include $manifest : [];
-        $len = strlen($this->namespace);
-        foreach ($classes as $class) {
-            $ns = substr($class, $len);
-            if (($pos = strpos($ns, '\\')) === false) {
-                continue; // no subdirectory
-            }
-            if (strpos($ns, '\\Contracts\\') !== false) {
-                continue; // contracts
-            }
-            $group = substr($ns, 0, $pos);
-            if (in_array($group, ['Bootstraps', 'Commands', 'Services'])) {
-                continue; // listed by an another migration file
-            }
-            $name = substr($ns, $pos + 1); //basename(str_replace('\\', '/', $class));
-            if ($register) {
-                if (!isset($list[$group])) {
-                    $list[$group] = [];
-                }
-                $list[$group][$name] = $class;
-            }
-            else {
-                if (isset($list[$group])) {
-                    unset($list[$group][$name]);
-                    if (empty($list[$group])) {
-                        unset($list[$group]);
-                    }
-                }
-            }
-        }
-
-        //ksort($list);
-        $this->saveArray($manifest, $list);
+        $this->saveContent($this->getManifest('routes'), '<?php' . PHP_EOL . $dest);
     }
 
     /**
@@ -584,11 +654,7 @@ class PluginManager implements PluginManagerContract
 
         // update manifest
 
-        $dest = '<?php' . PHP_EOL;
-        if (!empty($packages)) {
-            $dest .= PHP_EOL . '$di = \Core\Services\DI::getInstance();' . PHP_EOL;
-        }
-
+        $dest = '';
         foreach ($packages as $package => $path) {
             $file = base_path($path . '/config/services.php');
             if (!@file_exists($file)) {
@@ -610,6 +676,9 @@ class PluginManager implements PluginManagerContract
             $src = trim(preg_replace('/\$di\s*=\s*\\\\Core\\\\Services\\\\DI::getInstance\(\);/', '', $src));
 
             // append content to summery file
+            if ($dest == '') {
+                $dest = PHP_EOL . '$di = \Core\Services\DI::getInstance();' . PHP_EOL;
+            }
             $dest .= PHP_EOL .
                 '///////////////////////////////////////////////////////////////////////////////' . PHP_EOL .
                 '// ' . $package . PHP_EOL .
@@ -617,7 +686,7 @@ class PluginManager implements PluginManagerContract
                 $src . PHP_EOL;
         }
 
-        $this->saveContent($this->getManifest('services'), $dest);
+        $this->saveContent($this->getManifest('services'), '<?php' . PHP_EOL . $dest);
     }
 
     /**
@@ -641,8 +710,7 @@ class PluginManager implements PluginManagerContract
 
         // update manifest
 
-        $dest = '<?php' . PHP_EOL;
-
+        $dest = '';
         foreach ($packages as $package => $relativePath) {
             $path = base_path($relativePath);
             $classes = [];
@@ -662,7 +730,7 @@ class PluginManager implements PluginManagerContract
             }
         }
 
-        $this->saveContent($this->getManifest('bootstrap'), $dest);
+        $this->saveContent($this->getManifest('bootstrap'), '<?php' . PHP_EOL . $dest);
     }
 
     /**
@@ -679,23 +747,49 @@ class PluginManager implements PluginManagerContract
     // Helpers
 
     /**
-     * Read enabled packages and add the current plugin.
+     * Get the manifest by given name.
+     *
+     * @param $name
+     * @return string
+     */
+    private function getManifest($name)
+    {
+        return $this->manifestPath . DIRECTORY_SEPARATOR . $name .'.php';
+    }
+
+    /**
+     * Get the list of enabled packages.
+     *
+     * @return array
+     */
+    private function getRegisteredPackages()
+    {
+        $manifest = $this->getManifest('packages');
+
+        /** @noinspection PhpIncludeInspection */
+        return @file_exists($manifest) ? include $manifest : [];
+    }
+
+    /**
+     * Read enabled packages and add/remove the current plugin.
      *
      * @param bool $register
      * @return array
      */
     private function listPackages($register)
     {
+        $packages = $this->getRegisteredPackages();
+
         if ($register) {
             $relativePath = substr($this->path, strlen(base_path()) + 1);
-            $this->packages[$this->vendor . DIRECTORY_SEPARATOR . $this->plugin] = $relativePath;
-            ksort($this->packages);
+            $packages[$this->vendor . '/' . $this->plugin] = $relativePath;
+            ksort($packages);
         }
         else {
-            unset($this->packages[$this->vendor . DIRECTORY_SEPARATOR . $this->plugin]);
+            unset($packages[$this->vendor . '/' . $this->plugin]);
         }
 
-        return $this->packages;
+        return $packages;
     }
 
     /**

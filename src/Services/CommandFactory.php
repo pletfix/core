@@ -36,7 +36,6 @@ class CommandFactory implements CommandFactoryContract
     {
         $this->cachedFile = $cachedFile ?: storage_path('cache/commands.php');
         $this->pluginManifestOfCommands = $pluginManifestOfCommands ?: manifest_path('plugins/commands.php');
-
     }
 
     /**

@@ -25,7 +25,7 @@ class ViewTest extends TestCase
         @unlink(storage_path('cache/views/' . md5(__DIR__ . '/../_data/views/foo/bar.blade.php') . '.phtml'));
         @unlink(storage_path('cache/views/' . md5(__DIR__ . '/../_data/views/foo/invalid.blade.php') . '.phtml'));
         @unlink(storage_path('cache/views/' . md5(__DIR__ . '/../_data/views/layout.blade.php') . '.phtml'));
-        @unlink(storage_path('cache/views/' . md5(dirname(__DIR__) . '/_data/plugin_manifest/../plugins/test/views/foo/baz.blade.php') . '.phtml'));
+        @unlink(storage_path('cache/views/' . md5(__DIR__ . '/../_data/plugins/test/views/foo/baz.blade.php') . '.phtml'));
     }
 
     protected function setUp()
@@ -49,12 +49,12 @@ class ViewTest extends TestCase
 
     public function testRenderFromPlugin()
     {
-        $this->assertSame('<h3>Dummy View</h3>', trim($this->view->render('foo.baz')));
+        $this->assertSame('<h3>Dummy View</h3>', trim($this->view->render('~test.foo.baz')));
     }
 
     public function testClearManifestCache()
     {
-        $this->view->render('foo.baz');
+        $this->view->render('~test.foo.baz');
         $manifest = $this->getPrivateProperty($this->view, 'manifest');
         $this->assertNotEmpty($manifest);
         View::clearManifestCache();

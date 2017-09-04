@@ -41,15 +41,15 @@ class Route implements RouteContract
      *
      * @var string
      */
-    private $pluginManifestOfClasses;
+    private $pluginManifestOfControllers;
 
     /**
      * Create a new Route instance.
-     * @param string|null $pluginManifestOfClasses
+     * @param string|null $pluginManifestOfControllers
      */
-    public function __construct($pluginManifestOfClasses = null)
+    public function __construct($pluginManifestOfControllers = null)
     {
-        $this->pluginManifestOfClasses = $pluginManifestOfClasses ?: manifest_path('plugins/classes.php');
+        $this->pluginManifestOfControllers = $pluginManifestOfControllers ?: manifest_path('plugins/controllers.php');
     }
 
     /**
@@ -80,7 +80,7 @@ class Route implements RouteContract
                     $class = $pluginController;
                 }
                 else {
-                    $class = '\\Core\\Controllers\\' . $class;
+                    throw new InvalidArgumentException('Controller "' . $class . '" not found.');
                 }
             }
             $controller = new $class;
@@ -107,17 +107,11 @@ class Route implements RouteContract
     private function getPluginController($class)
     {
         if ($this->pluginControllers === null) {
-            if (file_exists($this->pluginManifestOfClasses)) {
-                /** @noinspection PhpIncludeInspection */
-                $classes = include $this->pluginManifestOfClasses;
-                $this->pluginControllers = isset($classes['Controllers']) ? $classes['Controllers'] : [];
-            }
-            else {
-                $this->pluginControllers = [];
-            }
+            /** @noinspection PhpIncludeInspection */
+            $this->pluginControllers = file_exists($this->pluginManifestOfControllers) ? include $this->pluginManifestOfControllers : [];
         }
 
-        return isset($this->pluginControllers[$class]) ? $this->pluginControllers[$class] : null;
+        return isset($this->pluginControllers[$class]) && count($this->pluginControllers[$class]) == 1 ? $this->pluginControllers[$class][0] : null;
     }
 
     /**

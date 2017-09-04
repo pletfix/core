@@ -12,8 +12,8 @@ use Core\Testing\TestCase;
 use InvalidArgumentException;
 use RuntimeException;
 
-require_once __DIR__ . '/../_data/classes/CoreDummyController.php.stub';
 require_once __DIR__ . '/../_data/classes/PluginDummyController.php.stub';
+require_once __DIR__ . '/../_data/classes/AppDummyController.php.stub';
 require_once __DIR__ . '/../_data/classes/AppMiddlewareWithoutParams.php.stub';
 require_once __DIR__ . '/../_data/classes/CoreMiddlewareWithParams.php.stub';
 
@@ -38,7 +38,7 @@ class RouteTest extends TestCase
 
     protected function setUp()
     {
-        $this->route = new Route(__DIR__ . '/../_data/plugin_manifest/classes.php');
+        $this->route = new Route(__DIR__ . '/../_data/plugin_manifest/controllers.php');
     }
 
     public function testDispatchController()
@@ -51,11 +51,11 @@ class RouteTest extends TestCase
         $delegate->expects($this->once())->method('setMiddleware')->with([])->willReturn($delegate);
 
         /** @noinspection PhpUndefinedNamespaceInspection, PhpUndefinedClassInspection, PhpUnnecessaryFullyQualifiedNameInspection */
-        $delegate->expects($this->once())->method('setAction')->with([new \Core\Controllers\CoreDummyController, 'foo'], ['bar'])->willReturn($delegate);
+        $delegate->expects($this->once())->method('setAction')->with([new \App\Controllers\DummyController, 'foo'], ['bar'])->willReturn($delegate);
         $delegate->expects($this->once())->method('process')->with($request)->willReturn(new \Core\Services\Response());
         DI::getInstance()->set('delegate', $delegate, true);
 
-        $this->assertInstanceOf(Route::class, $this->route->post('dummy/foo/{param}', 'CoreDummyController@foo'));
+        $this->assertInstanceOf(Route::class, $this->route->post('dummy/foo/{param}', '\App\Controllers\DummyController@foo'));
         $response = $this->route->dispatch($request);
         $this->assertInstanceOf(Response::class, $response);
     }
@@ -160,7 +160,7 @@ class RouteTest extends TestCase
 
     public function testPluginManifestNotExists()
     {
-        $route = new Route(__DIR__ . '/../_data/plugin_manifest/classes2.php');
+        $route = new Route(__DIR__ . '/../_data/plugin_manifest/controllers2.php');
 
         $request = $this->getMockBuilder(Request::class)->setMethods(['method', 'path'])->getMock();
         $request->expects($this->any())->method('method')->willReturn('POST');
@@ -170,12 +170,25 @@ class RouteTest extends TestCase
         $delegate->expects($this->once())->method('setMiddleware')->with([])->willReturn($delegate);
 
         /** @noinspection PhpUndefinedNamespaceInspection, PhpUndefinedClassInspection, PhpUnnecessaryFullyQualifiedNameInspection */
-        $delegate->expects($this->once())->method('setAction')->with([new \Core\Controllers\CoreDummyController, 'foo'], ['bar'])->willReturn($delegate);
+        $delegate->expects($this->once())->method('setAction')->with([new \App\Controllers\DummyController, 'foo'], ['bar'])->willReturn($delegate);
         $delegate->expects($this->once())->method('process')->with($request)->willReturn(new \Core\Services\Response());
         DI::getInstance()->set('delegate', $delegate, true);
 
-        $this->assertInstanceOf(Route::class, $route->post('dummy/foo/{param}', 'CoreDummyController@foo'));
+        $this->assertInstanceOf(Route::class, $route->post('dummy/foo/{param}', '\App\Controllers\DummyController@foo'));
         $response = $route->dispatch($request);
         $this->assertInstanceOf(Response::class, $response);
+    }
+
+    public function testPluginClassNotFound()
+    {
+        $request = $this->getMockBuilder(Request::class)->setMethods(['method', 'path'])->getMock();
+        $request->expects($this->any())->method('method')->willReturn('POST');
+        $request->expects($this->any())->method('path')->willReturn('dummy/foo/bar');
+
+        DI::getInstance()->set('delegate', Delegate::class, true);
+
+        $this->assertInstanceOf(Route::class, $this->route->post('dummy/foo/{param}', 'XYZController@foo'));
+        $this->expectException(InvalidArgumentException::class);
+        $this->route->dispatch($request);
     }
 }

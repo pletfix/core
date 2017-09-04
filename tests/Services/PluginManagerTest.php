@@ -30,9 +30,11 @@ class PluginManagerTest extends TestCase
         if (file_exists($manifestPath)) {
             @unlink($manifestPath . '/assets.php');
             @unlink($manifestPath . '/bootstrap.php');
-            @unlink($manifestPath . '/classes.php');
+            @unlink($manifestPath . '/controllers.php');
+            @unlink($manifestPath . '/drivers.php');
             @unlink($manifestPath . '/commands.php');
             @unlink($manifestPath . '/languages.php');
+            @unlink($manifestPath . '/middleware.php');
             @unlink($manifestPath . '/migrations.php');
             @unlink($manifestPath . '/packages.php');
             @unlink($manifestPath . '/routes.php');
@@ -54,9 +56,11 @@ class PluginManagerTest extends TestCase
         if (file_exists($manifestPath)) {
             @unlink($manifestPath . '/assets.php');
             @unlink($manifestPath . '/bootstrap.php');
-            @unlink($manifestPath . '/classes.php');
             @unlink($manifestPath . '/commands.php');
+            @unlink($manifestPath . '/controllers.php');
+            @unlink($manifestPath . '/drivers.php');
             @unlink($manifestPath . '/languages.php');
+            @unlink($manifestPath . '/middleware.php');
             @unlink($manifestPath . '/migrations.php');
             @unlink($manifestPath . '/packages.php');
             @unlink($manifestPath . '/routes.php');
@@ -99,6 +103,10 @@ class PluginManagerTest extends TestCase
         $this->assertInstanceOf(PluginManager::class, $m->register());
         $this->assertTrue($m->isRegistered());
 
+        // register test2
+        $m2 = new PluginManager('pletfix/~test2', self::$packagePath . '/test2', $manifestPath);
+        $m2->register();
+
         // asset
         $this->assertFileExists($manifestPath . '/assets.php');
         /** @noinspection PhpIncludeInspection */
@@ -113,16 +121,6 @@ class PluginManagerTest extends TestCase
         $this->assertFileExists($manifestPath . '/bootstrap.php');
         $data = file_get_contents($manifestPath . '/bootstrap.php');
         $this->assertStringEndsWith('(new Pletfix\Test\Bootstraps\DummyBootstrap)->boot();', trim($data));
-
-        // classes
-        $this->assertFileExists($manifestPath . '/classes.php');
-        /** @noinspection PhpIncludeInspection */
-        $data = include $manifestPath . '/classes.php';
-        $this->assertSame([
-            'Auth'        => ['DummyAuth' => 'Pletfix\\Test\\Auth\\DummyAuth'],
-            'Controllers' => ['DummyController' => 'Pletfix\\Test\\Controllers\\DummyController'],
-            'Middleware'  => ['Dummy' => 'Pletfix\\Test\\Middleware\\Dummy']
-        ], $data);
 
         // commands
         $this->assertFileExists($manifestPath . '/commands.php');
@@ -142,13 +140,53 @@ class PluginManagerTest extends TestCase
         $data = include config_path('~test.php');
         $this->assertSame(['foo' => 'bar'], $data);
 
+        // controllers
+        $this->assertFileExists($manifestPath . '/controllers.php');
+        /** @noinspection PhpIncludeInspection */
+        $data = include $manifestPath . '/controllers.php';
+        $this->assertSame([
+            'DummyController' => [
+                0 => 'Pletfix\\Test\\Controllers\\DummyController',
+                1 => 'Pletfix\\Test2\\Controllers\\DummyController',
+            ],
+        ], $data);
+
+        // drivers
+        $this->assertFileExists($manifestPath . '/drivers.php');
+        /** @noinspection PhpIncludeInspection */
+        $data = include $manifestPath . '/drivers.php';
+        $this->assertSame([
+            '' => [
+                'Bar' => [
+                    0 => 'Pletfix\\Test\\Drivers\\Bar',
+                ]
+            ],
+            'DummyDrivers' => [
+                'Foo' => [
+                    0 => 'Pletfix\\Test\\Drivers\\DummyDrivers\\Foo',
+                    1 => 'Pletfix\\Test2\\Drivers\\DummyDrivers\\Foo',
+                ]
+            ],
+        ], $data);
+
         // languages
         $this->assertFileExists($manifestPath . '/languages.php');
         /** @noinspection PhpIncludeInspection */
         $data = include $manifestPath . '/languages.php';
         $this->assertSame([
             'de' => ['~test' => $relativePackagePath . '/test/lang/de.php'],
-            'en' => ['~test' => $relativePackagePath . '/test/lang/en.php']
+            'en' => ['~test' => $relativePackagePath . '/test/lang/en.php'],
+        ], $data);
+
+        // middleware
+        $this->assertFileExists($manifestPath . '/middleware.php');
+        /** @noinspection PhpIncludeInspection */
+        $data = include $manifestPath . '/middleware.php';
+        $this->assertSame([
+            'Dummy' => [
+                0 => 'Pletfix\\Test\\Middleware\\Dummy',
+                1 => 'Pletfix\\Test2\\Middleware\\Dummy',
+            ],
         ], $data);
 
         // migrations
@@ -164,7 +202,8 @@ class PluginManagerTest extends TestCase
         /** @noinspection PhpIncludeInspection */
         $data = include $manifestPath . '/packages.php';
         $this->assertSame([
-            'pletfix/~test' => $relativePackagePath . '/test'
+            'pletfix/~test' => $relativePackagePath . '/test',
+            'pletfix/~test2' => $relativePackagePath . '/test2',
         ], $data);
 
         // public
@@ -180,14 +219,14 @@ class PluginManagerTest extends TestCase
         // services
         $this->assertFileExists($manifestPath . '/services.php');
         $data = file_get_contents($manifestPath . '/services.php');
-        $this->assertStringEndsWith('$di->set(\'test\', \Pletfix\Test\DummyService::class, true);', trim($data));
+        $this->assertStringEndsWith('$di->set(\'foo\', \Pletfix\Test\FooService::class, true);', trim($data));
 
         // views
         $this->assertFileExists($manifestPath . '/views.php');
         /** @noinspection PhpIncludeInspection */
         $data = include $manifestPath . '/views.php';
         $this->assertSame([
-            'foo.baz' => $relativePackagePath . '/test/views/foo/baz.blade.php',
+            '~test.foo.baz' => $relativePackagePath . '/test/views/foo/baz.blade.php',
         ], $data);
 
         // unregister
@@ -206,12 +245,6 @@ class PluginManagerTest extends TestCase
         $data = file_get_contents($manifestPath . '/bootstrap.php');
         $this->assertSame('<?php', trim($data));
 
-        // classes
-        $this->assertFileExists($manifestPath . '/classes.php');
-        /** @noinspection PhpIncludeInspection */
-        $data = include $manifestPath . '/classes.php';
-        $this->assertSame([], $data);
-
         // commands
         $this->assertFileExists($manifestPath . '/commands.php');
         /** @noinspection PhpIncludeInspection */
@@ -224,11 +257,43 @@ class PluginManagerTest extends TestCase
         $data = include config_path('~test.php');
         $this->assertSame(['foo' => 'bar'], $data); // Must not be deleted!
 
+        // controllers
+        $this->assertFileExists($manifestPath . '/controllers.php');
+        /** @noinspection PhpIncludeInspection */
+        $data = include $manifestPath . '/controllers.php';
+        $this->assertSame([
+            'DummyController' => [
+                0 => 'Pletfix\\Test2\\Controllers\\DummyController',
+            ],
+        ], $data);
+
+        // drivers
+        $this->assertFileExists($manifestPath . '/drivers.php');
+        /** @noinspection PhpIncludeInspection */
+        $data = include $manifestPath . '/drivers.php';
+        $this->assertSame([
+            'DummyDrivers' => [
+                'Foo' => [
+                    0 => 'Pletfix\\Test2\\Drivers\\DummyDrivers\\Foo',
+                ]
+            ],
+        ], $data);
+
         // languages
         $this->assertFileExists($manifestPath . '/languages.php');
         /** @noinspection PhpIncludeInspection */
         $data = include $manifestPath . '/languages.php';
         $this->assertSame([], $data);
+
+        // middleware
+        $this->assertFileExists($manifestPath . '/middleware.php');
+        /** @noinspection PhpIncludeInspection */
+        $data = include $manifestPath . '/middleware.php';
+        $this->assertSame([
+            'Dummy' => [
+                0 => 'Pletfix\\Test2\\Middleware\\Dummy',
+            ],
+        ], $data);
 
         // migrations
         $this->assertFileExists($manifestPath . '/migrations.php');
@@ -240,7 +305,9 @@ class PluginManagerTest extends TestCase
         $this->assertFileExists($manifestPath . '/packages.php');
         /** @noinspection PhpIncludeInspection */
         $data = include $manifestPath . '/packages.php';
-        $this->assertSame([], $data);
+        $this->assertSame([
+            'pletfix/~test2' => $relativePackagePath . '/test2',
+        ], $data);
 
         // public
         $this->assertFileNotExists(public_path('~test/dummy.txt'));
@@ -259,6 +326,34 @@ class PluginManagerTest extends TestCase
         $this->assertFileExists($manifestPath . '/views.php');
         /** @noinspection PhpIncludeInspection */
         $data = include $manifestPath . '/views.php';
+        $this->assertSame([], $data);
+
+        // unregister test2
+
+        $m2->unregister();
+
+        // controllers
+        $this->assertFileExists($manifestPath . '/controllers.php');
+        /** @noinspection PhpIncludeInspection */
+        $data = include $manifestPath . '/controllers.php';
+        $this->assertSame([], $data);
+
+        // drivers
+        $this->assertFileExists($manifestPath . '/drivers.php');
+        /** @noinspection PhpIncludeInspection */
+        $data = include $manifestPath . '/drivers.php';
+        $this->assertSame([], $data);
+
+        // middleware
+        $this->assertFileExists($manifestPath . '/middleware.php');
+        /** @noinspection PhpIncludeInspection */
+        $data = include $manifestPath . '/middleware.php';
+        $this->assertSame([], $data);
+
+        // packages
+        $this->assertFileExists($manifestPath . '/packages.php');
+        /** @noinspection PhpIncludeInspection */
+        $data = include $manifestPath . '/packages.php';
         $this->assertSame([], $data);
     }
 

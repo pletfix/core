@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Controllers;
+namespace App\Controllers;
 
-class CoreDummyController
+class DummyController
 {
     public function foo($param = null)
     {

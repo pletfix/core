@@ -143,10 +143,8 @@ class Translator implements TranslatorContract
         }
 
         if ($this->manifest === null) {
-            if (@file_exists($this->pluginManifestOfLanguages)) {
-                /** @noinspection PhpIncludeInspection */
-                $this->manifest = include $this->pluginManifestOfLanguages;
-            }
+            /** @noinspection PhpIncludeInspection */
+            $this->manifest = @file_exists($this->pluginManifestOfLanguages) ? include $this->pluginManifestOfLanguages : [];
         }
 
         return isset($this->manifest[$locale][$dictionary]) ? base_path($this->manifest[$locale][$dictionary]) : null;

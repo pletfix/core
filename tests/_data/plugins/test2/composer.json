@@ -1,0 +1,19 @@
+{
+    "name": "pletfix/~test2",
+    "description": "An another plugin for unit test.",
+    "authors": [
+        {
+            "name": "Frank Rohlfing",
+            "email": "mail@pletfix.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=5.6.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Pletfix\\Test2\\": "src/"
+        }
+    }
+}
