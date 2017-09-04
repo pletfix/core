@@ -27,7 +27,7 @@
         "behat/mink": "^1.7",
         "behat/mink-browserkit-driver": "dev-master",
         "behat/mink-goutte-driver": "^1.2",
-        "phpunit/phpunit": "^5.7|^6.0"
+        "phpunit/phpunit": "^5.7"
     },
     "autoload": {
         "files": [

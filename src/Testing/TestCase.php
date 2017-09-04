@@ -8,6 +8,11 @@ use PHPUnit_Framework_Assert as PHPUnit;
 use PHPUnit_Framework_TestCase;
 use ReflectionClass;
 
+// backward compatibility
+if (!class_exists('\PHPUnit\Framework\TestCase') && class_exists('\PHPUnit_Framework_TestCase')) {
+    class_alias('\PHPUnit_Framework_TestCase', '\PHPUnit\Framework\TestCase');
+}
+
 /**
  * The methods invokePrivateMethod, getPrivateProperty, and setPrivateProperty are based from "Web Tips", a Blog for
  * developers (http://www.webtipblog.com/unit-testing-private-methods-and-properties-with-phpunit)
