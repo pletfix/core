@@ -6,6 +6,8 @@ This is the core for the Pletfix framework.
 
 Read more about Pletfix in the [official documentation](https://pletfix.com).
 
+> If you want to build an application using Pletfix, visit the repository for [Pletfix Application Skeleton](https://github.com/pletfix/app).
+
 ## Core Development
 
 If you want to develop at the Pletfix Core, you can create a workbench as follows.

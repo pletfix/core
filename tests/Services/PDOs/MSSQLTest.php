@@ -81,6 +81,12 @@ class MSSQLTest extends TestCase
 
     public function testConnectWithDblibDriver()
     {
+        $options = $this->options;
+        if (defined('PDO::DBLIB_ATTR_STRINGIFY_UNIQUEIDENTIFIER')) { // attribute was added since PHP 7.0.11
+            /** @noinspection PhpUndefinedClassConstantInspection */
+            $options[PDO::DBLIB_ATTR_STRINGIFY_UNIQUEIDENTIFIER] = true;
+        }
+
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
@@ -91,7 +97,7 @@ class MSSQLTest extends TestCase
 
         $db->expects($this->once())
             ->method('createPDO')
-            ->with('dblib:host=localhost:1433;dbname=~test', 'sa', 'psss', $this->options)
+            ->with('dblib:host=localhost:1433;dbname=~test', 'sa', 'psss', $options)
             ->willReturn($pdo);
 
         $db->expects($this->once())
@@ -107,6 +113,12 @@ class MSSQLTest extends TestCase
         $this->config['charset'] = 'UTF-8';
         $this->config['port']     = 4711;
 
+        $options = $this->options;
+        if (defined('PDO::DBLIB_ATTR_STRINGIFY_UNIQUEIDENTIFIER')) { // attribute was added since PHP 7.0.11
+            /** @noinspection PhpUndefinedClassConstantInspection */
+            $options[PDO::DBLIB_ATTR_STRINGIFY_UNIQUEIDENTIFIER] = true;
+        }
+
         $pdo = $this->getMockBuilder(PDO::class)->disableOriginalConstructor()->getMock();
 
         /** @var Database|PHPUnit_Framework_MockObject_MockObject $db */
@@ -117,7 +129,7 @@ class MSSQLTest extends TestCase
 
         $db->expects($this->once())
             ->method('createPDO')
-            ->with('dblib:host=localhost:4711;dbname=~test;appname=PHP Generic DB-lib;charset=UTF-8', 'sa', 'psss', $this->options)
+            ->with('dblib:host=localhost:4711;dbname=~test;appname=PHP Generic DB-lib;charset=UTF-8', 'sa', 'psss', $options)
             ->willReturn($pdo);
 
         $db->expects($this->once())
