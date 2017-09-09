@@ -31,8 +31,6 @@ class MinkTestCase extends TestCase
      */
     protected function setUp()
     {
-        parent::setUp();
-
         $this->driver = new GoutteDriver();
         $this->session = new Session($this->driver);
         $this->session->start();

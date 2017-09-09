@@ -46,7 +46,7 @@ class Application
         });
 
         /*
-         * Bootstrap the framework
+         * Bootstrap the framework.
          */
         call_user_func(function() {
             /** @noinspection PhpIncludeInspection */

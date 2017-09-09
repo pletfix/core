@@ -1,18 +1,11 @@
 <?php
 
-namespace Core;
+namespace Core\Testing;
 
 use Core\Services\DI;
 
-class Console
+class Environment
 {
-    /**
-     * The framework version.
-     *
-     * @var string
-     */
-    const VERSION = '0.7.2';
-
     /**
      * Base path of the application.
      *
@@ -21,21 +14,9 @@ class Console
     protected static $basePath = BASE_PATH;
 
     /**
-     * Get the version number of the framework.
-     *
-     * @return string
+     * Load the test environment.
      */
-    public static function version()
-    {
-        return static::VERSION;
-    }
-
-    /**
-     * Start the command.
-     *
-     * @return int Exit Status
-     */
-    public static function run()
+    public static function load()
     {
         /*
          * Push the Services into the Dependency Injector.
@@ -58,18 +39,8 @@ class Console
         });
 
         /*
-         * Get the command line parameters.
+         * Set configuration.
          */
-        $argv = $_SERVER['argv'];
-        array_shift($argv); // strip the application name ("console")
-
-        /*
-         * Dispatch the command line request.
-         */
-        /** @var \Core\Services\Contracts\Command|false $command */
-        $command = DI::getInstance()->get('command-factory')->command($argv);
-        $status = $command->run();
-
-        return $status;
+        DI::getInstance()->get('config')->set('app.env', env('APP_ENV'));
     }
 }

@@ -22,29 +22,29 @@
     array (
       'name' => 'PK__table1__3213E83F3C69FB99',
       'column_name' => 'id',
-      'is_unique' => 1,
-      'is_primary_key' => 1,
+      'is_unique' => '1',
+      'is_primary_key' => '1',
     ),
     1 => 
     array (
       'name' => 'table1_integer1_unique',
       'column_name' => 'integer1',
-      'is_unique' => 1,
-      'is_primary_key' => 0,
+      'is_unique' => '1',
+      'is_primary_key' => '0',
     ),
     2 => 
     array (
       'name' => 'table1_string1_string2_index',
       'column_name' => 'string1',
-      'is_unique' => 0,
-      'is_primary_key' => 0,
+      'is_unique' => '0',
+      'is_primary_key' => '0',
     ),
     3 => 
     array (
       'name' => 'table1_string1_string2_index',
       'column_name' => 'string2',
-      'is_unique' => 0,
-      'is_primary_key' => 0,
+      'is_unique' => '0',
+      'is_primary_key' => '0',
     ),
   ),
 );

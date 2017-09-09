@@ -187,7 +187,6 @@ class PostgreSQLSchemaTest extends SchemaTestCase
             ->with('SELECT COUNT(*) FROM "table1"')
             ->willReturn(5);
 
-        //$this->expectsQueryFile('show_table1_column_comments', 1);
         /** @noinspection SqlDialectInspection */
         $this->expectsQuery("
             SELECT c.column_name, pgd.description
@@ -199,7 +198,6 @@ class PostgreSQLSchemaTest extends SchemaTestCase
             AND pgd.description > ''
         ", ['public', 'table1'], [], 1);
 
-        //$this->expectsQueryFile('show_table1_columns', 2);
         /** @noinspection SqlDialectInspection */
         $this->expectsQuery("
             SELECT column_name, 
@@ -232,7 +230,6 @@ class PostgreSQLSchemaTest extends SchemaTestCase
             2
         );
 
-        //$this->expectsQueryFile('show_table1_indexes', 3);
         /** @noinspection SqlDialectInspection */
         $this->expectsQuery("
             SELECT

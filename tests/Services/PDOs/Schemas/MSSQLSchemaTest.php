@@ -56,7 +56,7 @@ class MSSQLSchemaTest extends SchemaTestCase
     {
         $this->expectsQueryFile('show_table1_column_comments', 0);
         $this->expectsQueryFile('show_table1_column_collations', 1);
-        $this->expectsQueryFile('show_table1_columns', 3);
+        $this->expectsQueryFile('show_table1_columns' . (phpversion() < '7' ? '_v5' : ''), 3);
 
         $actual = $this->schema->columns('table1');
 
@@ -147,7 +147,7 @@ class MSSQLSchemaTest extends SchemaTestCase
 
     public function testIndexes()
     {
-        $this->expectsQueryFile('show_table1_indexes');
+        $this->expectsQueryFile('show_table1_indexes' . (phpversion() < '7' ? '_v5' : ''));
 
         $actual = $this->schema->indexes('table1');
 
@@ -229,7 +229,6 @@ class MSSQLSchemaTest extends SchemaTestCase
             ->method('version')
             ->willReturn('2008');
 
-        //$this->expectsQueryFile('show_table1_column_comments', 1);
         /** @noinspection SqlDialectInspection */
         $this->expectsQuery("
             SELECT c.name AS column_name, CAST(cd.value AS VARCHAR(255)) AS description
@@ -241,7 +240,7 @@ class MSSQLSchemaTest extends SchemaTestCase
             AND t.name = ?
         ", ['table1'], [], 1);
 
-        //$this->expectsQueryFile('show_table1_column_collations', 2);
+
         /** @noinspection SqlDialectInspection */
         $this->expectsQuery("
             SELECT c.name, c.collation_name 
@@ -254,7 +253,7 @@ class MSSQLSchemaTest extends SchemaTestCase
             [['name' => 'string1', 'collation_name' => 'Latin1_General_CI_AS']],
             2
         );
-        //$this->expectsQueryFile('show_table1_columns', 4);
+
         /** @noinspection SqlDialectInspection */
         $this->expectsQuery("EXEC sp_columns 'table1'", [], [[
                 'TABLE_QUALIFIER' => 'pletfix',
@@ -280,7 +279,6 @@ class MSSQLSchemaTest extends SchemaTestCase
             4
         );
 
-        //$this->expectsQueryFile('show_table1_indexes', 3);
         /** @noinspection SqlDialectInspection */
         $this->expectsQuery("
             SELECT 
