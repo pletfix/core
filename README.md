@@ -1,88 +1,33 @@
 # The Pletfix Core
 
+<p align="center">
+  <a href="https://pletfix.com" target="_blank" >
+    <img alt="Pletfix" src="https://pletfix.com/images/logo_200x200.png"/>
+  </a>
+</p>
+
+<p align="center">
+<a href="https://travis-ci.org/pletfix/core"><img src="https://travis-ci.org/pletfix/core.svg?branch=master" alt="Build Status"></a>
+<a href="https://packagist.org/packages/pletfix/core"><img src="https://poser.pugx.org/pletfix/core/v/stable.svg" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/pletfix/core"><img src="https://poser.pugx.org/pletfix/core/d/total.svg" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/pletfix/core"><img src="https://poser.pugx.org/pletfix/core/license.svg" alt="License"></a>
+</p>
+
 ## About Pletfix Core
 
 This is the core for the Pletfix framework. 
 
 Read more about Pletfix in the [official documentation](https://pletfix.com).
 
-> If you want to build an application using Pletfix, visit the repository for [Pletfix Application Skeleton](https://github.com/pletfix/app).
+## Build an Application
+
+If you want to build an application using Pletfix, visit the repository [Pletfix Application Skeleton](https://github.com/pletfix/app).
 
 ## Core Development
 
-If you want to develop at the Pletfix Core, you can create a workbench as follows.
+If you want to develop at the Pletfix Core, read the [contribution guide](https://pletfix.com/docs/master/en/contributions#core).
 
-1. Install a fresh [Pletfix Application](https://github.com/pletfix/app)
+## License
 
-2. Remove the Pletfix Core in the vendor path: 
-
-    ~~~
-    rm -R vendor/pletfix/core
-    ~~~
-    
-3. Create a folder `workbench` in the project folder and clone your fork of the Pletfix Core to this folder:
-   
-    ~~~
-    mkdir workbench
-    cd workbench
-    git clone https://github.com/pletfix/core.git
-    ~~~
-
-4. Modify `composer.json` as below:
-
-    - In the `require` section, remove the `"pletfix/core": "dev-master"` entry and insert all required packages from 
-      the core instead.
-    - Add `"Core\\": "workbench/pletfix/core/src/"` to the `psr-4` autoload section.
-    - Add the core's function files into the `files` autoload section.
-    
-    After this the `autolaod` section looks like below:
-    
-    ~~~    
-    "require": {
-        "php": ">=5.6.4",
-        "doctrine/cache": "^1.6",
-        "doctrine/inflector": "^1.1",
-        "jdorn/sql-formatter": "^1.2",
-        "leafo/scssphp": "^0.6.6",
-        "monolog/monolog": "~1.11",
-        "natxet/cssmin": "^3.0",
-        "oyejorge/less.php": "v1.7.0.10",
-        "paragonie/random_compat": "^2.0",
-        "psr/http-message": "~1.0",
-        "tedivm/jshrink": "^1.1",
-        "vlucas/phpdotenv": "~2.2"
-    },
-    "require-dev": {
-        "behat/mink": "^1.7",
-        "behat/mink-browserkit-driver": "dev-master",
-        "behat/mink-goutte-driver": "^1.2",
-        "phpunit/phpunit": "^5.7|^6.0",
-        "npm-asset/bootstrap": "^3.3.7",
-        "npm-asset/eonasdan-bootstrap-datetimepicker": "^4.17.37",
-        "npm-asset/font-awesome": "^4.6.3",
-        "npm-asset/jquery": "^2.2.4",
-        "npm-asset/moment": "^2.10",
-        "npm-asset/selectize": "^0.12.3"
-    },
-    "autoload": {
-        "classmap": [
-            "library/classes",
-            "library/facades"
-        ],
-        "files": [
-            "library/functions/helpers.php",
-            "workbench/pletfix/core/helpers.php"
-        ],
-        "psr-4": {
-            "App\\": "app/",
-            "Core\\": "workbench/pletfix/core/src/",
-        }
-    }    
-    ~~~
-
-5. Open `phpunit.xml` and modify attribute `bootstrap`:
-    
-    ~~~  
-    <phpunit bootstrap="./workbench/pletfix/core/tests/bootstrap.php"
-    ~~~
-    
+The Pletfix framework is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
+ 
