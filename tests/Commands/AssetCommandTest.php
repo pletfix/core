@@ -26,7 +26,8 @@ class AssetCommandTest extends TestCase
     public function testPublish()
     {
         $stdio = $this->getMockBuilder(Stdio::class)->setMethods(['line'])->getMock();
-        $stdio->expects($this->once())->method('line')->with('Assets are successfully published.')->willReturnSelf();
+        $stdio->expects($this->at(0))->method('line')->with('Build assets...')->willReturnSelf();
+        $stdio->expects($this->at(1))->method('line')->with('Assets are successfully published.')->willReturnSelf();
 
         // mock asset_manager()->publish('foo.js', true)
         $manager = $this->getMockBuilder(AssetManager::class)->setMethods(['publish', 'remove'])->getMock();
@@ -42,7 +43,8 @@ class AssetCommandTest extends TestCase
     public function testPublishWithoutMinify()
     {
         $stdio = $this->getMockBuilder(Stdio::class)->setMethods(['line'])->getMock();
-        $stdio->expects($this->once())->method('line')->with('Assets are successfully published.')->willReturnSelf();
+        $stdio->expects($this->at(0))->method('line')->with('Build assets...')->willReturnSelf();
+        $stdio->expects($this->at(1))->method('line')->with('Assets are successfully published.')->willReturnSelf();
 
         // mock asset_manager()->publish('foo.js', false)
         $manager = $this->getMockBuilder(AssetManager::class)->setMethods(['publish', 'remove'])->getMock();
@@ -58,7 +60,8 @@ class AssetCommandTest extends TestCase
     public function testPublishPlugin()
     {
         $stdio = $this->getMockBuilder(Stdio::class)->setMethods(['line'])->getMock();
-        $stdio->expects($this->once())->method('line')->with('Assets are successfully published.')->willReturnSelf();
+        $stdio->expects($this->at(0))->method('line')->with('Build assets...')->willReturnSelf();
+        $stdio->expects($this->at(1))->method('line')->with('Assets are successfully published.')->willReturnSelf();
 
         // mock asset_manager()->publish('foo.js', true, 'ldap')
         $manager = $this->getMockBuilder(AssetManager::class)->setMethods(['publish', 'remove'])->getMock();

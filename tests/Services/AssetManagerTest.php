@@ -59,19 +59,6 @@ class AssetManagerTest extends TestCase
         @unlink(self::$manifestFile);
     }
 
-    public function testConstruct()
-    {
-        // Set a manifest path that does not exist, so the path should be created.
-        $manifestPath = manifest_path('~assets_dummy');
-        try {
-            $this->assertInstanceOf(AssetManager::class, new AssetManager(self::$assetPath . '/build.php', $manifestPath . '/manifest.php'));
-            $this->assertDirectoryExists($manifestPath);
-        } finally {
-            @unlink($manifestPath . '/manifest.php');
-            @rmdir($manifestPath);
-        }
-    }
-
     public function testPublishAndRemove()
     {
         $m = new AssetManager(self::$assetPath . '/build.php', self::$manifestFile, self::$pluginManifestOfAssets);
@@ -116,6 +103,21 @@ class AssetManagerTest extends TestCase
         /** @noinspection PhpIncludeInspection */
         $build = @include self::$manifestFile;
         $this->assertSame([], $build);
+    }
+
+    public function testManifestPathNotExists()
+    {
+        // Set a manifest path that does not exist, so the path should be created.
+        $manifestPath = manifest_path('~assets_dummy');
+        try {
+            $m = new AssetManager(self::$assetPath . '/build.php', $manifestPath . '/manifest.php');
+            $this->assertInstanceOf(AssetManager::class, $m->publish());
+            $this->assertDirectoryExists($manifestPath);
+            $this->assertInstanceOf(AssetManager::class, $m->remove());
+        } finally {
+            @unlink($manifestPath . '/manifest.php');
+            @rmdir($manifestPath);
+        }
     }
 
     public function testNothingToDo()
