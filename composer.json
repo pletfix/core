@@ -1,6 +1,7 @@
 {
     "name": "pletfix/core",
     "description": "The Pletfix Core.",
+    "keywords": ["pletfix", "framework", "kiss", "fullstack", "core"],
     "license": "MIT",
     "authors": [
         {
