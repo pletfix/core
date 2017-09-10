@@ -1,0 +1,7 @@
+/node_modules
+/storage
+/vendor
+phpunit.xml
+.DS_Store
+.env
+.idea
