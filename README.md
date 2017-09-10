@@ -85,3 +85,4 @@ If you want to develop at the Pletfix Core, you can create a workbench as follow
     ~~~  
     <phpunit bootstrap="./workbench/pletfix/core/tests/bootstrap.php"
     ~~~
+    
