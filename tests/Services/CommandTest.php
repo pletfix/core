@@ -367,8 +367,6 @@ class CommandTest extends TestCase
         $this->cmd->__construct([]);
         $this->assertTrue(is_int($this->cmd->terminalWidth()), 'terminalWidth is int');
         $this->assertTrue(is_int($this->cmd->terminalHeight()), 'terminalHeight is int');
-        $this->assertTrue($this->cmd->terminalWidth() > 0);
-        $this->assertTrue($this->cmd->terminalHeight() > 0);
     }
 
     public function testConsoleMode()
