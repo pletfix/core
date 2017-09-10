@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://pletfix.com" target="_blank" >
-    <img alt="Pletfix" src="https://pletfix.com/images/logo_200x200.png"/>
+    <img src="https://avatars3.githubusercontent.com/u/25625700?v=4&s=200"/>
   </a>
 </p>
 
