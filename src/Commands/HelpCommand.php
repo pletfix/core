@@ -175,7 +175,7 @@ class HelpCommand extends Command
             return $lev < 2 * $threshold;
         });
 
-        asort($alternatives);
+        ksort($alternatives);
 
         return array_keys($alternatives);
     }
