@@ -192,7 +192,7 @@ class CommandFactory implements CommandFactoryContract
         return max(
             file_exists($this->pluginManifestOfCommands) ? filemtime($this->pluginManifestOfCommands) : 0,
             filemtime(__DIR__ . '/../Commands'),
-            filemtime(app_path('Commands'))
+            file_exists(app_path('Commands')) ? filemtime(app_path('Commands')) : 0
         );
     }
 }

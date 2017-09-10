@@ -8,13 +8,13 @@ define('APP_STARTTIME', microtime(true));
 /*
  * Set the base path of the application.
  */
-define('BASE_PATH', realpath(__DIR__ . '/../../../..'));
+define('BASE_PATH', realpath(__DIR__ . '/..'));
 
 /*
- * Register the Composer Autoloader
+ * Register the Composer Autoloader.
  */
 /** @noinspection PhpIncludeInspection */
-require __DIR__ . '/../../../../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 
 /*
  * Load the test environment.

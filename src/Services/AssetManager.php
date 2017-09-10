@@ -63,14 +63,6 @@ class AssetManager implements AssetManagerContract
         $this->manifestFile = $manifestFile ?: manifest_path('assets/manifest.php');
         $this->pluginManifestOfAssets = $pluginManifestOfAssets ?: manifest_path('plugins/assets.php');
 
-        // be sure the manifest path is exits
-        $dir = dirname($this->manifestFile);
-        if (!@file_exists($dir)) {
-            if (!make_dir($dir, 0755)) {
-                throw new RuntimeException('Unable to create directory ' . $dir); // @codeCoverageIgnore
-            }
-        }
-
         /** @noinspection PhpIncludeInspection */
         $this->manifest = @file_exists($this->manifestFile) ? include $this->manifestFile : [];
     }
@@ -120,7 +112,7 @@ class AssetManager implements AssetManagerContract
     {
         if ($plugin !== null) {
             /** @noinspection PhpIncludeInspection */
-            $builds = file_exists($this->pluginManifestOfAssets) ? include $this->pluginManifestOfAssets : [];
+            $builds = @file_exists($this->pluginManifestOfAssets) ? include $this->pluginManifestOfAssets : [];
             if (!isset($builds[$plugin])) {
                 throw new InvalidArgumentException('Plugin "' . $plugin . '" has no assets or is not installed.');
             }
@@ -257,11 +249,26 @@ class AssetManager implements AssetManagerContract
      */
     private function buildUniqueFile($file)
     {
+        // be sure the folder public/build is exist
+        $dir = public_path('build');
+        if (!@file_exists($dir)) {
+            if (!make_dir($dir, 0755)) { // @codeCoverageIgnore
+                throw new RuntimeException('Unable to create directory ' . $dir); // @codeCoverageIgnore
+            } // @codeCoverageIgnore
+        }
+
+        // be sure the manifest path is exist
+        $dir = dirname($this->manifestFile);
+        if (!@file_exists($dir)) {
+            if (!make_dir($dir, 0755)) {
+                throw new RuntimeException('Unable to create directory ' . $dir); // @codeCoverageIgnore
+            }
+        }
+
         // generate unique file
         $ext = pathinfo($file, PATHINFO_EXTENSION);
         $uniqueFile = 'build/' . basename($file, '.' . $ext) . '-' . uniqid() . '.' . $ext;
         copy(public_path($file), public_path($uniqueFile));
-        //@chmod(public_path($uniqueFile), 0775);
 
         // update manifest
         $oldFile = isset($this->manifest[$file]) ? public_path($this->manifest[$file]) : null;
@@ -269,7 +276,6 @@ class AssetManager implements AssetManagerContract
         if (file_put_contents($this->manifestFile, '<?php return ' . var_export($this->manifest, true) . ';' . PHP_EOL, LOCK_EX) === false) {
             throw new RuntimeException(sprintf('Asset Manager was not able to save manifest file "%s"', $this->manifestFile)); // @codeCoverageIgnore
         }
-        // @chmod($this->manifestFile, 0664); // not necessary, because only the cli need to have access
 
         // delete old unique file
         if ($oldFile !== null && @file_exists($oldFile)) {

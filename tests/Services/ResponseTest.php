@@ -97,6 +97,7 @@ class ResponseTest extends TestCase
 
     public function testDownload()
     {
+        touch(__DIR__ . '/../_data/images/logo_50x50.png', strtotime('Wed, 21 Jun 2017 15:36:45 GMT'));
         $this->response->clear();
         $this->assertInstanceOf(Response::class, $this->response->download(__DIR__ . '/../_data/images/logo_50x50.png', 'logo.png'));
         $this->assertSame('attachment; filename="logo.png"', $this->response->getHeader('Content-Disposition'));

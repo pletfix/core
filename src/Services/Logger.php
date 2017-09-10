@@ -50,7 +50,7 @@ class Logger implements LoggerContract
             'app_file'   => 'app.log',
             'cli_file'   => 'cli.log',
             'permission' => 0664,
-        ], config('logger'));
+        ], config('logger', []));
 
         $file   = storage_path('logs/' . $config[is_console() ? 'cli_file' : 'app_file']);
         $levels = $this->log->getLevels();

@@ -47,13 +47,14 @@ class AssetCommand extends Command
     {
         $dest   = $this->input('dest');
         $minify = !$this->input('no-minify');
-        $plugin  = str_replace('pletfix-', '', str_replace('-plugin', '', $this->input('plugin')));
+        $plugin = $this->input('plugin') !== null ? str_replace('pletfix-', '', str_replace('-plugin', '', $this->input('plugin'))) : null;
 
         if ($this->input('remove')) {
             asset_manager()->remove($dest, $plugin);
             $this->line('Assets are successfully removed.');
         }
         else {
+            $this->line('Build assets...');
             asset_manager()->publish($dest, $minify, $plugin);
             $this->line('Assets are successfully published.');
         }

@@ -689,7 +689,7 @@ if (!function_exists('list_files')) {
                 }
             }
             else {
-                if (!is_null($filter)) {
+                if ($filter !== null) {
                     $ext = pathinfo($file, PATHINFO_EXTENSION);
                     if (!in_array($ext, $filter)) {
                         continue;
@@ -712,6 +712,10 @@ if (!function_exists('list_classes')) {
      */
     function list_classes(array &$result, $path, $namespace, $suffix = '')
     {
+        if (!file_exists($path)) {
+            return;
+        }
+
         $ext = $suffix . '.php';
         $len = strlen($ext);
 
@@ -850,11 +854,11 @@ if (!function_exists('mime_type')) {
      */
     function mime_type($file)
     {
-        $finfo = finfo_open(FILEINFO_MIME_TYPE); // todo mit @?
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
         if ($finfo === false) {
             return false; // @codeCoverageIgnore
         }
-        $mimetype = @finfo_file($finfo, $file); // todo mit @?
+        $mimetype = finfo_file($finfo, $file);
         finfo_close($finfo);
 
         return $mimetype;

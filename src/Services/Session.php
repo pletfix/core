@@ -42,12 +42,13 @@ class Session implements SessionContract
         $path = rtrim(dirname($_SERVER['PHP_SELF']), '/');
 
         $config = array_merge([
+            'name'      => 'pletfix_session',
             'lifetime'  => 0,
             'path'      => $path, // '/',
             'domain'    => null,
             'secure'    => false,
             'http_only' => true,
-        ], config('session'));
+        ], config('session', []));
 
         $this->lifetime = $config['lifetime'] * 60;
 

@@ -209,7 +209,7 @@ class HelpersTest extends TestCase
         }
         else {
             $key = 'foo.xyz';
-            $value = 'my_base_url/foo.xyz';
+            $value = 'foo.xyz';
         }
         $this->assertEquals('my_base_url/foo.xyz', asset('foo.xyz'));
         $this->assertEquals('my_base_url/' . $value, asset($key));
@@ -425,18 +425,18 @@ class HelpersTest extends TestCase
         $this->assertSame("'Pletfix'", $out);
     }
 
-    public function testDd()
-    {
-        ob_start();
-        try {
-            dd('Pletfix');
-        }
-        finally {
-            $out = ob_get_clean();
-        }
-
-        $this->assertSame("'Pletfix'", $out);
-    }
+//    public function testDd()
+//    {
+//        ob_start();
+//        try {
+//            dd('Pletfix');
+//        }
+//        finally {
+//            $out = ob_get_clean();
+//        }
+//
+//        $this->assertSame("'Pletfix'", $out);
+//    }
 
     public function testE()
     {
@@ -745,6 +745,11 @@ class HelpersTest extends TestCase
 
         DI::getInstance()->get('translator')
             ->setLocale('~testlocale');
+
+        $dir = resource_path('lang');
+        if (!@file_exists($dir)) {
+            make_dir($dir, 0755);
+        }
 
         $path1 = resource_path('lang/~testlocale');
         $path2 = resource_path('lang/~testfallback');

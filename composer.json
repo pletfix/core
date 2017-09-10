@@ -36,5 +36,13 @@
         "psr-4": {
             "Core\\": "src/"
         }
+    },
+    "scripts": {
+        "post-root-package-install": [
+            "Core\\Handler\\ComposerHandler::postRootPackageInstall"
+        ],
+        "post-create-project-cmd": [
+            "Core\\Handler\\ComposerHandler::postCreateProjectCmd"
+        ]
     }
 }

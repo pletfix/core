@@ -118,13 +118,13 @@ class Mailer implements MailerContract
     public function __construct()
     {
         $config = array_merge([
-            'replyTo' => [],
             'from'    => null,
+            'replyTo' => [],
             'pretend' => false,
-        ], config('mail'));
+        ], config('mail', []));
 
-        $this->replyTo = $config['replyTo'];
         $this->from    = $config['from'];
+        $this->replyTo = $config['replyTo'];
         $this->pretend = $config['pretend'];
     }
 

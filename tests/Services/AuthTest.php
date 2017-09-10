@@ -2,6 +2,7 @@
 
 namespace Core\Tests\Services;
 
+use Core\Models\Model;
 use Core\Services\Auth;
 use Core\Services\DI;
 use Core\Testing\TestCase;
@@ -12,7 +13,7 @@ class AuthTest extends TestCase
     {
         self::defineMemoryAsDefaultDatabase();
 
-        /** @noinspection SqlDialectInspection */
+        /** @noinspection SqlDialectInspection, SqlNoDataSourceInspection */
         database()->exec('
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY NOT NULL,
@@ -26,17 +27,17 @@ class AuthTest extends TestCase
             );
         ');
 
-        /** @noinspection SqlDialectInspection */
+        /** @noinspection SqlDialectInspection, SqlNoDataSourceInspection */
         database()->exec('
             CREATE UNIQUE INDEX users_email_unique ON users (email);
         ');
 
-        /** @noinspection SqlDialectInspection */
+        /** @noinspection SqlDialectInspection, SqlNoDataSourceInspection */
         database()->exec('
             CREATE UNIQUE INDEX users_principal_unique ON users (principal);
         ');
 
-        /** @noinspection SqlDialectInspection */
+        /** @noinspection SqlDialectInspection, SqlNoDataSourceInspection */
         database()->exec('
             INSERT INTO users (name, email, password, role) VALUES 
               (\'Tiger\', \'test@example.com\', \'$2y$10$xM5BdnPXR8cZ.66zANjx1OAnY9kd9Lp6KyYqRvpfYLhF3Xq7JY11O\', \'admin\');
@@ -67,6 +68,8 @@ class AuthTest extends TestCase
 
     public function testBase()
     {
+        DI::getInstance()->get('config')->set('auth.model.class', 'Core\Tests\Services\User');
+
         $auth = new Auth();
 
         // login failed
@@ -137,4 +140,8 @@ class AuthTest extends TestCase
         $this->assertSame('admin', $auth->role());
         $this->assertSame('admin', $auth->role());
     }
+}
+
+class User extends Model
+{
 }
