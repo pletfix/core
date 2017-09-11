@@ -32,13 +32,13 @@ class ExceptionHandler implements ExceptionHandlerContract
             $this->log($e);
         }
         catch (Exception $e2) { // don't overwrite the original exception
-            if (!is_writable(storage_path('logs')) || !is_writable(storage_path('cache'))) { // no output without writable cache!
-                die('
-                    <div style="font-family:Arial,serif; background-color:red; color:white; padding:1px 1px 1px 10px;">' .
-                    (config('app.debug') ? '<p>' . $e->getMessage() . '</p>' : '').
+            if (!is_writable(storage_path('logs')) || !is_writable(storage_path('cache'))) { // cannot generate view without writable cache!
+                return response()->output('
+                    <div style="font-family: Arial,serif; color: #a94442; background-color: #f2dede; border-color: #ebccd1; padding: 1px 1px 1px 10px; border-radius: 4px;">' .
+                    (config('app.debug') ? '<p><b>Fatal Error!</b> ' . $e->getMessage() . '</p>' : '').
                     '<p>The directories within the storage folder must be writable for your web server! Check the permissions!</p>' .
                     '</div>'
-                );
+                )->send();
             }
         }
 

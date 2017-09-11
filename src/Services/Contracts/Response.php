@@ -111,12 +111,12 @@ interface Response
      * Render the output by the given view.
      *
      * @param string $name Name of the view
-     * @param array $variables
+     * @param array|\Core\Services\Contracts\Collection $variables
      * @param int $status The response status code
      * @param array $headers An array of response headers
      * @return $this
      */
-    public function view($name, array $variables = [], $status = Response::HTTP_OK, $headers = []);
+    public function view($name, $variables = [], $status = Response::HTTP_OK, $headers = []);
 
     /**
      * Get a JSON response.

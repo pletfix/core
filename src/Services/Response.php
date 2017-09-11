@@ -63,7 +63,7 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
-    public function view($name, array $variables = [], $status = ResponseContract::HTTP_OK, $headers = [])
+    public function view($name, $variables = [], $status = ResponseContract::HTTP_OK, $headers = [])
     {
         return $this->output(DI::getInstance()->get('view')->render($name, $variables), $status, $headers);
     }
