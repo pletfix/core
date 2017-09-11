@@ -1076,6 +1076,7 @@ class Collection implements CollectionContract
     public function where($key, $value, $operator = '==')
     {
         return $this->filter(function ($item) use ($key, $operator, $value) {
+            $item = (array)$item;
             $retrieved = isset($item[$key]) ? $item[$key] : null;
             switch ($operator) {
                 default:
@@ -1101,6 +1102,7 @@ class Collection implements CollectionContract
         $values = $this->getArrayableItems($values);
 
         return $this->filter(function ($item) use ($key, $values, $strict) {
+            $item = (array)$item;
             return in_array(isset($item[$key]) ? $item[$key] : null, $values, $strict);
         });
     }
@@ -1113,6 +1115,7 @@ class Collection implements CollectionContract
         $values = $this->getArrayableItems($values);
 
         return $this->filter(function ($item) use ($key, $values, $strict) {
+            $item = (array)$item;
             return !in_array(isset($item[$key]) ? $item[$key] : null, $values, $strict);
         });
     }
