@@ -31,7 +31,15 @@ class ExceptionHandler implements ExceptionHandlerContract
         try {
             $this->log($e);
         }
-        catch (Exception $e) { // overwrite the original exception
+        catch (Exception $e2) { // don't overwrite the original exception
+            if (!is_writable(storage_path('logs')) || !is_writable(storage_path('cache'))) { // no output without writable cache!
+                die('
+                    <div style="font-family:Arial,serif; background-color:red; color:white; padding:1px 1px 1px 10px;">' .
+                    (config('app.debug') ? '<p>' . $e->getMessage() . '</p>' : '').
+                    '<p>The directories within the storage folder must be writable for your web server! Check the permissions!</p>' .
+                    '</div>'
+                );
+            }
         }
 
         if (is_console()) {
