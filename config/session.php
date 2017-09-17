@@ -27,4 +27,18 @@ return [
 
     'lifetime' => 120, // minutes
 
+    /**
+     * ----------------------------------------------------------------
+     * Session Save Path
+     * ----------------------------------------------------------------
+     *
+     * If specified, the path to which the session data is saved will
+     * be changed.
+     *
+     * The default setting is specified in `php.ini` under the
+     * `session.save_path` key.
+     */
+
+    'save_path' => storage_path('sessions'),
+
 ];

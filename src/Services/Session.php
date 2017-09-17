@@ -60,6 +60,10 @@ class Session implements SessionContract
             $config['http_only']
         );
 
+        if (isset($config['save_path'])) {
+            session_save_path($config['save_path']);
+        }
+
         session_name($config['name']);
     }
 
