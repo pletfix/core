@@ -335,6 +335,7 @@ class DateTimeTest extends TestCase
 
     public function testLocale()
     {
+        DI::getInstance()->get('cookie')->delete('locale');
         DI::getInstance()->get('config')
             ->set('locale.default', '~testlocale')
             ->set('locale.fallback', '~testfallback');
