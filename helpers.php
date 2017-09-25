@@ -602,7 +602,7 @@ if (!function_exists('http_status_text')) {
 
 if (!function_exists('is_absolute_path')) {
     /**
-     * Determines if the given path given is an absolute path.
+     * Determines if the given path is an absolute path.
      *
      * @param string $path
      * @return bool
@@ -614,6 +614,34 @@ if (!function_exists('is_absolute_path')) {
         }
 
         return !empty($path) && $path[0] == DIRECTORY_SEPARATOR;
+    }
+}
+
+if (!function_exists('is_active')) {
+    /**
+     * Determine if the given path is the one of the current url.
+     *
+     * @param string $path The path relative to the base url, e.g. "admin/users"
+     * @return bool
+     */
+    function is_active($path)
+    {
+        $active = request()->path();
+
+        if (is_multilingual()) {
+            if (is_supported_locale($active)) {
+                $active = '';
+            }
+            else if (($pos = strpos($active, '/')) !== false && is_supported_locale(substr($active, 0, $pos))) {
+                $active = substr($active, $pos + 1);
+            }
+        }
+
+        if (empty($path)) {
+            return empty($active);
+        }
+
+        return substr($active, 0, strlen($path)) == $path;
     }
 }
 
@@ -761,6 +789,35 @@ if (!function_exists('locale')) {
         }
 
         return cookie('locale', config('locale.default'));
+    }
+}
+
+if (!function_exists('locale_url')) {
+    /**
+     * Prefix the current URL with the given language code.
+     *
+     * https://example.com/myapp/mypath --> https://example.com/myapp/en/mypath
+     *
+     * @param string $lang The two-letter language code according to ISO 639-1
+     * @return string
+     * @see https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes ISO 639-1
+     */
+    function locale_url($lang)
+    {
+        $url = request()->baseUrl() . (!empty($lang) ? '/' . $lang : '');
+
+        $path = request()->path();
+        if (empty($path)) {
+            return $url;
+        }
+
+        if (($pos = strpos($path, '/')) !== false) {
+            $firstSegment = substr($path, 0, $pos);
+            return $url . (is_supported_locale($firstSegment) ? substr($path, $pos) : '/' . $path);
+        }
+        else {
+            return $url . (is_supported_locale($path) ? '' : '/' . $path);
+        }
     }
 }
 
