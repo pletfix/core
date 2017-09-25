@@ -14,8 +14,8 @@ class DateTimeTest extends TestCase
     public static function setUpBeforeClass()
     {
         DI::getInstance()->get('config')
-            ->set('app.timezone', 'Europe/Berlin')
-            ->set('app.first_dow', DateTime::MONDAY);
+            ->set('locale.timezone', 'Europe/Berlin')
+            ->set('locale.first_dow', DateTime::MONDAY);
     }
 
     public function testConstruct()
@@ -336,8 +336,8 @@ class DateTimeTest extends TestCase
     public function testLocale()
     {
         DI::getInstance()->get('config')
-            ->set('app.locale', '~testlocale')
-            ->set('app.fallback_locale', '~testfallback');
+            ->set('locale.default', '~testlocale')
+            ->set('locale.fallback', '~testfallback');
         DateTime::setLocale(null);
 
         $path1 = resource_path('lang/~testlocale');

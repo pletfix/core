@@ -67,7 +67,7 @@ class LoadConfiguration implements Bootable
         /*
          * Sets the default timezone used by all date/time functions in a script.
          */
-        date_default_timezone_set($config->get('app.timezone'));
+        date_default_timezone_set($config->get('locale.timezone'));
 
         /*
          * Use internally the UTF-8 Encoding

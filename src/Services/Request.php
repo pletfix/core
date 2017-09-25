@@ -115,14 +115,6 @@ class Request implements RequestContract
     /**
      * @inheritdoc
      */
-    public function canonicalUrl()
-    {
-        return config('app.url') . '/' . $this->path();
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function path()
     {
         if ($this->path === null && isset($_SERVER['REQUEST_URI'])) {
@@ -135,6 +127,16 @@ class Request implements RequestContract
         }
 
         return $this->path;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function segment($index, $default = null)
+    {
+        $segments = explode('/', $this->path());
+
+        return isset($segments[$index]) ? rawurldecode($segments[$index]) : $default;
     }
 
     /**

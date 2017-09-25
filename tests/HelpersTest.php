@@ -265,6 +265,18 @@ class HelpersTest extends TestCase
         cache('~bar');
     }
 
+    public function testCanonicalUrl()
+    {
+        DI::getInstance()->get('config')->set('app.url', 'http://mycanonical.com');
+        DI::getInstance()->get('config')->set('locale.supported', ['supported' => ['en' => 'English']]);
+        $this->assertSame('http://mycanonical.com/mypath', canonical_url());
+
+        $locale = locale();
+        $this->assertSame('http://mycanonical.com/mypath', canonical_url());
+        DI::getInstance()->get('config')->set('locale.supported', ['supported' => ['en' => 'English', 'de' => 'Deutsch']]);
+        $this->assertSame('http://mycanonical.com/mypath/' . $locale, canonical_url());
+    }
+
     public function testCollect()
     {
         $c = collect(['a', 'b']);
@@ -528,6 +540,9 @@ class HelpersTest extends TestCase
             $this->assertEquals(4, count($result));
             $this->assertEquals('MyNamespace\Foo\MyClass4Controller', $result[0]);
             $this->assertEquals('MyNamespace\MyClass2Controller', $result[3]);
+
+            $result = [];
+            list_classes($result, storage_path('~not_exists'), 'MyNamespace', 'Controller');
         }
         finally {
             @unlink($path . '/Foo/MyClass4Controller.php');
@@ -585,13 +600,13 @@ class HelpersTest extends TestCase
 
     public function testLocale()
     {
-        $curr = config('app.locale');
+        $curr = locale();
         $other = $curr == 'en' ? 'de' : 'en';
-        $this->assertSame($curr, locale());
         $this->assertSame($other, locale($other));
         try {
             $this->assertSame($other, DI::getInstance()->get('translator')->getLocale());
             $this->assertSame($other, DI::getInstance()->get('date-time')->getLocale());
+            $this->assertSame($other, DI::getInstance()->get('cookie')->get('locale'));
         }
         finally {
             locale($curr);
@@ -740,8 +755,8 @@ class HelpersTest extends TestCase
     public function testT()
     {
         DI::getInstance()->get('config')
-            ->set('app.locale', '~testlocale')
-            ->set('app.fallback_locale', '~testfallback');
+            ->set('locale.default',  '~testlocale')
+            ->set('locale.fallback', '~testfallback');
 
         DI::getInstance()->get('translator')
             ->setLocale('~testlocale');

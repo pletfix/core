@@ -48,17 +48,6 @@ interface Request
     public function baseUrl();
 
     /**
-     * Get the canonical URL for the request.
-     *
-     * This URL is important for SEO (Search Engine Optimizing).
-     *
-     * Example: fullUrl = "http://example.com/path?a=3" --> canonicalUrl = "https://www.example.de/path"
-     *
-     * @return string
-     */
-    public function canonicalUrl();
-
-    /**
      * Get the path for the request (without query string).
      *
      * Example: fullUrl = "http://localhost/myapp/public/test?a=4" --> path = "test"
@@ -66,6 +55,17 @@ interface Request
      * @return string
      */
     public function path();
+
+    /**
+     * Get a segment from the path (zero based index).
+     *
+     * Example: path = "foo/bar/baz" --> segment(1) = "bar"
+     *
+     * @param int $index
+     * @param string|null $default
+     * @return string|null
+     */
+    public function segment($index, $default = null);
 
     /**
      * Retrieve an input item from the request ($_GET and $_POST).

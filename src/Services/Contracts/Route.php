@@ -15,6 +15,17 @@ interface Route
     public function dispatch(Request $request);
 
     /**
+     * Add a prefix for each route in the group with a given URI.
+     *
+     * If the closure is omit, the prefix is used by all the routes defined below.
+     *
+     * @param string|array $prefix
+     * @param Closure|null $nested
+     * @return $this
+     */
+    public function prefix($prefix, Closure $nested = null);
+
+    /**
      * Define a group of routes embedded in middleware.
      *
      * If the closure is omit, the middleware is used by all the routes defined below.

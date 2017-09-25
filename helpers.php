@@ -155,6 +155,33 @@ if (!function_exists('cache')) {
     }
 }
 
+if (!function_exists('canonical_url')) {
+    /**
+     * Get the canonical URL for the current request.
+     *
+     * This method always returns the same URL for a particular page, even if the page is accessible through different
+     * URLs. This is important for SEO (Search Engine Optimizing).
+     *
+     * Note that if your application is [multilingual](helpers#is-multilingual), this function prefixes the path with
+     * the current language code. Be sure the corresponding route entry exists!
+     *
+     * Example: fullUrl = "http://example.com/path?a=3" --> canonical_url = "https://www.example.de/path/en"
+     *
+     * @return string
+     */
+    function canonical_url()
+    {
+        if (!is_multilingual() || is_supported_locale(request()->segment(0))) {
+            $url = config('app.url') . '/' . request()->path(); // not multilingual, or language code already in path
+        }
+        else {
+            $url = config('app.url') . '/' . locale() . '/' . request()->path();
+        }
+
+        return rtrim($url, '/');
+    }
+}
+
 if (! function_exists('collect')) {
     /**
      * Create a collection from the given array.
@@ -357,15 +384,13 @@ if (!function_exists('dd')) {
     /**
      * Dump a value and end the script.
      *
-     * @param  mixed
-     * @return void
+     * @param mixed
+     * @codeCoverageIgnore
      */
     function dd($value)
     {
         dump($value);
-        if (!is_testing()) {
-            die(1); // @codeCoverageIgnore
-        }
+        die(1);
     }
 }
 
@@ -458,45 +483,6 @@ if (!function_exists('flash')) {
         return $flash->get($key, $default);
     }
 }
-
-//if (!function_exists('format_datetime')) {
-//    /**
-//     * Returns the given datetime formatted by the apps settings.
-//     *
-//     * @param string $value DateTime
-//     * @return string
-//     */
-//    function format_datetime($value)
-//    {
-//        return date_create($value)->format(config('app.date_formats.' . config('app.locale') . '.datetime'));
-//    }
-//}
-//
-//if (!function_exists('format_date')) {
-//    /**
-//     * Returns the given date formatted by the apps settings.
-//     *
-//     * @param string $value Date
-//     * @return string
-//     */
-//    function format_date($value)
-//    {
-//        return date_create($value)->format(config('app.date_formats.' . config('app.locale') . '.date'));
-//    }
-//}
-//
-//if (!function_exists('format_time')) {
-//    /**
-//     * Returns the given time formatted by the apps settings.
-//     *
-//     * @param string $value Time
-//     * @return string
-//     */
-//    function format_time($value)
-//    {
-//        return date_create($value)->format(config('app.date_formats.' . config('app.locale') . '.time'));
-//    }
-//}
 
 if (!function_exists('guess_file_extension')) {
     /**
@@ -643,6 +629,29 @@ if (!function_exists('is_console')) {
     }
 }
 
+if (!function_exists('is_supported_locale')) {
+    /**
+     * Determine if the given language code is supported by the application.
+     *
+     * @param string $lang
+     * @return bool
+     */
+    function is_supported_locale($lang)
+    {
+        return config('locale.supported.' . $lang) !== null;
+    }
+}
+
+if (!function_exists('is_multilingual')) {
+    /**
+     * Determine if the application is multilingual.
+     */
+    function is_multilingual()
+    {
+        return count(config('locale.supported', [])) > 1;
+    }
+}
+
 if (!function_exists('is_testing')) {
     /**
      * Determine if we are running unit tests.
@@ -735,22 +744,23 @@ if (!function_exists('list_classes')) {
 
 if (!function_exists('locale')) {
     /**
-     * Get and set the current locale.
+     * Get and set the current locale from and to the cookie.
      *
-     * @param string $lang
+     * @param string $lang The two-letter language code according to ISO 639-1
      * @return string
+     * @see https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes ISO 639-1
      */
     function locale($lang = null)
     {
         if ($lang !== null) {
-            DI::getInstance()->get('config')->set('app.locale', $lang);
+            DI::getInstance()->get('cookie')->setForever('locale', $lang);
             DI::getInstance()->get('translator')->setLocale($lang);
             $dt = DI::getInstance()->get('date-time');
             $dt::setLocale($lang);
             return $lang;
         }
 
-        return config('app.locale');
+        return cookie('locale', config('locale.default'));
     }
 }
 

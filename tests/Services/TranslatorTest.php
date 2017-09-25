@@ -16,8 +16,8 @@ class TranslatorTest extends TestCase
     public static function setUpBeforeClass()
     {
         DI::getInstance()->get('config')
-            ->set('app.locale', 'en')
-            ->set('app.fallback_locale', 'de');
+            ->set('locale.default',  'en')
+            ->set('locale.fallback', 'de');
 
         DI::getInstance()->get('translator')->setLocale('en');
     }

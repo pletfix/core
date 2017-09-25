@@ -74,7 +74,7 @@ class Translator implements TranslatorContract
         // if no translation exist for the local, try the fallback...
         if ($translation === null && $fallback) {
             if ($this->fallback === null) {
-                $this->fallback = config('app.fallback_locale');
+                $this->fallback = config('locale.fallback');
             }
             if ($this->fallback != $this->locale) {
                 $translation = $this->find($this->fallback, $dictionary, $keys);
@@ -172,7 +172,7 @@ class Translator implements TranslatorContract
     public function getLocale()
     {
         if ($this->locale === null) {
-            $this->locale = config('app.locale');
+            $this->locale = locale();
         }
 
         return $this->locale;

@@ -22,7 +22,7 @@ class LocaleTest extends TestCase
     public static function setUpBeforeClass()
     {
         self::$origCookie = DI::getInstance()->get('cookie');
-        DI::getInstance()->get('config')->set('app.locale', 'en');
+        DI::getInstance()->get('config')->set('locale.default', 'en');
     }
 
     public static function tearDownAfterClass()
@@ -50,6 +50,6 @@ class LocaleTest extends TestCase
 
         $this->assertInstanceOf(Response::class, $response);
         $this->assertSame(Response::HTTP_OK, $response->getStatusCode());
-        $this->assertSame('de', DI::getInstance()->get('config')->get('app.locale'));
+        $this->assertSame('de', DI::getInstance()->get('config')->get('locale.default'));
     }
 }

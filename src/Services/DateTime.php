@@ -1048,7 +1048,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
         }
         else {
             if ($timezone === null) {
-                $timezone = config('app.timezone', 'UTC');
+                $timezone = config('locale.timezone', 'UTC');
             }
             self::$timezone = self::createTimezone($timezone);
             date_default_timezone_set($timezone);
@@ -1075,7 +1075,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     public static function getFirstDayOfWeek()
     {
         if (self::$firstDayOfWeek === null) {
-            self::$firstDayOfWeek = config('app.first_dow');
+            self::$firstDayOfWeek = config('locale.first_dow');
         }
 
         return static::$firstDayOfWeek;
@@ -1095,7 +1095,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
     public static function getLocale()
     {
         if (self::$locale === null) {
-            self::$locale = config('app.locale');
+            self::$locale = locale();
         }
 
         return self::$locale;
@@ -1136,7 +1136,7 @@ class DateTime extends BaseDateTime implements DateTimeContract
                 self::$localeFormat = include $file;
             }
             else {
-                $file = resource_path('lang/' . config('app.fallback_locale') . '/datetime.php');
+                $file = resource_path('lang/' . config('locale.fallback') . '/datetime.php');
                 /** @noinspection PhpIncludeInspection */
                 self::$localeFormat = @file_exists($file) ? include $file : ['datetime' => 'Y-m-d H:i', 'date' => 'Y-m-d', 'time' => 'H:i'];
             }

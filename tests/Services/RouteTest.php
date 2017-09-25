@@ -124,6 +124,22 @@ class RouteTest extends TestCase
         $this->route->dispatch($request);
     }
 
+    public function testPrefix()
+    {
+        $this->assertInstanceOf(Route::class, $this->route->prefix('pre1'));
+        $this->assertInstanceOf(Route::class, $this->route->post('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Route::class, $this->route->prefix('pre2', function () {
+            $this->route->post('foo2/bar/{param}', 'CoreDummyController@foo2');
+        }));
+
+        $routes = $this->route->getRoutes();
+        $this->assertTrue(is_array($routes));
+        $this->assertSame(2, count($routes));
+        $this->assertInstanceOf(\stdClass::class, $routes[0]);
+        $this->assertSame('pre1/foo1/bar', $routes[0]->path);
+        $this->assertSame('pre1/pre2/foo2/bar/{param}', $routes[1]->path);
+    }
+
     public function testMiddleware()
     {
         $this->assertInstanceOf(Route::class, $this->route->middleware('\App\Middleware\MiddlewareWithoutParams'));

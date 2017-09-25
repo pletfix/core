@@ -30,6 +30,13 @@ class Route implements RouteContract
     private $middleware = [];
 
     /**
+     * The prefix of the path.
+     *
+     * @var string|null
+     */
+    private $prefix;
+
+    /**
      * PLugin's controllers.
      *
      * @var array|null
@@ -166,6 +173,25 @@ class Route implements RouteContract
     private function pattern($route)
     {
         return '/^' . preg_replace('/\\\{([A-Za-z0-9-._]+)\\\}/', '([A-Za-z0-9-._]+)', preg_quote($route->path, '/')) . '$/';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function prefix($prefix, Closure $nested = null)
+    {
+        $previous = $this->prefix;
+        $this->prefix = trim($this->prefix . '/' . $prefix, '/');
+        if ($nested !== null) {
+            try {
+                $nested($this);
+            }
+            finally {
+                $this->prefix = $previous;
+            }
+        }
+
+        return $this;
     }
 
     /**
@@ -316,7 +342,7 @@ class Route implements RouteContract
     {
         $this->routes[] = (object)[
             'method'     => $method,
-            'path'       => $path,
+            'path'       => !empty($this->prefix) ? trim($this->prefix . '/' . $path, '/') : $path,
             'action'     => $action,
             'middleware' => $middleware !== null ? $this->mergeMiddleware((array)$middleware) : $this->middleware
         ];

@@ -13,10 +13,9 @@ class Locale implements MiddlewareContract
      */
     public function process(Request $request, Delegate $delegate)
     {
-        $locale = cookie('locale');
-
-        if ($locale !== config('app.locale')) {
-            locale($locale);
+        $firstSegment = request()->segment(0);
+        if (is_supported_locale($firstSegment) && $firstSegment !== locale()) {
+            locale($firstSegment);
         }
 
         return $delegate->process($request);

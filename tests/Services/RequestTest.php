@@ -60,15 +60,15 @@ class RequestTest extends TestCase
         $this->request->baseUrl();
     }
 
-    public function testCanonicalUrl()
-    {
-        DI::getInstance()->get('config')->set('app.url', 'http://mycanonical.com');
-        $this->assertSame('http://mycanonical.com/mypath', $this->request->canonicalUrl());
-    }
-
     public function testPath()
     {
         $this->assertSame('mypath', $this->request->path());
+    }
+
+    public function testSegment()
+    {
+        $this->assertSame('mypath', $this->request->segment(0));
+        $this->assertSame('def', $this->request->segment(1, 'def'));
     }
 
     public function testFormInput()
