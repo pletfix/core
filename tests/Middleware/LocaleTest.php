@@ -37,19 +37,23 @@ class LocaleTest extends TestCase
 
     public function testProcess()
     {
-        $request = new Request;
+        DI::getInstance()->get('config')->set('locale.supported', ['en' => 'English', 'de' => 'Deutsch']);
+
+        $request = $this->getMockBuilder(Request::class)->setMethods(['segment'])->getMock();
+        $request->expects($this->once())->method('segment')->with(0)->willReturn('en');
+        DI::getInstance()->set('request', $request, true);
 
         $delegate = $this->getMockBuilder(Delegate::class)->setMethods(['process'])->getMock();
         $delegate->expects($this->once())->method('process')->with($request)->willReturn(new Response);
 
-        $cookie = $this->getMockBuilder(Cookie::class)->setMethods(['get'])->getMock();
+        $cookie = $this->getMockBuilder(Cookie::class)->setMethods(['get', 'setForever'])->getMock();
         $cookie->expects($this->once())->method('get')->with('locale')->willReturn('de');
+        $cookie->expects($this->once())->method('setForever')->with('locale', 'en')->willReturnSelf();
         DI::getInstance()->set('cookie', $cookie, true);
 
         $response = $this->middleware->process($request, $delegate);
 
         $this->assertInstanceOf(Response::class, $response);
         $this->assertSame(Response::HTTP_OK, $response->getStatusCode());
-        $this->assertSame('de', DI::getInstance()->get('config')->get('locale.default'));
     }
 }

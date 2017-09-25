@@ -267,13 +267,12 @@ class HelpersTest extends TestCase
 
     public function testCanonicalUrl()
     {
-        DI::getInstance()->get('config')->set('app.url', 'http://mycanonical.com');
-        DI::getInstance()->get('config')->set('locale.supported', ['supported' => ['en' => 'English']]);
+        DI::getInstance()->get('config')->set('app.url', 'http://mycanonical.com/mypath');
+        DI::getInstance()->get('config')->set('locale.supported', ['en' => 'English']);
         $this->assertSame('http://mycanonical.com/mypath', canonical_url());
 
         $locale = locale();
-        $this->assertSame('http://mycanonical.com/mypath', canonical_url());
-        DI::getInstance()->get('config')->set('locale.supported', ['supported' => ['en' => 'English', 'de' => 'Deutsch']]);
+        DI::getInstance()->get('config')->set('locale.supported', ['en' => 'English', 'de' => 'Deutsch']);
         $this->assertSame('http://mycanonical.com/mypath/' . $locale, canonical_url());
     }
 
