@@ -794,7 +794,7 @@ if (!function_exists('locale')) {
 
 if (!function_exists('locale_url')) {
     /**
-     * Prefix the current URL with the given language code.
+     * Prefix the path of the current URL with the given language code.
      *
      * https://example.com/myapp/mypath --> https://example.com/myapp/en/mypath
      *

@@ -39,7 +39,7 @@ class Session implements SessionContract
      */
     public function __construct()
     {
-        $path = rtrim(dirname($_SERVER['PHP_SELF']), '/');
+        $path = rtrim(dirname($_SERVER['SCRIPT_NAME']), '\\/');
 
         $config = array_merge([
             'name'      => 'pletfix_session',

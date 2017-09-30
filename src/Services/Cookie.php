@@ -31,7 +31,7 @@ class Cookie implements CookieContract
     public function set($name, $value, $minutes = 0, $path = null, $domain = null, $secure = false, $httpOnly = false)
     {
         if ($path === null) {
-            $path = rtrim(dirname($_SERVER['PHP_SELF']), '/'); // PHP_SELF = /myapp/public/index.php
+            $path = rtrim(dirname($_SERVER['SCRIPT_NAME']), '\\/'); // SCRIPT_NAME = /myapp/public/index.php
         }
 
         $expire = $minutes > 0 ? time() + $minutes * 60 : 0;
@@ -55,7 +55,7 @@ class Cookie implements CookieContract
     public function delete($name, $path = null, $domain = null)
     {
         if ($path === null) {
-            $path = rtrim(dirname($_SERVER['PHP_SELF']), '/');
+            $path = rtrim(dirname($_SERVER['SCRIPT_NAME']), '\\/');
         }
 
         setcookie($name, '', time() - 3600, $path, $domain);

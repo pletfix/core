@@ -95,7 +95,7 @@ class Request implements RequestContract
             $scheme        = $this->isSecure() ? 'https' : 'http';
             $host          = isset($_SERVER['HTTP_HOST']) ? strtolower($_SERVER['HTTP_HOST']) : (isset($_SERVER['SERVER_NAME']) ? strtolower($_SERVER['SERVER_NAME']) : $this->ip());
             $port          = isset($_SERVER['SERVER_PORT']) ? $_SERVER['SERVER_PORT'] : 80;
-            $basePath      = dirname($_SERVER['PHP_SELF']); // PHP_SELF = /myapp/public/index.php
+            $basePath      = dirname($_SERVER['SCRIPT_NAME']); // SCRIPT_NAME = /myapp/public/index.php
             $isDefaultPort = ($scheme == 'http' && $port == '80') || ($scheme == 'https' && $port == '443');
 
             // As the host can come from the user (HTTP_HOST and depending on the configuration, SERVER_NAME too can
@@ -106,7 +106,7 @@ class Request implements RequestContract
                 throw new \UnexpectedValueException(sprintf('Invalid Host "%s"', $host));
             }
 
-            $this->baseUrl = $scheme . '://' . $host . (!$isDefaultPort ? ':' . $port : '') . rtrim($basePath, '/');
+            $this->baseUrl = $scheme . '://' . $host . (!$isDefaultPort ? ':' . $port : '') . rtrim($basePath, '\\/');
         }
 
         return $this->baseUrl;
@@ -122,8 +122,8 @@ class Request implements RequestContract
             if (($pos = strpos($uri, '?')) !== false) {
                 $uri = substr($uri, 0, $pos);
             }
-            $basePath = dirname($_SERVER['PHP_SELF']); // PHP_SELF = /myapp/public/index.php
-            $this->path = trim(substr($uri, strlen($basePath)), '/');
+            $basePath = dirname($_SERVER['SCRIPT_NAME']); // SCRIPT_NAME = /myapp/public/index.php
+            $this->path = trim(substr($uri, strlen($basePath)), '\\/');
         }
 
         return $this->path;

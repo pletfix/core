@@ -19,8 +19,8 @@ class RequestTest extends TestCase
         $_SERVER['HTTP_HOST']    = 'myhost';
         $_SERVER['SERVER_PORT']  = 443;
         $_SERVER['HTTPS']        = 'on';
-        $_SERVER['PHP_SELF']     = '/myapp/index.php';
-        $_SERVER['REQUEST_URI']  = '/myapp/mypath?foo=bar';
+        $_SERVER['SCRIPT_NAME']  = '/myapp/public/index.php';
+        $_SERVER['REQUEST_URI']  = '/myapp/public/mypath?foo=bar';
         $_SERVER['QUERY_STRING'] = 'foo=bar';
         $_SERVER['SERVER_ADDR']  = '127.0.0.1';
         $_SERVER['CONTENT_TYPE'] = 'application/x-www-form-urlencoded; charset=UTF-8';
@@ -34,23 +34,23 @@ class RequestTest extends TestCase
 
     public function testFullUrl()
     {
-        $this->assertSame('https://myhost/myapp/mypath?foo=bar', $this->request->fullUrl());
+        $this->assertSame('https://myhost/myapp/public/mypath?foo=bar', $this->request->fullUrl());
     }
 
     public function testFullUrlWithCustomPort()
     {
         $_SERVER['SERVER_PORT'] = 4430;
-        $this->assertSame('https://myhost:4430/myapp/mypath?foo=bar', $this->request->fullUrl());
+        $this->assertSame('https://myhost:4430/myapp/public/mypath?foo=bar', $this->request->fullUrl());
     }
 
     public function testUrl()
     {
-        $this->assertSame('https://myhost/myapp/mypath', $this->request->url());
+        $this->assertSame('https://myhost/myapp/public/mypath', $this->request->url());
     }
 
     public function testBaseUrl()
     {
-        $this->assertSame('https://myhost/myapp', $this->request->baseUrl());
+        $this->assertSame('https://myhost/myapp/public', $this->request->baseUrl());
     }
 
     public function testInvalidBaseUrl()
