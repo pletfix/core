@@ -69,7 +69,7 @@ class Application
          * Push the Services into the Dependency Injector.
          */
 
-        if (file_exists(self::$basePath . '/.manifest/plugins/routes.php')) {
+        if (file_exists(self::$basePath . '/.manifest/plugins/services.php')) {
             call_user_func(function () {
                 /** @noinspection PhpIncludeInspection */
                 @include self::$basePath . '/.manifest/plugins/services.php';
@@ -84,7 +84,7 @@ class Application
 
         static::bootstrap();
 
-        if (file_exists(self::$basePath . '/.manifest/plugins/routes.php')) {
+        if (file_exists(self::$basePath . '/.manifest/plugins/bootstrap.php')) {
             call_user_func(function () {
                 /** @noinspection PhpIncludeInspection */
                 @include self::$basePath . '/.manifest/plugins/bootstrap.php';
