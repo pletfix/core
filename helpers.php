@@ -1071,6 +1071,18 @@ if (!function_exists('response')) {
 //    function response($content = '', $status = 200, array $headers = [])
 }
 
+if (!function_exists('route')) {
+    /**
+     * Get the Route Service.
+     *
+     * @return \Core\Services\Contracts\Route
+     */
+    function route()
+    {
+        return DI::getInstance()->get('route');
+    }
+}
+
 if (!function_exists('session')) {
     /**
      * Get the Session.

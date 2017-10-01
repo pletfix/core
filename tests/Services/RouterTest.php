@@ -7,7 +7,7 @@ use Core\Services\Contracts\Response;
 use Core\Services\Delegate;
 use Core\Services\DI;
 use Core\Services\Request;
-use Core\Services\Route;
+use Core\Services\Router;
 use Core\Testing\TestCase;
 use InvalidArgumentException;
 use RuntimeException;
@@ -20,9 +20,9 @@ require_once __DIR__ . '/../_data/classes/CoreMiddlewareWithParams.php.stub';
 class RouteTest extends TestCase
 {
     /**
-     * @var Route;
+     * @var Router;
      */
-    private $route;
+    private $router;
 
     private static $origDelegate;
 
@@ -38,7 +38,7 @@ class RouteTest extends TestCase
 
     protected function setUp()
     {
-        $this->route = new Route(__DIR__ . '/../_data/plugin_manifest/controllers.php');
+        $this->router = new Router(__DIR__ . '/../_data/plugin_manifest/controllers.php');
     }
 
     public function testDispatchController()
@@ -55,8 +55,8 @@ class RouteTest extends TestCase
         $delegate->expects($this->once())->method('process')->with($request)->willReturn(new \Core\Services\Response());
         DI::getInstance()->set('delegate', $delegate, true);
 
-        $this->assertInstanceOf(Route::class, $this->route->post('dummy/foo/{param}', '\App\Controllers\DummyController@foo'));
-        $response = $this->route->dispatch($request);
+        $this->assertInstanceOf(Router::class, $this->router->post('dummy/foo/{param}', '\App\Controllers\DummyController@foo'));
+        $response = $this->router->dispatch($request);
         $this->assertInstanceOf(Response::class, $response);
     }
 
@@ -74,8 +74,8 @@ class RouteTest extends TestCase
         $delegate->expects($this->once())->method('process')->with($request)->willReturn(new \Core\Services\Response());
         DI::getInstance()->set('delegate', $delegate, true);
 
-        $this->assertInstanceOf(Route::class, $this->route->post('dummy/foo/{param}', 'DummyController@foo'));
-        $response = $this->route->dispatch($request);
+        $this->assertInstanceOf(Router::class, $this->router->post('dummy/foo/{param}', 'DummyController@foo'));
+        $response = $this->router->dispatch($request);
         $this->assertInstanceOf(Response::class, $response);
     }
 
@@ -95,8 +95,8 @@ class RouteTest extends TestCase
         $delegate->expects($this->once())->method('process')->with($request)->willReturn(new \Core\Services\Response());
         DI::getInstance()->set('delegate', $delegate, true);
 
-        $this->assertInstanceOf(Route::class, $this->route->post('dummy/foo/{param}', $f));
-        $response = $this->route->dispatch($request);
+        $this->assertInstanceOf(Router::class, $this->router->post('dummy/foo/{param}', $f));
+        $response = $this->router->dispatch($request);
         $this->assertInstanceOf(Response::class, $response);
     }
 
@@ -108,9 +108,9 @@ class RouteTest extends TestCase
 
         DI::getInstance()->set('delegate', Delegate::class, true);
 
-        $this->assertInstanceOf(Route::class, $this->route->post('dummy/foo/{param}', null));
+        $this->assertInstanceOf(Router::class, $this->router->post('dummy/foo/{param}', null));
         $this->expectException(RuntimeException::class);
-        $this->route->dispatch($request);
+        $this->router->dispatch($request);
     }
 
     public function test404()
@@ -119,20 +119,20 @@ class RouteTest extends TestCase
         $request->expects($this->any())->method('method')->willReturn('POST');
         $request->expects($this->any())->method('path')->willReturn('wrong');
 
-        $this->assertInstanceOf(Route::class, $this->route->post('foo/bar/{param}', 'CoreDummyController@foo'));
+        $this->assertInstanceOf(Router::class, $this->router->post('foo/bar/{param}', 'CoreDummyController@foo'));
         $this->expectException(HttpException::class);
-        $this->route->dispatch($request);
+        $this->router->dispatch($request);
     }
 
     public function testPrefix()
     {
-        $this->assertInstanceOf(Route::class, $this->route->prefix('pre1'));
-        $this->assertInstanceOf(Route::class, $this->route->post('foo1/bar', 'CoreDummyController@foo1'));
-        $this->assertInstanceOf(Route::class, $this->route->prefix('pre2', function () {
-            $this->route->post('foo2/bar/{param}', 'CoreDummyController@foo2');
+        $this->assertInstanceOf(Router::class, $this->router->prefix('pre1'));
+        $this->assertInstanceOf(Router::class, $this->router->post('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Router::class, $this->router->prefix('pre2', function () {
+            $this->router->post('foo2/bar/{param}', 'CoreDummyController@foo2');
         }));
 
-        $routes = $this->route->getRoutes();
+        $routes = $this->router->getRoutes();
         $this->assertTrue(is_array($routes));
         $this->assertSame(2, count($routes));
         $this->assertInstanceOf(\stdClass::class, $routes[0]);
@@ -142,13 +142,13 @@ class RouteTest extends TestCase
 
     public function testMiddleware()
     {
-        $this->assertInstanceOf(Route::class, $this->route->middleware('\App\Middleware\MiddlewareWithoutParams'));
-        $this->assertInstanceOf(Route::class, $this->route->post('foo1/bar', 'CoreDummyController@foo1'));
-        $this->assertInstanceOf(Route::class, $this->route->middleware('\Core\Middleware\MiddlewareWithParams', function () {
-            $this->route->post('foo2/bar/{param}', 'CoreDummyController@foo2');
+        $this->assertInstanceOf(Router::class, $this->router->middleware('\App\Middleware\MiddlewareWithoutParams'));
+        $this->assertInstanceOf(Router::class, $this->router->post('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Router::class, $this->router->middleware('\Core\Middleware\MiddlewareWithParams', function () {
+            $this->router->post('foo2/bar/{param}', 'CoreDummyController@foo2');
         }));
 
-        $routes = $this->route->getRoutes();
+        $routes = $this->router->getRoutes();
         $this->assertTrue(is_array($routes));
         $this->assertSame(2, count($routes));
         $this->assertInstanceOf(\stdClass::class, $routes[0]);
@@ -159,24 +159,24 @@ class RouteTest extends TestCase
 
     public function testAddRoutes()
     {
-        $this->assertInstanceOf(Route::class, $this->route->get('foo1/bar', 'CoreDummyController@foo1'));
-        $this->assertInstanceOf(Route::class, $this->route->head('foo1/bar', 'CoreDummyController@foo1'));
-        $this->assertInstanceOf(Route::class, $this->route->post('foo1/bar', 'CoreDummyController@foo1'));
-        $this->assertInstanceOf(Route::class, $this->route->put('foo1/bar', 'CoreDummyController@foo1'));
-        $this->assertInstanceOf(Route::class, $this->route->patch('foo1/bar', 'CoreDummyController@foo1'));
-        $this->assertInstanceOf(Route::class, $this->route->delete('foo1/bar', 'CoreDummyController@foo1'));
-        $this->assertInstanceOf(Route::class, $this->route->options('foo1/bar', 'CoreDummyController@foo1'));
-        $this->assertInstanceOf(Route::class, $this->route->multi(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 'foo1/bar', 'CoreDummyController@foo1'));
-        $this->assertInstanceOf(Route::class, $this->route->any('foo1/bar', 'CoreDummyController@foo1'));
-        $this->assertInstanceOf(Route::class, $this->route->resource('foo1/bar', 'CoreDummyController'));
+        $this->assertInstanceOf(Router::class, $this->router->get('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Router::class, $this->router->head('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Router::class, $this->router->post('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Router::class, $this->router->put('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Router::class, $this->router->patch('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Router::class, $this->router->delete('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Router::class, $this->router->options('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Router::class, $this->router->multi(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], 'foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Router::class, $this->router->any('foo1/bar', 'CoreDummyController@foo1'));
+        $this->assertInstanceOf(Router::class, $this->router->resource('foo1/bar', 'CoreDummyController'));
 
         $this->expectException(InvalidArgumentException::class);
-        $this->route->multi(['WRONG'], 'foo1/bar', 'CoreDummyController@foo1');
+        $this->router->multi(['WRONG'], 'foo1/bar', 'CoreDummyController@foo1');
     }
 
     public function testPluginManifestNotExists()
     {
-        $route = new Route(__DIR__ . '/../_data/plugin_manifest/controllers2.php');
+        $router = new Router(__DIR__ . '/../_data/plugin_manifest/controllers2.php');
 
         $request = $this->getMockBuilder(Request::class)->setMethods(['method', 'path'])->getMock();
         $request->expects($this->any())->method('method')->willReturn('POST');
@@ -190,8 +190,8 @@ class RouteTest extends TestCase
         $delegate->expects($this->once())->method('process')->with($request)->willReturn(new \Core\Services\Response());
         DI::getInstance()->set('delegate', $delegate, true);
 
-        $this->assertInstanceOf(Route::class, $route->post('dummy/foo/{param}', '\App\Controllers\DummyController@foo'));
-        $response = $route->dispatch($request);
+        $this->assertInstanceOf(Router::class, $router->post('dummy/foo/{param}', '\App\Controllers\DummyController@foo'));
+        $response = $router->dispatch($request);
         $this->assertInstanceOf(Response::class, $response);
     }
 
@@ -203,8 +203,8 @@ class RouteTest extends TestCase
 
         DI::getInstance()->set('delegate', Delegate::class, true);
 
-        $this->assertInstanceOf(Route::class, $this->route->post('dummy/foo/{param}', 'XYZController@foo'));
+        $this->assertInstanceOf(Router::class, $this->router->post('dummy/foo/{param}', 'XYZController@foo'));
         $this->expectException(InvalidArgumentException::class);
-        $this->route->dispatch($request);
+        $this->router->dispatch($request);
     }
 }

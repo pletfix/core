@@ -4,16 +4,16 @@ namespace Core\Services;
 
 use Closure;
 use Core\Exceptions\HttpException;
-use Core\Services\Contracts\Route as RouteContract;
+use Core\Services\Contracts\Router as RouterContract;
 use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * The Route class represents a HTTP Router.
+ * The Router class represents a HTTP Router.
  *
  * @package Core\Services
  */
-class Route implements RouteContract
+class Router implements RouterContract
 {
     /**
      * The route collection instance.
@@ -51,7 +51,7 @@ class Route implements RouteContract
     private $pluginManifestOfControllers;
 
     /**
-     * Create a new Route instance.
+     * Create a new Router instance.
      * @param string|null $pluginManifestOfControllers
      */
     public function __construct($pluginManifestOfControllers = null)

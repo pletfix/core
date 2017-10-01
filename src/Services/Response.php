@@ -71,8 +71,20 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
+    public function plaintext($text, $status = 200, array $headers = [])
+    {
+        $headers['Content-Type'] = 'text/plain';
+
+        return $this->output($text, $status, $headers);
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function json($data = [], $status = 200, array $headers = [], $options = 0)
     {
+        $headers['Content-Type'] = 'application/json';
+
         return $this->output(json_encode($data, $options), $status, $headers);
     }
 

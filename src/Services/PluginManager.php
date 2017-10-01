@@ -615,18 +615,18 @@ class PluginManager implements PluginManagerContract
                 $src = trim(substr($src, 0, -2));
             }
 
-            // strip the $route variable if exists
-            $src = trim(preg_replace('/\$route\s*=\s*\\\\Core\\\\Application::route\(\);/', '', $src));
+            // strip the $router variable if exists
+            $src = trim(preg_replace('/\$router\s*=\s*\\\\Core\\\\Services\\\\DI::getInstance\(\)->get\(\'router\'\);/', '', $src));
 
-            // strip "use Core\Services\Contracts\Route;" if exists
-            $src = trim(preg_replace('/use Core\\\\Services\\\\Contracts\\\\Route;/', '', $src));
+            // strip "use Core\Services\Contracts\Router;" if exists
+            $src = trim(preg_replace('/use Core\\\\Services\\\\Contracts\\\\Router;/', '', $src));
 
             // append content to summery file
             if ($dest == '') {
                 $dest = PHP_EOL .
-                    'use Core\Services\Contracts\Route;' . PHP_EOL
+                    'use Core\Services\Contracts\Router;' . PHP_EOL
                     . PHP_EOL .
-                    '$route = \Core\Application::route();' . PHP_EOL;
+                    '$router = \Core\Services\DI::getInstance()->get(\'router\');' . PHP_EOL;
             }
             $dest .= PHP_EOL .
                 '///////////////////////////////////////////////////////////////////////////////' . PHP_EOL .

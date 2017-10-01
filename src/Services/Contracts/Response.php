@@ -119,6 +119,16 @@ interface Response
     public function view($name, $variables = [], $status = Response::HTTP_OK, $headers = []);
 
     /**
+     * get a plaintext response.
+     *
+     * @param string $text
+     * @param int $status The response status code
+     * @param array $headers An array of response headers
+     * @return $this
+     */
+    public function plaintext($text, $status = 200, array $headers = []);
+
+    /**
      * Get a JSON response.
      *
      * @param mixed $data

@@ -17,6 +17,11 @@ define('BASE_PATH', realpath(__DIR__ . '/..'));
 require __DIR__ . '/../vendor/autoload.php';
 
 /*
- * Load the test environment.
+ * Initialize the application.
  */
-Core\Testing\Environment::load();
+\Core\Application::init();
+
+/*
+ * Override configuration with the environment entry of phpunit.xml.
+ */
+\Core\Services\DI::getInstance()->get('config')->set('app.env', env('APP_ENV'));

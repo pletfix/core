@@ -17,10 +17,10 @@ return [
      * Application Version
      * ----------------------------------------------------------------
      *
-     * Defines the Code Version.
+     * The version of the application.
      */
 
-    'version' => '0.7.2',
+    'version' => '0.7.3',
 
     /**
      * ----------------------------------------------------------------

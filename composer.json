@@ -15,20 +15,19 @@
         "doctrine/cache": "~1.6.2",
         "doctrine/inflector": "~1.1.0",
         "jdorn/sql-formatter": "^1.2",
-        "leafo/scssphp": "^0.6.6",
         "monolog/monolog": "~1.11",
-        "natxet/cssmin": "^3.0",
-        "oyejorge/less.php": "v1.7.0.10",
         "paragonie/random_compat": "^2.0",
-        "psr/http-message": "~1.0",
-        "tedivm/jshrink": "^1.1",
         "vlucas/phpdotenv": "~2.2"
     },
     "require-dev": {
         "behat/mink": "^1.7",
         "behat/mink-browserkit-driver": "dev-master",
         "behat/mink-goutte-driver": "^1.2",
-        "phpunit/phpunit": "^5.7"
+        "leafo/scssphp": "^0.6.6",
+        "natxet/cssmin": "^3.0",
+        "oyejorge/less.php": "v1.7.0.10",
+        "phpunit/phpunit": "^5.7",
+        "tedivm/jshrink": "^1.1"
     },
     "autoload": {
         "files": [

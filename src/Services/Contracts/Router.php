@@ -4,7 +4,7 @@ namespace Core\Services\Contracts;
 
 use Closure;
 
-interface Route
+interface Router
 {
     /**
      * Dispatch the request to the application.
@@ -130,7 +130,7 @@ interface Route
     /**
      * Route a resource to a CRUD controller.
      *
-     * Example : $route->resource('articles', 'ArticleController');
+     * Example : $router->resource('articles', 'ArticleController');
      *
      * Method     | Path                   | Name             | Action                    | Used for
      * -----------------------------------------------------------------------------------------------------------------------

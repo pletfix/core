@@ -3,7 +3,6 @@
 namespace Core\Tests;
 
 use Core\Application;
-use Core\Console;
 use Core\Services\DI;
 use Core\Services\Response;
 use Core\Services\Route;
@@ -29,7 +28,6 @@ class ApplicationTest extends TestCase
     public function testVersion()
     {
         $this->assertSame(Application::VERSION, Application::version());
-        $this->assertSame(Console::version(), Application::version());
     }
 
     public function testRun()
@@ -47,10 +45,5 @@ class ApplicationTest extends TestCase
 
         $this->setPrivateProperty(Application::class, 'basePath', __DIR__ .'/_data');
         Application::run();
-    }
-
-    public function testRoute()
-    {
-        $this->assertInstanceOf(\Core\Services\Contracts\Route::class, Application::route());
     }
 }
