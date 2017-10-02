@@ -616,7 +616,7 @@ class PluginManager implements PluginManagerContract
             }
 
             // strip the $router variable if exists
-            $src = trim(preg_replace('/\\$router\\s*=\\s*\\\\?Core\\\\Services\\\\DI::getInstance\\(\\)->get\\(\'router\'\\);/', '', $src));
+            $src = trim(preg_replace('/\\$router\\s*=\\s*\\\\?Core\\\\Application::router\\(\\);/', '', $src));
 
             // strip "use Core\Services\Contracts\Router;" if exists
             $src = trim(preg_replace('/use Core\\\\Services\\\\Contracts\\\\Router;/', '', $src));
@@ -626,7 +626,7 @@ class PluginManager implements PluginManagerContract
                 $dest = PHP_EOL .
                     'use Core\Services\Contracts\Router;' . PHP_EOL
                     . PHP_EOL .
-                    '$router = \Core\Services\DI::getInstance()->get(\'router\');' . PHP_EOL;
+                    '$router = \Core\Application::router();' . PHP_EOL;
             }
             $dest .= PHP_EOL .
                 '///////////////////////////////////////////////////////////////////////////////' . PHP_EOL .
