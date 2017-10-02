@@ -196,7 +196,7 @@ class PluginManager implements PluginManagerContract
      */
     private function publishConfig($register)
     {
-        $src = $this->path . '/config/config.php';
+        $src = $this->path . '/config.php';
         if (!@file_exists($src)) {
             return;
         }
@@ -587,7 +587,7 @@ class PluginManager implements PluginManagerContract
      */
     private function publishRoutes($register)
     {
-        if (!@file_exists($this->path . '/config/routes.php')) {
+        if (!@file_exists($this->path . '/boot/routes.php')) {
             return;
         }
 
@@ -599,7 +599,7 @@ class PluginManager implements PluginManagerContract
 
         $dest = '';
         foreach ($packages as $package => $path) {
-            $file = base_path($path . '/config/routes.php');
+            $file = base_path($path . '/boot/routes.php');
             if (!@file_exists($file)) {
                 continue;
             }
@@ -616,7 +616,7 @@ class PluginManager implements PluginManagerContract
             }
 
             // strip the $router variable if exists
-            $src = trim(preg_replace('/\$router\s*=\s*\\\\Core\\\\Services\\\\DI::getInstance\(\)->get\(\'router\'\);/', '', $src));
+            $src = trim(preg_replace('/\\$router\\s*=\\s*\\\\?Core\\\\Services\\\\DI::getInstance\\(\\)->get\\(\'router\'\\);/', '', $src));
 
             // strip "use Core\Services\Contracts\Router;" if exists
             $src = trim(preg_replace('/use Core\\\\Services\\\\Contracts\\\\Router;/', '', $src));
@@ -645,7 +645,7 @@ class PluginManager implements PluginManagerContract
      */
     private function publishServices($register)
     {
-        if (!@file_exists($this->path . '/config/services.php')) {
+        if (!@file_exists($this->path . '/boot/services.php')) {
             return;
         }
 
@@ -657,7 +657,7 @@ class PluginManager implements PluginManagerContract
 
         $dest = '';
         foreach ($packages as $package => $path) {
-            $file = base_path($path . '/config/services.php');
+            $file = base_path($path . '/boot/services.php');
             if (!@file_exists($file)) {
                 continue;
             }
