@@ -113,4 +113,14 @@ class Application
 
         return $status;
     }
+
+    /**
+     * Get the Route Service.
+     *
+     * @return \Core\Services\Contracts\Router
+     */
+    public static function router()
+    {
+        return DI::getInstance()->get('router');
+    }
 }
