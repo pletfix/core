@@ -44,7 +44,7 @@ class CommandFactoryTest extends TestCase
 
         // cache not up to date
         @unlink($this->cache);
-        @touch($this->cache);
+        touch($this->cache);
         $list = $cf->commandList();
         $this->assertArrayHasKey('help', $list);
         $this->assertSame(['class' => HelpCommand::class, 'name' => 'help', 'description' => 'Display help for a command.' ], $list['help']);

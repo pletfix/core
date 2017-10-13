@@ -176,13 +176,15 @@ class View implements ViewContract
         if (@file_exists($file)) {
             unlink($file); // so we will to be the owner at the new file
         }
+
         if (file_put_contents($file, $content, LOCK_EX) === false) {
             throw new RuntimeException(sprintf('View Template Engine was not able to save file "%s"', $file)); // @codeCoverageIgnore
         }
-        //@chmod($file, 0664); // not necessary, because only the application need to have access
+
+        @chmod($file, 0664);
 
         // set file modification time
-        if (!touch($file, $time)) {
+        if (!@touch($file, $time)) {
             throw new RuntimeException(sprintf('View Template Engine was not able to modify time of file "%s"', $file)); // @codeCoverageIgnore
         }
     }

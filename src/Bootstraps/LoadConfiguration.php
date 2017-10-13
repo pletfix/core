@@ -160,7 +160,7 @@ class LoadConfiguration implements Bootable
         @chmod($this->cachedFile, 0664);
 
         $time = max(filemtime($this->configPath), filemtime($this->envFile));
-        if (!touch($this->cachedFile, $time)) {
+        if (!@touch($this->cachedFile, $time)) {
             throw new RuntimeException(sprintf('Configuration Loader was not able to modify time of cached file "%s"', $this->cachedFile)); // @codeCoverageIgnore
         }
     }

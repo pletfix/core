@@ -238,7 +238,7 @@ class Request implements RequestContract
 //     * @param string|null $default
 //     * @return string|array
 //     */
-//    public function header($key = null, $default = null) // evtl wieder raus nehmen, zu kompliziert
+//    public function header($key = null, $default = null) // eventually compare with Guzzles Request().
 //    {
 //        if ($this->headers === null) {
 //            $headers = [];
@@ -383,8 +383,7 @@ class Request implements RequestContract
      */
     public function isAjax()
     {
-//        return isset($_SERVER['X-Requested-With']) && $_SERVER['X-Requested-With'] == 'XMLHttpRequest';
-        return isset($_SERVER['X-REQUESTED-WITH']) && $_SERVER['X-REQUESTED-WITH'] == 'XMLHttpRequest';
+        return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest';
     }
 
     /**

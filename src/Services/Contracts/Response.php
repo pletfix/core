@@ -172,6 +172,16 @@ interface Response
     public function redirect($url, $status = Response::HTTP_FOUND, $headers = []);
 
     /**
+     * Get a redirect to the previous page on which the user clicked a link to the current page.
+     *
+     * @param string $fallbackUrl A fallback url that is used if HTTP_REFERER is not set (if the user did not clicked a link before)
+     * @param int $status 301: permanently, 302: temporarily (default), 303: other
+     * @param array $headers An array of response headers
+     * @return $this
+     */
+    public function back($fallbackUrl = '', $status = Response::HTTP_FOUND, $headers = []);
+
+    /**
      * Sets the HTTP status code.
      *
      * @param int $code HTTP status code.

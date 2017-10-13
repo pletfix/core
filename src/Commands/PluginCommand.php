@@ -36,8 +36,9 @@ class PluginCommand extends Command
      * @var array
      */
     protected $options = [
-        'remove' => ['type' => 'bool', 'short' => 'r', 'description' => 'Remove the plugin.'],
-        'update' => ['type' => 'bool', 'short' => 'u', 'description' => 'Update the plugin.'],
+        'remove'     => ['type' => 'bool', 'short' => 'r', 'description' => 'Remove the plugin.'],
+        'update'     => ['type' => 'bool', 'short' => 'u', 'description' => 'Update the plugin.'],
+        'add-routes' => ['type' => 'bool', 'short' => 'a', 'description' => 'Add route entries.'],
     ];
 
     /**
@@ -46,17 +47,20 @@ class PluginCommand extends Command
     protected function handle()
     {
         $package = $this->input('package');
+        $options = [
+            'add-routes' => $this->input('add-routes'),
+        ];
 
         if ($this->input('remove')) {
-            plugin_manager($package)->unregister();
+            plugin_manager($package, $options)->unregister();
             $this->line('Plugin successfully unregistered.');
         }
         else if ($this->input('update')) {
-            plugin_manager($package)->update();
+            plugin_manager($package, $options)->update();
             $this->line('Plugin successfully updated.');
         }
         else {
-            plugin_manager($package)->register();
+            plugin_manager($package, $options)->register();
             $this->line('Plugin successfully registered.');
         }
     }

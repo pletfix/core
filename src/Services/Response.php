@@ -128,6 +128,16 @@ class Response implements ResponseContract
     /**
      * @inheritdoc
      */
+    public function back($fallbackUrl = '', $status = ResponseContract::HTTP_FOUND, $headers = [])
+    {
+        $url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : $fallbackUrl;
+
+        return $this->redirect($url, $status, $headers);
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function status($code)
     {
         $this->status = $code;

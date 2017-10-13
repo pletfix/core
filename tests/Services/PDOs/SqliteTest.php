@@ -68,7 +68,7 @@ class SQLiteTest extends TestCase
         $file = storage_path('db/~test.db');
         if (!file_exists($file)) {
             @mkdir(dirname($file));
-            @touch($file);
+            touch($file);
         }
         $this->config['database'] = $file;
 

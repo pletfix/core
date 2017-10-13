@@ -50,17 +50,27 @@ class PluginManager implements PluginManagerContract
     private $manifestPath;
 
     /**
+     * Options.
+     *
+     * @var array
+     */
+    private $options;
+
+    /**
      * Create a new PluginManager instance.
      *
      * @param string $package Name of the plugin with vendor, e.g. foo/bar.
+     * @param array $options
      * @param string|null $packagePath
      * @param string|null $manifestPath
      */
-    public function __construct($package, $packagePath = null, $manifestPath = null)
+    public function __construct($package, array $options = [], $packagePath = null, $manifestPath = null)
     {
         if (($pos = strpos($package, '/')) === false) {
             throw new InvalidArgumentException('The package name is invalid. Format <vendor>/<plugin> expected.');
         }
+
+        $this->options = $options;
 
         // search the package
         $this->path = $packagePath ?: vendor_path($package);
@@ -589,6 +599,10 @@ class PluginManager implements PluginManagerContract
     {
         if (!@file_exists($this->path . '/boot/routes.php')) {
             return;
+        }
+
+        if ($register && (!isset($this->options['add-routes']) || $this->options['add-routes'] == false)) {
+            $register = false; // routes should not added -> remove old entries!
         }
 
         // Read enabled packages and add/remove the current plugin.

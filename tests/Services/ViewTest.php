@@ -73,7 +73,7 @@ class ViewTest extends TestCase
     public function testUpdateCache()
     {
         $cacheFile = storage_path('cache/views/' . md5(__DIR__ . '/../_data/views/foo/bar.blade.php') . '.phtml');
-        @touch($cacheFile);
+        touch($cacheFile);
         $this->view->render('foo.bar');
         $this->assertSame(filemtime($cacheFile), filemtime(__DIR__ . '/../_data/views/foo/bar.blade.php'));
     }

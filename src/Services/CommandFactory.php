@@ -173,11 +173,11 @@ class CommandFactory implements CommandFactoryContract
             throw new RuntimeException(sprintf('Command factory was not able to save cached file "%s"', $this->cachedFile)); // @codeCoverageIgnore
         }
 
-        //@chmod($this->cachedFile, 0664); // not necessary, because only the cli need to have access
+        @chmod($this->cachedFile, 0664);
 
         $time = $this->modificationTime();
 
-        if (!touch($this->cachedFile, $time)) {
+        if (!@touch($this->cachedFile, $time)) {
             throw new RuntimeException(sprintf('Command factory was not able to modify time of cached file "%s"', $this->cachedFile)); // @codeCoverageIgnore
         }
     }

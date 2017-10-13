@@ -971,13 +971,42 @@ if (!function_exists('plugin_manager')) {
      * Get the Plugin Manager.
      *
      * @param string $package Name of the plugin with vendor, e.g. foo/bar.
+     * @param array $options
      * @return \Core\Services\Contracts\PluginManager
      */
-    function plugin_manager($package)
+    function plugin_manager($package, array $options = [])
     {
-        return DI::getInstance()->get('plugin-manager', [$package]);
+        return DI::getInstance()->get('plugin-manager', [$package, $options]);
     }
 }
+
+//if (!function_exists('process_user')) {
+//    /**
+//     * Return the effective user of the current process.
+//     *
+//     * Note, that this function works only for Unix platforms like Linux and Mac OS!
+//     *
+//     * @return string
+//     */
+//    function process_user()
+//    {
+//        return posix_getpwuid(posix_geteuid())['name'];
+//    }
+//}
+//
+//if (!function_exists('process_group')) {
+//    /**
+//     * Return the effective group of the current process.
+//     *
+//     * Note, that this function works only for Unix platforms like Linux and Mac OS!
+//     *
+//     * @return string
+//     */
+//    function process_group()
+//    {
+//        return posix_getgrgid(posix_getegid())['name'];
+//    }
+//}
 
 if (! function_exists('redirect')) {
     /**
@@ -1057,29 +1086,6 @@ if (!function_exists('response')) {
     function response()
     {
         return DI::getInstance()->get('response');
-    }
-
-    // todo vielleicht noch diese Möglichkeit zulasen
-//    /**
-//     * Return a new response from the application.
-//     *
-//     * @param  string  $content
-//     * @param  int     $status
-//     * @param  array   $headers
-//     * @return \Core\Services\Contracts\Response
-//     */
-//    function response($content = '', $status = 200, array $headers = [])
-}
-
-if (!function_exists('route')) {
-    /**
-     * Get the Route Service.
-     *
-     * @return \Core\Services\Contracts\Route
-     */
-    function route()
-    {
-        return DI::getInstance()->get('route');
     }
 }
 

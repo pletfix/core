@@ -85,7 +85,7 @@ class PluginManagerTest extends TestCase
     public function testRegisterAndUnregister()
     {
         $manifestPath = manifest_path('~plugins');
-        $m = new PluginManager('pletfix/~test', self::$packagePath . '/test', $manifestPath);
+        $m = new PluginManager('pletfix/~test', ['add-routes' => true], self::$packagePath . '/test', $manifestPath);
         $this->assertInstanceOf(PluginManager::class, $m);
 
         $assetManager = $this->getMockBuilder(AssetManager::class)->setMethods(['publish', 'remove'])->getMock();
@@ -104,7 +104,7 @@ class PluginManagerTest extends TestCase
         $this->assertTrue($m->isRegistered());
 
         // register test2
-        $m2 = new PluginManager('pletfix/~test2', self::$packagePath . '/test2', $manifestPath);
+        $m2 = new PluginManager('pletfix/~test2', ['add-routes' => true], self::$packagePath . '/test2', $manifestPath);
         $m2->register();
 
         // asset
@@ -361,7 +361,7 @@ class PluginManagerTest extends TestCase
     {
         $manifestPath = manifest_path('~plugins');
 
-        $m = new PluginManager('pletfix/~test', self::$packagePath . '/test', $manifestPath);
+        $m = new PluginManager('pletfix/~test', [], self::$packagePath . '/test', $manifestPath);
         $m->register();
 
         file_put_contents(config_path('~test.php'), '<?php return [\'foo\' => \'baz\'];');
@@ -379,12 +379,12 @@ class PluginManagerTest extends TestCase
     {
         $manifestPath = manifest_path('~plugins');
 
-        $m = new PluginManager('pletfix/~empty', self::$packagePath . '/empty', $manifestPath);
+        $m = new PluginManager('pletfix/~empty', [], self::$packagePath . '/empty', $manifestPath);
         $this->assertInstanceOf(PluginManager::class, $m);
         $this->assertInstanceOf(PluginManager::class, $m->register());
         $this->assertTrue($m->isRegistered());
 
-        $m2 = new PluginManager('pletfix/~test', self::$packagePath . '/test', $manifestPath);
+        $m2 = new PluginManager('pletfix/~test', [], self::$packagePath . '/test', $manifestPath);
         $m2->register()->unregister();
 
         $this->assertInstanceOf(PluginManager::class, $m->unregister());
@@ -394,7 +394,7 @@ class PluginManagerTest extends TestCase
     public function testRegisterAlreadyRegisteredPlugin()
     {
         $manifestPath = manifest_path('~plugins');
-        $m = new PluginManager('pletfix/~empty', self::$packagePath . '/empty', $manifestPath);
+        $m = new PluginManager('pletfix/~empty', [], self::$packagePath . '/empty', $manifestPath);
         $m->register();
         $this->expectException(PluginException::class);
         $m->register();
@@ -403,7 +403,7 @@ class PluginManagerTest extends TestCase
     public function testUpdateNotRegisteredPlugin()
     {
         $manifestPath = manifest_path('~plugins');
-        $m = new PluginManager('pletfix/~empty', self::$packagePath . '/empty', $manifestPath);
+        $m = new PluginManager('pletfix/~empty', [], self::$packagePath . '/empty', $manifestPath);
         $this->expectException(PluginException::class);
         $m->update();
     }
@@ -411,7 +411,7 @@ class PluginManagerTest extends TestCase
     public function testUnregisterNotRegisteredPlugin()
     {
         $manifestPath = manifest_path('~plugins');
-        $m = new PluginManager('pletfix/~empty', self::$packagePath . '/empty', $manifestPath);
+        $m = new PluginManager('pletfix/~empty', [], self::$packagePath . '/empty', $manifestPath);
         $this->expectException(PluginException::class);
         $m->unregister();
     }
@@ -419,7 +419,7 @@ class PluginManagerTest extends TestCase
     public function testWithoutPsr4()
     {
         $this->expectException(InvalidArgumentException::class);
-        new PluginManager('pletfix/~faulty', self::$packagePath . '/faulty', manifest_path('~plugins'));
+        new PluginManager('pletfix/~faulty', [], self::$packagePath . '/faulty', manifest_path('~plugins'));
     }
 
 }

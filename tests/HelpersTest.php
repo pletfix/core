@@ -521,12 +521,12 @@ class HelpersTest extends TestCase
         $path = storage_path('~test');
         @mkdir($path);
         @mkdir($path . '/Foo');
-        @touch($path . '/Foo/MyClass4Controller.php');
-        @touch($path . '/Foo/MyClass5Controller.php');
-        @touch($path . '/Foo/MyClass6.php');
-        @touch($path . '/MyClass1Controller.php');
-        @touch($path . '/MyClass2Controller.php');
-        @touch($path . '/MyClass3.php');
+        touch($path . '/Foo/MyClass4Controller.php');
+        touch($path . '/Foo/MyClass5Controller.php');
+        touch($path . '/Foo/MyClass6.php');
+        touch($path . '/MyClass1Controller.php');
+        touch($path . '/MyClass2Controller.php');
+        touch($path . '/MyClass3.php');
         try {
             $result = [];
             list_classes($result, $path, 'MyNamespace');
@@ -544,14 +544,14 @@ class HelpersTest extends TestCase
             list_classes($result, storage_path('~not_exists'), 'MyNamespace', 'Controller');
         }
         finally {
-            @unlink($path . '/Foo/MyClass4Controller.php');
-            @unlink($path . '/Foo/MyClass5Controller.php');
-            @unlink($path . '/Foo/MyClass6.php');
-            @unlink($path . '/MyClass1Controller.php');
-            @unlink($path . '/MyClass2Controller.php');
-            @unlink($path . '/MyClass3.php');
-            @rmdir($path . '/Foo');
-            @rmdir($path);
+            unlink($path . '/Foo/MyClass4Controller.php');
+            unlink($path . '/Foo/MyClass5Controller.php');
+            unlink($path . '/Foo/MyClass6.php');
+            unlink($path . '/MyClass1Controller.php');
+            unlink($path . '/MyClass2Controller.php');
+            unlink($path . '/MyClass3.php');
+            rmdir($path . '/Foo');
+            rmdir($path);
         }
     }
 
@@ -701,10 +701,10 @@ class HelpersTest extends TestCase
     {
         $path = storage_path('~test');
         @mkdir($path);
-        @touch($path . '/a.txt');
-        @touch($path . '/b.txt');
+        touch($path . '/a.txt');
+        touch($path . '/b.txt');
         @mkdir($path . '/foo');
-        @touch($path . '/foo/b.txt');
+        touch($path . '/foo/b.txt');
         try {
             // remove a file
             $this->assertFileExists($path . '/b.txt');
