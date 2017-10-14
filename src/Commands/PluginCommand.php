@@ -36,9 +36,9 @@ class PluginCommand extends Command
      * @var array
      */
     protected $options = [
-        'remove'     => ['type' => 'bool', 'short' => 'r', 'description' => 'Remove the plugin.'],
-        'update'     => ['type' => 'bool', 'short' => 'u', 'description' => 'Update the plugin.'],
-        'add-routes' => ['type' => 'bool', 'short' => 'a', 'description' => 'Add route entries.'],
+        'remove'    => ['type' => 'bool', 'short' => 'r',  'description' => 'Remove the plugin.'],
+        'update'    => ['type' => 'bool', 'short' => 'u',  'description' => 'Update the plugin.'],
+        'no-routes' => ['type' => 'bool', 'short' => 'nr', 'description' => 'Ignore the route entries.'],
     ];
 
     /**
@@ -48,7 +48,7 @@ class PluginCommand extends Command
     {
         $package = $this->input('package');
         $options = [
-            'add-routes' => $this->input('add-routes'),
+            'no-routes' => $this->input('no-routes'),
         ];
 
         if ($this->input('remove')) {

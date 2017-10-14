@@ -597,12 +597,12 @@ class PluginManager implements PluginManagerContract
      */
     private function publishRoutes($register)
     {
-        if (!@file_exists($this->path . '/boot/routes.php')) {
+        if ($register && (isset($this->options['no-routes']) && $this->options['no-routes'] == true)) {
             return;
         }
 
-        if ($register && (!isset($this->options['add-routes']) || $this->options['add-routes'] == false)) {
-            $register = false; // routes should not added -> remove old entries!
+        if (!@file_exists($this->path . '/boot/routes.php')) {
+            return;
         }
 
         // Read enabled packages and add/remove the current plugin.

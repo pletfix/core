@@ -85,7 +85,7 @@ class PluginManagerTest extends TestCase
     public function testRegisterAndUnregister()
     {
         $manifestPath = manifest_path('~plugins');
-        $m = new PluginManager('pletfix/~test', ['add-routes' => true], self::$packagePath . '/test', $manifestPath);
+        $m = new PluginManager('pletfix/~test', [], self::$packagePath . '/test', $manifestPath);
         $this->assertInstanceOf(PluginManager::class, $m);
 
         $assetManager = $this->getMockBuilder(AssetManager::class)->setMethods(['publish', 'remove'])->getMock();
@@ -104,7 +104,7 @@ class PluginManagerTest extends TestCase
         $this->assertTrue($m->isRegistered());
 
         // register test2
-        $m2 = new PluginManager('pletfix/~test2', ['add-routes' => true], self::$packagePath . '/test2', $manifestPath);
+        $m2 = new PluginManager('pletfix/~test2', [], self::$packagePath . '/test2', $manifestPath);
         $m2->register();
 
         // asset
