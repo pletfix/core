@@ -202,7 +202,7 @@ class HelpersTest extends TestCase
 
         $manifestFile = manifest_path('assets/manifest.php');
         /** @noinspection PhpIncludeInspection */
-        $manifest = @file_exists($manifestFile) ? require $manifestFile : [];
+        $manifest = file_exists($manifestFile) ? include $manifestFile : [];
         if (!empty($manifest)) {
             $key = key($manifest);
             $value = $manifest[$key];
@@ -559,13 +559,13 @@ class HelpersTest extends TestCase
     {
         $path = storage_path('~test');
         @mkdir($path);
-        @touch($path . '/a.txt');
-        @touch($path . '/b.txt');
-        @touch($path . '/c.ini');
+        touch($path . '/a.txt');
+        touch($path . '/b.txt');
+        touch($path . '/c.ini');
         @mkdir($path . '/foo');
-        @touch($path . '/foo/d.txt');
-        @touch($path . '/foo/e.txt');
-        @touch($path . '/foo/f.ini');
+        touch($path . '/foo/d.txt');
+        touch($path . '/foo/e.txt');
+        touch($path . '/foo/f.ini');
         try {
             $result = [];
             list_files($result, $path);
@@ -761,7 +761,7 @@ class HelpersTest extends TestCase
             ->setLocale('~testlocale');
 
         $dir = resource_path('lang');
-        if (!@file_exists($dir)) {
+        if (!file_exists($dir)) {
             make_dir($dir, 0755);
         }
 

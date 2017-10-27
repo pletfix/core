@@ -67,7 +67,7 @@ class ResponseTest extends TestCase
         $this->response->clear();
         $this->assertInstanceOf(Response::class, $this->response->redirect('https://example.de', Response::HTTP_FOUND, ['foo2' => 'bar2']));
         $this->assertSame(Response::HTTP_FOUND, $this->response->getStatusCode());
-        $this->assertSame(['foo2' => 'bar2', 'location' => 'https://example.de'], $this->response->getHeader());
+        $this->assertSame(['foo2' => 'bar2', 'Location' => 'https://example.de'], $this->response->getHeader());
         $this->response->clear();
     }
 

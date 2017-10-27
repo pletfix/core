@@ -85,7 +85,7 @@ class TestCase extends PHPUnit_Framework_TestCase
     {
         $response = DI::getInstance()->get('response');
         PHPUnit::assertTrue(in_array($response->getStatusCode(), [301, 302, 303]));
-        PHPUnit::assertEquals($url, $response->getHeader('location'));
+        PHPUnit::assertEquals($url, $response->getHeader('Location'));
     }
 
     /**

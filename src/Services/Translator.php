@@ -114,7 +114,7 @@ class Translator implements TranslatorContract
             }
             $file = $this->dictionaryFile($dictionary, $locale);
             /** @noinspection PhpIncludeInspection */
-            $this->entries[$locale][$dictionary] = $file !== null && @file_exists($file) ? include $file : [];
+            $this->entries[$locale][$dictionary] = $file !== null && file_exists($file) ? include $file : [];
         }
 
         $entries = $this->entries[$locale][$dictionary];
@@ -138,13 +138,13 @@ class Translator implements TranslatorContract
     private function dictionaryFile($dictionary, $locale)
     {
         $file = $this->languagePath . DIRECTORY_SEPARATOR . $locale . DIRECTORY_SEPARATOR . $dictionary . '.php';
-        if (@file_exists($file)) {
+        if (file_exists($file)) {
             return $file;
         }
 
         if ($this->manifest === null) {
             /** @noinspection PhpIncludeInspection */
-            $this->manifest = @file_exists($this->pluginManifestOfLanguages) ? include $this->pluginManifestOfLanguages : [];
+            $this->manifest = file_exists($this->pluginManifestOfLanguages) ? include $this->pluginManifestOfLanguages : [];
         }
 
         return isset($this->manifest[$locale][$dictionary]) ? base_path($this->manifest[$locale][$dictionary]) : null;

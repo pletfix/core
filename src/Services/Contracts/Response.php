@@ -182,7 +182,7 @@ interface Response
     public function back($fallbackUrl = '', $status = Response::HTTP_FOUND, $headers = []);
 
     /**
-     * Sets the HTTP status code.
+     * Set the HTTP status code.
      *
      * @param int $code HTTP status code.
      * @return $this
@@ -190,21 +190,21 @@ interface Response
     public function status($code);
 
     /**
-     * Gets the HTTP status code.
+     * Get the HTTP status code.
      *
      * @return int
      */
     public function getStatusCode();
 
     /**
-     * Gets the HTTP status text.
+     * Get the HTTP status text.
      *
      * @return string
      */
     public function getStatusText();
 
     /**
-     * Adds a header to the response.
+     * Add a header to the response.
      *
      * @param string|array $name Header name or array of names and values
      * @param string $value Header value
@@ -213,7 +213,7 @@ interface Response
     public function header($name, $value = null);
 
     /**
-     * Returns the header from the response.
+     * Return the header from the response.
      *
      * @param string|null $name Header name
      * @return array|string
@@ -221,14 +221,14 @@ interface Response
     public function getHeader($name = null);
 
     /**
-     * Returns the content from the response.
+     * Return the content from the response.
      *
      * @return string
      */
     public function getContent();
 
     /**
-     * Writes content to the response body.
+     * Write content to the response body.
      *
      * @param string $str Response content
      * @return $this
@@ -236,7 +236,7 @@ interface Response
     public function write($str);
 
     /**
-     * Sets caching headers for the response.
+     * Set caching headers for the response.
      *
      * @param int|string $expires Expiration time
      * @return $this
@@ -244,7 +244,7 @@ interface Response
     public function cache($expires);
 
     /**
-     * Sends a HTTP response.
+     * Send a HTTP response.
      */
     public function send();
 

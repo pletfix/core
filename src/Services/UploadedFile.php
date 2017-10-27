@@ -6,7 +6,7 @@ use Core\Exceptions\UploadException;
 use Core\Services\Contracts\UploadedFile as UploadedFileContract;
 
 /**
- * The Request class represents an HTTP request.
+ * Uploaded File.
  *
  * errorMessage(), move() and getMaxFileSize() are based on Symfony's UploadedFile.
  *
@@ -96,7 +96,7 @@ class UploadedFile implements UploadedFileContract
      */
     public function hash()
     {
-        return @md5_file($this->path);
+        return md5_file($this->path);
     }
 
     /**

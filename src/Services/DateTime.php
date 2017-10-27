@@ -1131,14 +1131,14 @@ class DateTime extends BaseDateTime implements DateTimeContract
         if (self::$localeFormat === null) {
             $locale = self::getLocale();
             $file = resource_path('lang/' . $locale . '/datetime.php');
-            if (@file_exists($file)) {
+            if (file_exists($file)) {
                 /** @noinspection PhpIncludeInspection */
                 self::$localeFormat = include $file;
             }
             else {
                 $file = resource_path('lang/' . config('locale.fallback') . '/datetime.php');
                 /** @noinspection PhpIncludeInspection */
-                self::$localeFormat = @file_exists($file) ? include $file : ['datetime' => 'Y-m-d H:i', 'date' => 'Y-m-d', 'time' => 'H:i'];
+                self::$localeFormat = file_exists($file) ? include $file : ['datetime' => 'Y-m-d H:i', 'date' => 'Y-m-d', 'time' => 'H:i'];
             }
         }
 

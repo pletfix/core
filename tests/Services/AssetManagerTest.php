@@ -27,7 +27,7 @@ class AssetManagerTest extends TestCase
         // Remove generated unique build files.
         if (file_exists($manifestFile)) {
             /** @noinspection PhpIncludeInspection */
-            $build = @include $manifestFile;
+            $build = include $manifestFile;
             if (isset($build['~test/js/~test.js'])) {
                 @unlink(public_path($build['~test/js/~test.js']));
             }
@@ -68,7 +68,7 @@ class AssetManagerTest extends TestCase
         $this->assertInstanceOf(AssetManager::class, $m->publish());
 
         /** @noinspection PhpIncludeInspection */
-        $build = @include self::$manifestFile;
+        $build = include self::$manifestFile;
         $this->assertTrue(is_array($build));
         $this->assertArrayHasKey('~test/js/~test.js', $build);
         $this->assertArrayHasKey('~test/css/~test.css', $build);
@@ -101,7 +101,7 @@ class AssetManagerTest extends TestCase
         $this->assertFileNotExists(public_path('~test/files/test3.txt'));
 
         /** @noinspection PhpIncludeInspection */
-        $build = @include self::$manifestFile;
+        $build = include self::$manifestFile;
         $this->assertSame([], $build);
     }
 
@@ -156,7 +156,7 @@ class AssetManagerTest extends TestCase
         $this->assertInstanceOf(AssetManager::class, $m->publish(null, true, 'fake-plugin'));
 
         /** @noinspection PhpIncludeInspection */
-        $build = @include self::$manifestFile;
+        $build = include self::$manifestFile;
         $this->assertTrue(is_array($build));
         $this->assertArrayHasKey('~test/js/~plugin.js', $build);
         $this->assertFileExists(public_path($build['~test/js/~plugin.js']));
@@ -172,7 +172,7 @@ class AssetManagerTest extends TestCase
         $this->assertFileNotExists(public_path('~test/js/~plugin.js'));
 
         /** @noinspection PhpIncludeInspection */
-        $build = @include self::$manifestFile;
+        $build = include self::$manifestFile;
         $this->assertSame([], $build);
     }
 

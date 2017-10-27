@@ -106,7 +106,7 @@ class Request implements RequestContract
                 throw new \UnexpectedValueException(sprintf('Invalid Host "%s"', $host));
             }
 
-            $this->baseUrl = $scheme . '://' . $host . (!$isDefaultPort ? ':' . $port : '') . rtrim($basePath, '\\/');
+            $this->baseUrl = $scheme . '://' . $host . (!$isDefaultPort ? ':' . $port : '') . rtrim($basePath, '/');
         }
 
         return $this->baseUrl;
@@ -123,7 +123,7 @@ class Request implements RequestContract
                 $uri = substr($uri, 0, $pos);
             }
             $basePath = dirname($_SERVER['SCRIPT_NAME']); // SCRIPT_NAME = /myapp/public/index.php
-            $this->path = trim(substr($uri, strlen($basePath)), '\\/');
+            $this->path = trim(substr($uri, strlen($basePath)), '/');
         }
 
         return $this->path;

@@ -76,7 +76,7 @@ class PluginCommand extends Command
 
         $pluginManifest = $pluginManifestOfPackages ?: manifest_path('plugins/packages.php');
         /** @noinspection PhpIncludeInspection */
-        $packages = @file_exists($pluginManifest) ? include $pluginManifest : [];
+        $packages = file_exists($pluginManifest) ? include $pluginManifest : [];
 
         $length = 0;
         foreach ($packages as $package => $path) {

@@ -41,7 +41,7 @@ class Application
         call_user_func(function() {
             if (file_exists(self::$basePath . '/.manifest/plugins/services.php')) {
                 /** @noinspection PhpIncludeInspection */
-                @include self::$basePath . '/.manifest/plugins/services.php';
+                include self::$basePath . '/.manifest/plugins/services.php';
             }
             /** @noinspection PhpIncludeInspection */
             require self::$basePath . '/boot/services.php';
@@ -55,7 +55,7 @@ class Application
             require self::$basePath . '/boot/bootstrap.php';
             if (file_exists(self::$basePath . '/.manifest/plugins/bootstrap.php')) {
                 /** @noinspection PhpIncludeInspection */
-                @include self::$basePath . '/.manifest/plugins/bootstrap.php';
+                include self::$basePath . '/.manifest/plugins/bootstrap.php';
             }
         });
     }
@@ -75,7 +75,7 @@ class Application
             require self::$basePath . '/boot/routes.php';
             if (file_exists(self::$basePath . '/.manifest/plugins/routes.php')) {
                 /** @noinspection PhpIncludeInspection */
-                @include self::$basePath . '/.manifest/plugins/routes.php';
+                include self::$basePath . '/.manifest/plugins/routes.php';
             }
         });
 

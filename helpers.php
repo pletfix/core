@@ -52,7 +52,7 @@ if (! function_exists('asset')) {
         if ($manifest === null) {
             $manifestFile = manifest_path('assets/manifest.php');
             /** @noinspection PhpIncludeInspection */
-            $manifest = @file_exists($manifestFile) ? require $manifestFile : [];
+            $manifest = file_exists($manifestFile) ? include $manifestFile : [];
         }
 
         if (isset($manifest[$file])) {
@@ -507,6 +507,18 @@ if (!function_exists('guess_file_extension')) {
     }
 }
 
+if (! function_exists('http_client')) {
+    /**
+     * Create a HTTP Client to send a request.
+     *
+     * @return \Core\Services\Contracts\HttpClient
+     */
+    function http_client()
+    {
+        return DI::getInstance()->get('http-client');
+    }
+}
+
 if (!function_exists('http_status_text')) {
     /**
      * Translate a HTTP Status code to plain text.
@@ -720,7 +732,7 @@ if (!function_exists('list_files')) {
                 continue;
             }
             $file = $path . DIRECTORY_SEPARATOR . $file;
-            if (@is_dir($file)) {
+            if (is_dir($file)) {
                 if ($recursive) {
                     list_files($result, $file, $filter);
                 }
@@ -760,7 +772,7 @@ if (!function_exists('list_classes')) {
             if ($file[0] == '.') {
                 continue;
             }
-            if (@is_dir($path . DIRECTORY_SEPARATOR . $file)) {
+            if (is_dir($path . DIRECTORY_SEPARATOR . $file)) {
                 list_classes($result, $path . DIRECTORY_SEPARATOR . $file, $namespace . '\\' . $file, $suffix);
             }
             else if (substr($file, -$len) == $ext) {
@@ -1053,7 +1065,7 @@ if (!function_exists('remove_dir')) {
                 continue;
             }
             $file = $path . DIRECTORY_SEPARATOR . $filename;
-            if (@is_dir($file)) {
+            if (is_dir($file)) {
                 remove_dir($file);
             }
             else {

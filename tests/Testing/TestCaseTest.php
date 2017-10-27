@@ -37,14 +37,14 @@ class TestCaseTest extends TestCase
         // positive case
         $response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getHeader'])->getMock();
         $response->expects($this->any())->method('getStatusCode')->willReturn(302);
-        $response->expects($this->any())->method('getHeader')->with('location')->willReturn('https://example.com');
+        $response->expects($this->any())->method('getHeader')->with('Location')->willReturn('https://example.com');
         DI::getInstance()->set('response', $response, true);
         $this->assertRedirectedTo('https://example.com');
 
         // negative case
         $response = $this->getMockBuilder(Response::class)->setMethods(['getStatusCode', 'getHeader'])->getMock();
         $response->expects($this->any())->method('getStatusCode')->willReturn(200);
-        $response->expects($this->any())->method('getHeader')->with('location')->willReturn(null);
+        $response->expects($this->any())->method('getHeader')->with('Location')->willReturn(null);
         DI::getInstance()->set('response', $response, true);
         try {
             $this->assertRedirectedTo('https://example.com');

@@ -8,6 +8,7 @@ $di = \Core\Services\DI::getInstance();
 
 $di->set('collection',              \Core\Services\Collection::class, false);
 $di->set('date-time',               \Core\Services\DateTime::class, false);
+$di->set('http-client',             \Core\Services\HttpClient::class, false);
 $di->set('mailer',                  \Core\Services\Mailer::class, false);
 $di->set('migrator',                \Core\Services\Migrator::class, false);
 $di->set('paginator',               \Core\Services\Paginator::class, false);

@@ -87,7 +87,7 @@ class PluginManager implements PluginManagerContract
         $this->manifestPath = $manifestPath ?: manifest_path('plugins');
 
         // be sure the manifest path is exits
-        if (!@file_exists($this->manifestPath)) {
+        if (!file_exists($this->manifestPath)) {
             if (!make_dir($this->manifestPath, 0755)) {
                 throw new RuntimeException('Unable to create directory ' . $this->manifestPath); // @codeCoverageIgnore
             }
@@ -187,7 +187,7 @@ class PluginManager implements PluginManagerContract
      */
     private function getNamespace($composerJson)
     {
-        if (!@file_exists($composerJson)) {
+        if (!file_exists($composerJson)) {
             throw new InvalidArgumentException('"' . $composerJson . '" not found.'); // @codeCoverageIgnore
         }
         $composer = json_decode(file_get_contents($composerJson), true);
@@ -207,12 +207,12 @@ class PluginManager implements PluginManagerContract
     private function publishConfig($register)
     {
         $src = $this->path . '/config.php';
-        if (!@file_exists($src)) {
+        if (!file_exists($src)) {
             return;
         }
 
         $dest = config_path($this->plugin . '.php');
-        if (@file_exists($dest)) {
+        if (file_exists($dest)) {
             return;
         }
 
@@ -230,7 +230,7 @@ class PluginManager implements PluginManagerContract
     {
         // read files
         $publicPath = $this->path . '/public';
-        if (!@file_exists($publicPath)) {
+        if (!file_exists($publicPath)) {
             return;
         }
         $files = [];
@@ -240,7 +240,7 @@ class PluginManager implements PluginManagerContract
         $publicPathLength = strlen($publicPath) + 1;
         foreach ($files as $file) {
             $destDir = public_path(substr(dirname($file), $publicPathLength));
-            if (!@file_exists($destDir)) {
+            if (!file_exists($destDir)) {
                 if (!make_dir($destDir, 0755)) {
                     throw new RuntimeException('Unable to create directory ' . $destDir); //@codeCoverageIgnore
                 }
@@ -250,7 +250,7 @@ class PluginManager implements PluginManagerContract
                 copy($file, $dest);
             }
             else {
-                if (@file_exists($dest)) {
+                if (file_exists($dest)) {
                     unlink($dest);
                 }
             }
@@ -265,7 +265,7 @@ class PluginManager implements PluginManagerContract
     private function publishAssets($register)
     {
         $build = $this->path . '/assets/build.php';
-        if (!@file_exists($build)) {
+        if (!file_exists($build)) {
             return;
         }
 
@@ -276,7 +276,7 @@ class PluginManager implements PluginManagerContract
         // update manifest
         $manifest = $this->getManifest('assets');
         /** @noinspection PhpIncludeInspection */
-        $list = @file_exists($manifest) ? include $manifest : [];
+        $list = file_exists($manifest) ? include $manifest : [];
         if ($register) {
             // make absolute path to relative path
             $basePath = base_path();
@@ -314,7 +314,7 @@ class PluginManager implements PluginManagerContract
     {
         // read all plugin commands from folder
         $commandPath = $this->path . '/src/Commands';
-        if (!@file_exists($commandPath)) {
+        if (!file_exists($commandPath)) {
             return;
         }
         $classes = [];
@@ -323,7 +323,7 @@ class PluginManager implements PluginManagerContract
         // read existing command list
         $manifest = $this->getManifest('commands');
         /** @noinspection PhpIncludeInspection */
-        $list = @file_exists($manifest) ? include $manifest : [];
+        $list = file_exists($manifest) ? include $manifest : [];
 
         // merge plugin commands to the list (plugin overrides commands if exist)
         foreach ($classes as $class) {
@@ -353,7 +353,7 @@ class PluginManager implements PluginManagerContract
     {
         // read migrations from folder
         $migrationPath = $this->path . '/migrations';
-        if (!@file_exists($migrationPath)) {
+        if (!file_exists($migrationPath)) {
             return;
         }
         $files = [];
@@ -362,7 +362,7 @@ class PluginManager implements PluginManagerContract
         // update manifest
         $manifest = $this->getManifest('migrations');
         /** @noinspection PhpIncludeInspection */
-        $list = @file_exists($manifest) ? include $manifest : [];
+        $list = file_exists($manifest) ? include $manifest : [];
         $basePathLength = strlen(base_path()) + 1;
         foreach ($files as $file) {
             $name = basename($file, '.php');
@@ -385,7 +385,7 @@ class PluginManager implements PluginManagerContract
     {
         // read language files from folder
         $langPath = $this->path . '/lang';
-        if (!@file_exists($langPath)) {
+        if (!file_exists($langPath)) {
             return;
         }
         $files = [];
@@ -394,7 +394,7 @@ class PluginManager implements PluginManagerContract
         // update manifest
         $manifest = $this->getManifest('languages');
         /** @noinspection PhpIncludeInspection */
-        $list = @file_exists($manifest) ? include $manifest : [];
+        $list = file_exists($manifest) ? include $manifest : [];
         $basePathLength = strlen(base_path()) + 1;
         foreach ($files as $file) {
             $locale = basename($file, '.php');
@@ -425,7 +425,7 @@ class PluginManager implements PluginManagerContract
     {
         // read views from folder
         $visitPath = $this->path . '/views';
-        if (!@file_exists($visitPath)) {
+        if (!file_exists($visitPath)) {
             return;
         }
         $files = [];
@@ -434,7 +434,7 @@ class PluginManager implements PluginManagerContract
         // update manifest
         $manifest = $this->getManifest('views');
         /** @noinspection PhpIncludeInspection */
-        $list = @file_exists($manifest) ? include $manifest : [];
+        $list = file_exists($manifest) ? include $manifest : [];
         $visitPathLength = strlen($visitPath) + 1;
         $basePathLength  = strlen(base_path()) + 1;
         foreach ($files as $file) {
@@ -481,7 +481,7 @@ class PluginManager implements PluginManagerContract
     {
         // read middleware from folder
         $path = $this->path . '/src/' . $subfolder;
-        if (!@file_exists($path)) {
+        if (!file_exists($path)) {
             return;
         }
 
@@ -493,7 +493,7 @@ class PluginManager implements PluginManagerContract
 
         $manifest = $this->getManifest(lcfirst($subfolder));
         /** @noinspection PhpIncludeInspection */
-        $list = @file_exists($manifest) ? include $manifest : [];
+        $list = file_exists($manifest) ? include $manifest : [];
         $len = strlen($ns);
         foreach ($classes as $class) {
             if (strpos($class, '\\Contracts\\') !== false) {
@@ -533,7 +533,7 @@ class PluginManager implements PluginManagerContract
     {
         // read middleware from folder
         $path = $this->path . '/src/Drivers';
-        if (!@file_exists($path)) {
+        if (!file_exists($path)) {
             return;
         }
 
@@ -545,7 +545,7 @@ class PluginManager implements PluginManagerContract
 
         $manifest = $this->getManifest('drivers');
         /** @noinspection PhpIncludeInspection */
-        $list = @file_exists($manifest) ? include $manifest : [];
+        $list = file_exists($manifest) ? include $manifest : [];
         $len = strlen($ns);
         foreach ($classes as $class) {
             if (strpos($class, '\\Contracts\\') !== false) {
@@ -601,7 +601,7 @@ class PluginManager implements PluginManagerContract
             return;
         }
 
-        if (!@file_exists($this->path . '/boot/routes.php')) {
+        if (!file_exists($this->path . '/boot/routes.php')) {
             return;
         }
 
@@ -614,7 +614,7 @@ class PluginManager implements PluginManagerContract
         $dest = '';
         foreach ($packages as $package => $path) {
             $file = base_path($path . '/boot/routes.php');
-            if (!@file_exists($file)) {
+            if (!file_exists($file)) {
                 continue;
             }
 
@@ -659,7 +659,7 @@ class PluginManager implements PluginManagerContract
      */
     private function publishServices($register)
     {
-        if (!@file_exists($this->path . '/boot/services.php')) {
+        if (!file_exists($this->path . '/boot/services.php')) {
             return;
         }
 
@@ -672,7 +672,7 @@ class PluginManager implements PluginManagerContract
         $dest = '';
         foreach ($packages as $package => $path) {
             $file = base_path($path . '/boot/services.php');
-            if (!@file_exists($file)) {
+            if (!file_exists($file)) {
                 continue;
             }
 
@@ -712,7 +712,7 @@ class PluginManager implements PluginManagerContract
     private function publishBootstraps($register)
     {
         $classes = [];
-        if (@file_exists($this->path . '/src/Bootstraps')) {
+        if (file_exists($this->path . '/src/Bootstraps')) {
             list_classes($classes, $this->path . '/src/Bootstraps', $this->namespace . 'Bootstraps');
         }
         if (empty($classes)) {
@@ -729,7 +729,7 @@ class PluginManager implements PluginManagerContract
         foreach ($packages as $package => $relativePath) {
             $path = base_path($relativePath);
             $classes = [];
-            if (@file_exists($path . '/src/Bootstraps')) {
+            if (file_exists($path . '/src/Bootstraps')) {
                 $namespace = $this->getNamespace($path . '/composer.json');
                 list_classes($classes, $path . '/src/Bootstraps', $namespace . 'Bootstraps');
             }
@@ -782,7 +782,7 @@ class PluginManager implements PluginManagerContract
         $manifest = $this->getManifest('packages');
 
         /** @noinspection PhpIncludeInspection */
-        return @file_exists($manifest) ? include $manifest : [];
+        return file_exists($manifest) ? include $manifest : [];
     }
 
     /**

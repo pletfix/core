@@ -82,7 +82,7 @@ class View implements ViewContract
         }
 
         $templateFile = $this->templateFile($name);
-        if (!@file_exists($templateFile)) {
+        if (!file_exists($templateFile)) {
             throw new InvalidArgumentException('View ' . $name . '" not found.');
         }
 
@@ -101,7 +101,7 @@ class View implements ViewContract
      */
     public function exists($name)
     {
-        return @file_exists($this->templateFile($name));
+        return file_exists($this->templateFile($name));
     }
 
     /**
@@ -113,12 +113,12 @@ class View implements ViewContract
     private function templateFile($name)
     {
         $filename = $this->viewPath . '/' . str_replace('.', DIRECTORY_SEPARATOR, $name) . '.blade.php';
-        if (@file_exists($filename)) {
+        if (file_exists($filename)) {
             return $filename;
         }
 
         if (self::$manifest === null) {
-            if (@file_exists($this->pluginManifestOfViews)) {
+            if (file_exists($this->pluginManifestOfViews)) {
                 /** @noinspection PhpIncludeInspection */
                 self::$manifest = include $this->pluginManifestOfViews;
             }
@@ -144,7 +144,7 @@ class View implements ViewContract
      */
     private function isCacheUpToDate($cachedFile, $templateFile)
     {
-        if (!@file_exists($cachedFile)) {
+        if (!file_exists($cachedFile)) {
             return false;
         }
 
@@ -173,7 +173,7 @@ class View implements ViewContract
         } // @codeCoverageIgnore
 
         // save file
-        if (@file_exists($file)) {
+        if (file_exists($file)) {
             unlink($file); // so we will to be the owner at the new file
         }
 

@@ -628,12 +628,12 @@ class Mailer implements MailerContract
     private function renderEmbeddedFiles(&$content, $boundary)
     {
         foreach ($this->cids as $image => $cid) {
-            $name = basename($image);
-            if (($data = @file_get_contents($image)) === false) {
+            if (!is_readable($image)) {
                 throw new MailException('Image could bot be read: ' . $image);  // @codeCoverageIgnore
             }
-            $data = chunk_split(base64_encode($data));
             $type = self::getMimeTypeOfImage($image);
+            $name = basename($image);
+            $data = chunk_split(base64_encode(file_get_contents($image)));
             $content .= "\r\n";
             $content .= "--$boundary\r\n";
             $content .= "Content-Type: $type;\r\n\tname=\"$name\"\r\n";
@@ -656,10 +656,10 @@ class Mailer implements MailerContract
     private function renderAttachments(&$content, $boundary)
     {
         foreach($this->attachments as $file => $name) {
-            if (($data = @file_get_contents($file)) === false) {
+            if (!is_readable($file)) {
                 throw new MailException('File could not be read: ' . $file); // @codeCoverageIgnore
             }
-            $data = chunk_split(base64_encode($data));
+            $data = chunk_split(base64_encode(file_get_contents($file)));
             $type = mime_content_type($file);
             $content .= "\r\n";
             $content .= "--$boundary\r\n";

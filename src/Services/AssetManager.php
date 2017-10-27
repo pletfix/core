@@ -64,7 +64,7 @@ class AssetManager implements AssetManagerContract
         $this->pluginManifestOfAssets = $pluginManifestOfAssets ?: manifest_path('plugins/assets.php');
 
         /** @noinspection PhpIncludeInspection */
-        $this->manifest = @file_exists($this->manifestFile) ? include $this->manifestFile : [];
+        $this->manifest = file_exists($this->manifestFile) ? include $this->manifestFile : [];
     }
 
     /**
@@ -112,7 +112,7 @@ class AssetManager implements AssetManagerContract
     {
         if ($plugin !== null) {
             /** @noinspection PhpIncludeInspection */
-            $builds = @file_exists($this->pluginManifestOfAssets) ? include $this->pluginManifestOfAssets : [];
+            $builds = file_exists($this->pluginManifestOfAssets) ? include $this->pluginManifestOfAssets : [];
             if (!isset($builds[$plugin])) {
                 throw new InvalidArgumentException('Plugin "' . $plugin . '" has no assets or is not installed.');
             }
@@ -158,7 +158,7 @@ class AssetManager implements AssetManagerContract
 
         $ext = pathinfo($dest, PATHINFO_EXTENSION);
         $dir = !empty($ext) ? dirname($dest) : $dest;
-        if (!@file_exists($dir)) {
+        if (!file_exists($dir)) {
             if (!make_dir($dir, 0775)) {
                 throw new RuntimeException('Unable to create directory ' . $dir); // @codeCoverageIgnore
             }
@@ -168,7 +168,7 @@ class AssetManager implements AssetManagerContract
 
         $files = [];
         foreach ($sources as $source) {
-            if (@is_dir($source)) {
+            if (is_dir($source)) {
                 if ($ext == 'js') {
                     $filter = ['js'];
                 }
@@ -187,7 +187,7 @@ class AssetManager implements AssetManagerContract
 
         // copy all files to the destination
 
-        if (@file_exists($dest) && !@is_dir($dest)) {
+        if (file_exists($dest) && !is_dir($dest)) {
             unlink($dest);
         } // @codeCoverageIgnore
 
@@ -222,13 +222,13 @@ class AssetManager implements AssetManagerContract
             }
 
             // save content
-            if (@is_dir($dest)) {
+            if (is_dir($dest)) {
                 $success = file_put_contents($dest . DIRECTORY_SEPARATOR . basename($file), $content, LOCK_EX);
                 //@chmod($dest . DIRECTORY_SEPARATOR . basename($file), 0664);
             }
             else {
                 // concatenate the files to a single file
-                if (@file_exists($dest)) {
+                if (file_exists($dest)) {
                     $success = file_put_contents($dest, PHP_EOL . $content, FILE_APPEND | LOCK_EX);
                 }
                 else {
@@ -251,7 +251,7 @@ class AssetManager implements AssetManagerContract
     {
         // be sure the folder public/build is exist
         $dir = public_path('build');
-        if (!@file_exists($dir)) {
+        if (!file_exists($dir)) {
             if (!make_dir($dir, 0755)) { // @codeCoverageIgnore
                 throw new RuntimeException('Unable to create directory ' . $dir); // @codeCoverageIgnore
             } // @codeCoverageIgnore
@@ -259,7 +259,7 @@ class AssetManager implements AssetManagerContract
 
         // be sure the manifest path is exist
         $dir = dirname($this->manifestFile);
-        if (!@file_exists($dir)) {
+        if (!file_exists($dir)) {
             if (!make_dir($dir, 0755)) {
                 throw new RuntimeException('Unable to create directory ' . $dir); // @codeCoverageIgnore
             }
@@ -278,7 +278,7 @@ class AssetManager implements AssetManagerContract
         }
 
         // delete old unique file
-        if ($oldFile !== null && @file_exists($oldFile)) {
+        if ($oldFile !== null && file_exists($oldFile)) {
             unlink($oldFile);
         }
     }
@@ -291,28 +291,28 @@ class AssetManager implements AssetManagerContract
      */
     private function removeFiles(array $sources, $dest)
     {
-        if (@is_dir($dest)) {
+        if (is_dir($dest)) {
             foreach ($sources as $source) {
-                if (@is_dir($source)) {
+                if (is_dir($source)) {
                     $files = [];
                     list_files($files, $source);
                     foreach ($files as $file) {
                         $file = $dest . DIRECTORY_SEPARATOR . basename($file);
-                        if (@file_exists($file)) {
+                        if (file_exists($file)) {
                             unlink($file);
                         }
                     }
                 }
                 else {
                     $file = $dest . DIRECTORY_SEPARATOR . basename($source);
-                    if (@file_exists($file)) {
+                    if (file_exists($file)) {
                         unlink($file);
                     }
                 }
             }
         }
         else {
-            if (@file_exists($dest)) {
+            if (file_exists($dest)) {
                 unlink($dest);
             }
         }
@@ -331,7 +331,7 @@ class AssetManager implements AssetManagerContract
 
         // delete unique file
         $uniqueFile = public_path($this->manifest[$file]);
-        if (!is_null($uniqueFile) && @file_exists($uniqueFile)) {
+        if ($uniqueFile !== null && file_exists($uniqueFile)) {
             unlink($uniqueFile);
         }
 

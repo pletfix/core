@@ -122,7 +122,7 @@ class Response implements ResponseContract
             $this->header($headers);
         }
 
-        return $this->header('location', $url)->status($status);
+        return $this->header('Location', $url)->status($status);
     }
 
     /**
