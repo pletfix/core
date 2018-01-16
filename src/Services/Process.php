@@ -36,13 +36,6 @@ class Process implements ProcessContract
     private $process;
 
     /**
-     * The PID of the process.
-     *
-     * @var int
-     */
-    private $pid;
-
-    /**
      * The exitcode of the process.
      *
      * @var int
@@ -87,7 +80,6 @@ class Process implements ProcessContract
             $this->process = null;
         }
 
-        $this->pid      = null;
         $this->exitcode = null;
     }
 
