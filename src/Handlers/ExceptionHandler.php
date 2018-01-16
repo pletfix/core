@@ -1,11 +1,11 @@
 <?php
 
-namespace Core\Handler;
+namespace Core\Handlers;
 
 use Core\Exceptions\Contracts\HttpException;
 use Core\Exceptions\QueryException;
 use Core\Exceptions\StopException;
-use Core\Handler\Contracts\ExceptionHandler as ExceptionHandlerContract;
+use Core\Handlers\Contracts\ExceptionHandler as ExceptionHandlerContract;
 use Core\Services\Contracts\Command;
 use Core\Services\Contracts\Response;
 use Exception;

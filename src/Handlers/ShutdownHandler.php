@@ -1,8 +1,8 @@
 <?php
 
-namespace Core\Handler;
+namespace Core\Handlers;
 
-use Core\Handler\Contracts\Handler as HandlerContract;
+use Core\Handlers\Contracts\Handler as HandlerContract;
 
 class ShutdownHandler implements HandlerContract
 {

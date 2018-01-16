@@ -1,6 +1,6 @@
 <?php
 
-namespace Core\Handler\Contracts;
+namespace Core\Handlers\Contracts;
 
 use Exception;
 

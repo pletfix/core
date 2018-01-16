@@ -3,7 +3,7 @@
 namespace Core\Tests\Bootstraps;
 
 use Core\Bootstraps\HandleExceptions;
-use Core\Handler\Contracts\ExceptionHandler as ExceptionHandlerContract;
+use Core\Handlers\Contracts\ExceptionHandler as ExceptionHandlerContract;
 use Core\Services\DI;
 use Core\Testing\TestCase;
 use ErrorException;

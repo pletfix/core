@@ -3,7 +3,7 @@
 namespace Core\Tests\Bootstraps;
 
 use Core\Bootstraps\HandleShutdown;
-use Core\Handler\Contracts\Handler as HandlerContract;
+use Core\Handlers\Contracts\Handler as HandlerContract;
 use Core\Services\DI;
 use Core\Testing\TestCase;
 

@@ -70,6 +70,13 @@ abstract class Command implements CommandContract
     private $input = [];
 
     /**
+     * Determine if a SIGTERM signal has been triggered to terminate the process.
+     *
+     * @var bool
+     */
+    private $terminated = false;
+
+    /**
      * Standard input/output stream.
      *
      * @var \Core\Services\Contracts\Stdio
@@ -94,7 +101,12 @@ abstract class Command implements CommandContract
 
         $this->stdio = $stdio !== null ? $stdio : stdio();
 
-        $this->parseInput($argv); // parse the command line parameters
+        // parse the command line parameters
+        $this->parseInput($argv);
+
+        // install a termination signal handler
+        pcntl_signal(SIGTERM, function() { $this->terminated = true; });
+        declare(ticks = 1);
     }
 
     /**
@@ -149,6 +161,19 @@ abstract class Command implements CommandContract
      * @return int|void Exit Code
      */
     abstract protected function handle();
+
+    /**
+     * Determine if a SIGTERM signal has been triggered to terminate the process.
+     *
+     * To send a SIGTERM signal to PID 1234 enter this into your terminal:
+     *      kill -SIGTERM 1234
+     *
+     * @return bool
+     */
+    public function isTerminated()
+    {
+        return $this->terminated;
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Parse the command line arguments and options
@@ -522,7 +547,7 @@ abstract class Command implements CommandContract
     /**
      * @inheritdoc
      */
-    public function read($prompt, $options = null, $default = null)
+    public function read($prompt = null, $options = null, $default = null)
     {
         return $this->stdio->read($prompt, $options, $default);
     }

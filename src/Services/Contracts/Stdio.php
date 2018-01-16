@@ -66,12 +66,12 @@ interface Stdio
     /**
      * Prompts the user for input, and returns it.
      *
-     * @param string $prompt Prompt text.
+     * @param string|null $prompt Prompt text.
      * @param string|array|null $options String of options, e.g. ['y' => 'yes', 'n' => 'no'].  Pass null to omit.
      * @param string|null $default Default input value. Pass null to omit.
      * @return string Either the default value, or the user-provided input.
      */
-    public function read($prompt, array $options = null, $default = null);
+    public function read($prompt = null, array $options = null, $default = null);
 
     /**
      * Prompts the user for input, and returns it.

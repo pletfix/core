@@ -109,7 +109,7 @@ class HandleExceptions implements Bootable
     /**
      * Get an instance of the exception handler.
      *
-     * @return \Core\Handler\Contracts\ExceptionHandler
+     * @return \Core\Handlers\Contracts\ExceptionHandler
      */
     private function getExceptionHandler()
     {

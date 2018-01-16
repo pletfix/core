@@ -129,39 +129,43 @@ class Stdio implements StdioContract
     /**
      * @inheritdoc
      */
-    public function read($prompt, array $options = null, $default = null)
+    public function read($prompt = null, array $options = null, $default = null)
     {
-        // style the prompt
-        $prompt = $this->format($prompt, [self::STYLE_GREEN]);
+        if ($prompt !== null) {
+            // style the prompt
+            $prompt = $this->format($prompt, [self::STYLE_GREEN]);
 
-        // add default information to the prompt
-        if ($default !== null) {
-            if ($default === '') {
-                $defaultText = 'empty';
+            // add default information to the prompt
+            if ($default !== null) {
+                if ($default === '') {
+                    $defaultText = 'empty';
+                }
+                else if (is_bool($default)) {
+                    $defaultText = $default ? 'true': 'false';
+                }
+                else {
+                    $defaultText = $default;
+                }
+                $prompt .= ' [' . $this->format($defaultText, [self::STYLE_YELLOW]) . ']';
             }
-            else if (is_bool($default)) {
-                $defaultText = $default ? 'true': 'false';
-            }
-            else {
-                $defaultText = $default;
-            }
-            $prompt .= ' [' . $this->format($defaultText, [self::STYLE_YELLOW]) . ']';
-        }
-        $prompt .= ':' . PHP_EOL;
+            $prompt .= ':' . PHP_EOL;
 
-        // add the option list to the prompt
-        if ($options !== null) {
-            $optionHint = [];
-            foreach ($options as $key => $option) {
-                $optionHint[] = ' [' . $this->format($key, [self::STYLE_YELLOW]) . '] ' . $option;
+            // add the option list to the prompt
+            if ($options !== null) {
+                $optionHint = [];
+                foreach ($options as $key => $option) {
+                    $optionHint[] = ' [' . $this->format($key, [self::STYLE_YELLOW]) . '] ' . $option;
+                }
+                $prompt .= implode(PHP_EOL, $optionHint) . PHP_EOL;
             }
-            $prompt .= implode(PHP_EOL, $optionHint) . PHP_EOL;
+            $prompt .= '> ';
         }
-        $prompt .= '> ';
 
         do {
             // write the prompt
-            $this->write($prompt);
+            if ($prompt !== null) {
+                $this->write($prompt);
+            }
 
             // read a value from the stream
             $result = trim(fgets($this->stdin));

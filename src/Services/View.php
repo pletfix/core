@@ -83,7 +83,7 @@ class View implements ViewContract
 
         $templateFile = $this->templateFile($name);
         if (!file_exists($templateFile)) {
-            throw new InvalidArgumentException('View ' . $name . '" not found.');
+            throw new InvalidArgumentException('View "' . $name . '" not found.');
         }
 
         $cachedFile = storage_path('cache/views/' . md5($templateFile) . '.phtml');

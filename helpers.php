@@ -18,6 +18,7 @@
 
 use Core\Services\Contracts\Response;
 use Core\Services\DI;
+use Core\Services\Process;
 
 if (!function_exists('abort')) {
     /**
@@ -992,6 +993,20 @@ if (!function_exists('plugin_manager')) {
     }
 }
 
+if (!function_exists('process')) {
+    /**
+     * Create a background process.
+     *
+     * @param string $cmd The command line to run.
+     * @param array|null $env Environment variables, e.g. ['XDEBUG_CONFIG' => 'idekey=PHPSTORM']
+     * @return \Core\Services\Contracts\Process
+     */
+    function process($cmd, $env = null)
+    {
+        return DI::getInstance()->get('process', [$cmd, $env]);
+    }
+}
+
 //if (!function_exists('process_user')) {
 //    /**
 //     * Return the effective user of the current process.
@@ -1437,7 +1452,7 @@ if (!function_exists('lower_case')) {
 
 if (!function_exists('pascal_case')) {
     /**
-     * Converts the given word to pascal case, also known as studly caps case (PascalCase).
+     * Convert the given word to pascal case, also known as studly caps case (PascalCase).
      *
      * This is useful to convert a word into the format for a class name.
      *
